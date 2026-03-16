@@ -5,8 +5,22 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RobotTesting"
         mc:Ignorable="d"
-        Title="VDSE" Height="450" Width="800"
-        xmlns:prism="http://prismlibrary.com/"             
-        prism:ViewModelLocator.AutoWireViewModel="True">
-    <ContentControl prism:RegionManager.RegionName="CoverRegion" Margin="5" />
+  
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"   
+    prism:ViewModelLocator.AutoWireViewModel="True"  WindowStyle="None"
+        Title="Automation Robot" Height="450" Width="800"
+        xmlns:prism="http://prismlibrary.com/" >
+    <Grid  Background="{DynamicResource MaterialDesignToolBarBackground}">
+        <Rectangle Name="rctHeader" Height="40" VerticalAlignment="Top" Fill="Transparent" PreviewMouseLeftButtonDown="rctHeader_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="rctHeader_PreviewMouseLeftButtonUp" PreviewMouseMove="rctHeader_PreviewMouseMove"/>
+        <ContentControl prism:RegionManager.RegionName="CoverRegion"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Width="160" Height="40">
+            <Button Style="{DynamicResource MaterialDesignFlatButton}" Click="Button_Minimize_Click" Content="{materialDesign:PackIcon Kind=WindowMinimize}" Background="Transparent" Command="{Binding OnEnableSendMode}"
+VerticalAlignment="Center" HorizontalAlignment="Right"  Margin="2 0"/>
+            <Button Style="{DynamicResource MaterialDesignFlatButton}"  Content="{materialDesign:PackIcon Kind=WindowMaximize}" Click="Button_Maximize_Click"  Background="Transparent" Command="{Binding OnEnableSendMode}"
+VerticalAlignment="Center" HorizontalAlignment="Right"  Margin="2 0"/>
+            <Button Style="{DynamicResource MaterialDesignFlatButton}" Content="{materialDesign:PackIcon Kind=WindowClose}" Click="Button_Close_Click"  Background="Transparent" Command="{Binding OnEnableSendMode}"
+VerticalAlignment="Center" HorizontalAlignment="Right"  Margin="2 0"/>
+        </StackPanel>
+
+    </Grid>
 </Window>

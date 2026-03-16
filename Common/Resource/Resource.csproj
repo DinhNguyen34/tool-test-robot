@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Images\AutoTest.png" />
+    <None Remove="Images\Robot-32.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\AutoTest.png" />
+    <Resource Include="Images\Robot-32.png" />
+  </ItemGroup>
+
+</Project>

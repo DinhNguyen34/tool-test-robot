@@ -1,3 +1,11 @@
 <Solution>
+  <Folder Name="/Common/">
+    <Project Path="../Common/Core/Core.csproj" Id="15c7475b-16fd-4fce-b6f9-3e8855a5fc02" />
+    <Project Path="../Common/Resource/Resource.csproj" Id="90fa7f2b-fec7-4839-af9b-5c1845ec99e4" />
+    <Project Path="../Common/WinStyles/WinStyles.csproj" Id="c8aee942-72b9-4015-9e8c-37c3617fe603" />
+  </Folder>
+  <Folder Name="/Modules/">
+    <Project Path="../Modules/ModuleCover/ModuleCover.csproj" Id="c8a4228d-9e44-4db9-8251-c176a83f9533" />
+  </Folder>
   <Project Path="RobotTesting.csproj" />
 </Solution>
