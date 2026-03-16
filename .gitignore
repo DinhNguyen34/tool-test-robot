@@ -48,3 +48,6 @@ Thumbs.db
 *.mov
 *.wmv
 
+/RobotTesting/.vs
+/.vs
+/RobotTesting/obj
