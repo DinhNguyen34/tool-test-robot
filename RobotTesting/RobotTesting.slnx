@@ -5,7 +5,9 @@
     <Project Path="../Common/WinStyles/WinStyles.csproj" Id="c8aee942-72b9-4015-9e8c-37c3617fe603" />
   </Folder>
   <Folder Name="/Modules/">
+    <Project Path="../ModuleMotor/ModuleMotor.csproj" Id="eeb1bc4a-6b86-441c-848b-c36ea1d78f5b" />
     <Project Path="../Modules/ModuleCover/ModuleCover.csproj" Id="c8a4228d-9e44-4db9-8251-c176a83f9533" />
+    <Project Path="../Modules/ModuleNetwork/ModuleNetwork.csproj" Id="d1b5339e-2f71-4a8c-9d3e-7c8f12e45a01" />
   </Folder>
   <Project Path="RobotTesting.csproj" />
 </Solution>

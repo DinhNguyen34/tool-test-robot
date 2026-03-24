@@ -6,13 +6,22 @@
              xmlns:local="clr-namespace:ModuleCover.Views"
              mc:Ignorable="d" 
               xmlns:prism="http://prismlibrary.com/"             
-             prism:ViewModelLocator.AutoWireViewModel="True" >
+             prism:ViewModelLocator.AutoWireViewModel="True" Cursor="Pen" >
 
-    <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Height="35" Margin="3 3 0 0">
+    <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Cursor="No">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Height="35" Margin="3 3 0 0">
             <Image Source="/Resource;component/Images/Robot-32.png" Height="32" Width="32" Margin="5 0" VerticalAlignment="Center"/>
-            <TextBlock Text="Automation Robot" Grid.Column="1" VerticalAlignment="Center" FontWeight="Bold" FontSize="22" Foreground="#339AF0"/>
+            <TextBlock Text="Automation Robot" VerticalAlignment="Center" FontWeight="Bold" FontSize="22" Foreground="#339AF0"/>
         </StackPanel>
+
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
         <ItemsControl ItemsSource="{Binding Model.Tiles}" Background="Transparent" Margin="25" VerticalAlignment="Center" HorizontalAlignment="Center">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -90,6 +99,7 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
+        </ScrollViewer>
 
     </Grid>
 </UserControl>

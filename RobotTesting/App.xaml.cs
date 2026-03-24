@@ -1,5 +1,7 @@
 ﻿using Common.Core.Helpers;
 using ModuleCover;
+using ModuleMotor;
+using ModuleNetwork;
 using Prism.Unity;
 using System.ComponentModel;
 using System.Configuration;
@@ -31,13 +33,15 @@ namespace RobotTesting
 
         protected override IModuleCatalog CreateModuleCatalog()
         {
-            return new DirectoryModuleCatalog() { ModulePath = @".\Modules" };
+            return new ModuleCatalog();
         }
 
         protected override void ConfigureModuleCatalog(IModuleCatalog moduleCatalog)
         {
             //base.ConfigureModuleCatalog(moduleCatalog);
             moduleCatalog.AddModule<ModuleCoverModule>();
+            moduleCatalog.AddModule<ModuleMotorModule>();
+            moduleCatalog.AddModule<ModuleNetworkModule>();
             // Log các module đã tìm thấy
             LogHelper.Debug("=== Modules Found ===");
             foreach (var module in moduleCatalog.Modules)

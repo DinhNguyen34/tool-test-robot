@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "dgSpecHash": "2P0E5PFnrdU=",
+  "success": true,
+  "projectFilePath": "D:\\nguyen.nd\\Nguyen\\Vscode\\python\\robotapp\\Modules\\ModuleNetwork\\ModuleNetwork.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\LAB\\.nuget\\packages\\log4net\\3.3.0\\log4net.3.3.0.nupkg.sha512",
+    "C:\\Users\\LAB\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.1\\microsoft.extensions.dependencyinjection.abstractions.8.0.1.nupkg.sha512",
+    "C:\\Users\\LAB\\.nuget\\packages\\microsoft.xaml.behaviors.wpf\\1.1.122\\microsoft.xaml.behaviors.wpf.1.1.122.nupkg.sha512",
+    "C:\\Users\\LAB\\.nuget\\packages\\prism.container.abstractions\\9.0.106\\prism.container.abstractions.9.0.106.nupkg.sha512",
+    "C:\\Users\\LAB\\.nuget\\packages\\prism.core\\9.0.537\\prism.core.9.0.537.nupkg.sha512",
+    "C:\\Users\\LAB\\.nuget\\packages\\prism.events\\9.0.537\\prism.events.9.0.537.nupkg.sha512",
+    "C:\\Users\\LAB\\.nuget\\packages\\prism.wpf\\9.0.537\\prism.wpf.9.0.537.nupkg.sha512"
+  ],
+  "logs": []
+}

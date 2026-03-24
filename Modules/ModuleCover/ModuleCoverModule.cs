@@ -4,6 +4,7 @@ using Prism.Modularity;
 using System.Reflection;
 
 namespace ModuleCover
+    
 {
     public class ModuleCoverModule : IModule
     {

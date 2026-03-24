@@ -26,10 +26,14 @@ namespace ModuleCover.ViewModels
         {
             try
             {
-                switch ((TileType)obj)
+                if (obj is not TileType tile) return;
+                switch (tile)
                 {
                     case TileType.Mortor:
-                        _regionManager.RequestNavigate("CoverRegion", "MultiflashView");
+                        _regionManager.RequestNavigate("CoverRegion", "MotorView");
+                        break;
+                    case TileType.Network:
+                        _regionManager.RequestNavigate("CoverRegion", "NetworkView");
                         break;
                 }
             }
