@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ModuleMotor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+38d30d1b50a500e0f1aa249542b668949cee4e3b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0c4021bd0fb8df6efa37cb20c5e9511ccd962266")]
 [assembly: System.Reflection.AssemblyProductAttribute("ModuleMotor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ModuleMotor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
