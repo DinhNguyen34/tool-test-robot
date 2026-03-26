@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Ports;
+using System.Printing;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
@@ -45,8 +46,8 @@ namespace ModuleMotor.ViewModels
                 RaisePropertyChanged(nameof(CanStatusText));
             }
         }
-        public string ConnectLabel  => IsConnected ? "Stop"        : "CAN Connect";
-        public string CanStatusText => IsConnected ? "CONNECTED"   : "DISCONNECTED";
+        public string ConnectLabel => IsConnected ? "Stop" : "CAN Connect";
+        public string CanStatusText => IsConnected ? "CONNECTED" : "DISCONNECTED";
 
         // ── Port selection ─────────────────────────────────────────────────────
         public ObservableCollection<string> AvailablePorts { get; } = new();
@@ -102,21 +103,62 @@ namespace ModuleMotor.ViewModels
             get => _logStatusText;
             set => SetProperty(ref _logStatusText, value);
         }
+        public ObservableCollection<TestCaseDefinition> QuickLibraryTestCases { get; } = new();
+        public ObservableCollection<TestCaseDefinition> AvailableTestCases { get; } = new();
+        public ObservableCollection<BuiltTestStep> BuiltSteps { get; } = new();
+
+        private TestCaseDefinition? _selectedAvailableTestCase;
+        public TestCaseDefinition? SelectedAvailableTestCase
+        {
+            get => _selectedAvailableTestCase;
+            set => SetProperty(ref _selectedAvailableTestCase, value);
+        }
+
+        private BuiltTestStep? _selectedBuiltStep;
+        public BuiltTestStep? SelectedBuiltStep
+        {
+            get => _selectedBuiltStep;
+            set => SetProperty(ref _selectedBuiltStep, value);
+        }
+
+        private string _testPlanName = "New Test Plan";
+        public string TestPlanName
+        {
+            get => _testPlanName;
+            set => SetProperty(ref _testPlanName, value);
+        }
+
+        private bool _isAddTestCasePopupOpen;
+        public bool IsAddTestCasePopupOpen
+        {
+            get => _isAddTestCasePopupOpen;
+            set => SetProperty(ref _isAddTestCasePopupOpen, value);
+        }
 
         // ── Commands ───────────────────────────────────────────────────────────
-
-        public DelegateCommand                      ZeroCmdCommand        { get; }
-        public DelegateCommand                      HoldPositionCommand   { get; }
-        public DelegateCommand                      SetAllKpCommand       { get; }
-        public DelegateCommand                      SetAllKdCommand       { get; }
-        public DelegateCommand                      SaveLogCommand        { get; }
-        public DelegateCommand                      LoadConfigCommand     { get; }
-        public DelegateCommand                      SaveConfigCommand     { get; }
-        public DelegateCommand                      ClearLogCommand       { get; }
-        public DelegateCommand                      GoBackCommand         { get; }
-        public DelegateCommand                      RefreshPortsCommand   { get; }
-        public DelegateCommand<MotorChannelModel>   SendMotorCommand      { get; }
-        public DelegateCommand                      SendAllMotorsCommand  { get; }
+        public DelegateCommand CanConnectCommand { get; }
+        public DelegateCommand ZeroCmdCommand { get; }
+        public DelegateCommand HoldPositionCommand { get; }
+        public DelegateCommand SetAllKpCommand { get; }
+        public DelegateCommand SetAllKdCommand { get; }
+        public DelegateCommand SaveLogCommand { get; }
+        public DelegateCommand LoadConfigCommand { get; }
+        public DelegateCommand SaveConfigCommand { get; }
+        public DelegateCommand ClearLogCommand { get; }
+        public DelegateCommand GoBackCommand { get; }
+        public DelegateCommand RefreshPortsCommand { get; }
+        public DelegateCommand<MotorChannelModel> SendMotorCommand { get; }
+        public DelegateCommand SendAllMotorsCommand { get; }
+        public DelegateCommand OpenAddTestCaseCommand { get; }
+        public DelegateCommand AddSelectedTestCaseCommand { get; }
+        public DelegateCommand CloseAddTestCaseCommand { get; }
+        public DelegateCommand OpenAddConfigCommand { get; }
+        public DelegateCommand CloseAddConfigCommand { get; }
+        public DelegateCommand RemoveStepCommand { get; }
+        public DelegateCommand MoveStepUpCommand { get; }
+        public DelegateCommand MoveStepDownCommand { get; }
+        public DelegateCommand DuplicatesStepCommand { get; }
+        public DelegateCommand ClearBuiltStepCommand { get; }
 
         public DelegateCommand OpenListCan => new DelegateCommand(_openListCan);
         public DelegateCommand CanConnectCommand => new DelegateCommand(OnCanConnect);
@@ -133,29 +175,64 @@ namespace ModuleMotor.ViewModels
                 "Get Device ID", "Motor Enabled", "Motor Stop", "Set Zero Mechanical",
                 "Max Position",  "Min Position",  "Get State Motor", "Max Speed"
             };
+            for (int i = 0; i < tcLabels.Length; i++)
+            {
+                var tc = new TestCaseDefinition
+                {
+                    Number = i + 1,
+                    Code = $"TC{i + 1:000}",
+                    Label = tcLabels[i],
+                    Description = $"Built-in testcase: {tcLabels[i]}",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true
+
+                };
+                AvailableTestCases.Add(tc);
+                if (i < 4)
+                    QuickLibraryTestCases.Add(tc);
+            }
+
             for (int i = 0; i < N_MOTORS; i++)
             {
-                var num   = i + 1;
+                var num = i + 1;
                 var label = tcLabels[i];
                 TestCases.Add(new TestCaseItem
                 {
-                    Number  = num,
-                    Label   = label,
+                    Number = num,
+                    Label = label,
                     Command = new DelegateCommand(() => OnRunTestCase(num, label))
                 });
             }
 
-            ZeroCmdCommand       = new DelegateCommand(OnZeroCmd);
-            HoldPositionCommand  = new DelegateCommand(OnHoldPosition);
-            SetAllKpCommand      = new DelegateCommand(OnSetAllKp);
-            SetAllKdCommand      = new DelegateCommand(OnSetAllKd);
-            SaveLogCommand       = new DelegateCommand(OnSaveLog);
-            LoadConfigCommand    = new DelegateCommand(OnLoadConfig);
-            SaveConfigCommand    = new DelegateCommand(OnSaveConfig);
-            ClearLogCommand      = new DelegateCommand(() => LogEntries.Clear());
-            GoBackCommand        = new DelegateCommand(OnGoBack);
-            RefreshPortsCommand  = new DelegateCommand(RefreshPorts);
-            SendMotorCommand     = new DelegateCommand<MotorChannelModel>(OnSendMotor);
+            OpenAddTestCaseCommand = new DelegateCommand(() => IsAddTestCasePopupOpen = true);
+            CloseAddTestCaseCommand = new DelegateCommand(() => IsAddTestCasePopupOpen = false);
+            AddSelectedTestCaseCommand = new DelegateCommand(AddSelectedTestCase);
+
+            OpenAddConfigCommand = new DelegateCommand(() => IsAddTestCasePopupOpen = true);
+            CloseAddConfigCommand = new DelegateCommand(() => IsAddTestCasePopupOpen = false);
+
+            RemoveStepCommand = new DelegateCommand(RemoveSelectedStep);
+            MoveStepUpCommand = new DelegateCommand(MoveSelectedStepUp);
+            MoveStepDownCommand = new DelegateCommand(MoveSelectedStepDown);
+            DuplicatesStepCommand = new DelegateCommand(DuplicateSelectedStep);
+            ClearBuiltStepCommand = new DelegateCommand(ClearBuiltSteps);
+
+
+
+            CanConnectCommand = new DelegateCommand(OnCanConnect);
+            ZeroCmdCommand = new DelegateCommand(OnZeroCmd);
+            HoldPositionCommand = new DelegateCommand(OnHoldPosition);
+            SetAllKpCommand = new DelegateCommand(OnSetAllKp);
+            SetAllKdCommand = new DelegateCommand(OnSetAllKd);
+            SaveLogCommand = new DelegateCommand(OnSaveLog);
+            LoadConfigCommand = new DelegateCommand(OnLoadConfig);
+            SaveConfigCommand = new DelegateCommand(OnSaveConfig);
+            ClearLogCommand = new DelegateCommand(() => LogEntries.Clear());
+            GoBackCommand = new DelegateCommand(OnGoBack);
+            RefreshPortsCommand = new DelegateCommand(RefreshPorts);
+            SendMotorCommand = new DelegateCommand<MotorChannelModel>(OnSendMotor);
             SendAllMotorsCommand = new DelegateCommand(OnSendAllMotors);
 
             RefreshPorts();
@@ -220,8 +297,8 @@ namespace ModuleMotor.ViewModels
 
             try
             {
-                byte cmdByte   = (byte)(0x10 + number);
-                string canId   = Config.MotorId;
+                byte cmdByte = (byte)(0x10 + number);
+                string canId = Config.MotorId;
                 string txFrame = $"ID={canId}  DLC=8  Data=[{cmdByte:X2} {number:X2} 00 00 00 00 00 00]";
 
                 AppendLog($"[TC{number} {label}] SEND  {txFrame}");
@@ -238,10 +315,10 @@ namespace ModuleMotor.ViewModels
 
         private void SimulateCanResponse(int number, string label, string canId, byte cmdByte)
         {
-            bool success    = true;   // swap to real CAN read result
+            bool success = true;   // swap to real CAN read result
             byte statusByte = success ? (byte)0x00 : (byte)0xFF;
-            string rxFrame  = $"ID={canId}  DLC=8  Data=[{cmdByte:X2} {number:X2} {statusByte:X2} 00 00 00 00 00]";
-            string result   = success ? "OK" : "FAIL";
+            string rxFrame = $"ID={canId}  DLC=8  Data=[{cmdByte:X2} {number:X2} {statusByte:X2} 00 00 00 00 00]";
+            string result = success ? "OK" : "FAIL";
 
             AppendLog($"[TC{number} {label}] RECV  {rxFrame}");
             AppendLog($"[TC{number} {label}] RESULT → {result}");
@@ -253,8 +330,8 @@ namespace ModuleMotor.ViewModels
         {
             foreach (var m in Motors)
             {
-                m.QCmd   = 0;
-                m.DqCmd  = 0;
+                m.QCmd = 0;
+                m.DqCmd = 0;
                 m.TauCmd = 0;
             }
             AppendLog("All commands zeroed");
@@ -315,8 +392,8 @@ namespace ModuleMotor.ViewModels
         private string BuildMotorFrame(MotorChannelModel m)
         {
             // Pack floats into 8-byte CAN frame (placeholder encoding)
-            int qRaw   = (int)(m.QCmd  * 1000);
-            int dqRaw  = (int)(m.DqCmd * 1000);
+            int qRaw = (int)(m.QCmd * 1000);
+            int dqRaw = (int)(m.DqCmd * 1000);
             int tauRaw = (int)(m.TauCmd * 100);
             return $"ID={Config.MotorId}  DLC=8  Data=[{m.Id:X2} {qRaw & 0xFF:X2} {(qRaw >> 8) & 0xFF:X2} {dqRaw & 0xFF:X2} {tauRaw & 0xFF:X2} {(int)(m.Kp):X2} {(int)(m.Kd * 10):X2} 00]";
         }
@@ -341,9 +418,9 @@ namespace ModuleMotor.ViewModels
             {
                 var dlg = new SaveFileDialog
                 {
-                    Title      = "Save Motor Log",
-                    Filter     = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
-                    FileName   = Config.LogFile,
+                    Title = "Save Motor Log",
+                    Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+                    FileName = Config.LogFile,
                     DefaultExt = ".csv"
                 };
                 if (dlg.ShowDialog() != true) return;
@@ -374,7 +451,7 @@ namespace ModuleMotor.ViewModels
             {
                 var dlg = new OpenFileDialog
                 {
-                    Title  = "Load Config File",
+                    Title = "Load Config File",
                     Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*"
                 };
                 if (dlg.ShowDialog() != true) return;
@@ -382,7 +459,7 @@ namespace ModuleMotor.ViewModels
                 try
                 {
                     var json = File.ReadAllText(dlg.FileName);
-                    var cfg  = JsonSerializer.Deserialize<MotorConfig>(json);
+                    var cfg = JsonSerializer.Deserialize<MotorConfig>(json);
                     if (cfg != null)
                     {
                         Config = cfg;
@@ -411,9 +488,9 @@ namespace ModuleMotor.ViewModels
             {
                 var dlg = new SaveFileDialog
                 {
-                    Title      = "Save Config File",
-                    Filter     = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                    FileName   = "motor_config.json",
+                    Title = "Save Config File",
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                    FileName = "motor_config.json",
                     DefaultExt = ".json"
                 };
                 if (dlg.ShowDialog() != true) return;
@@ -434,6 +511,11 @@ namespace ModuleMotor.ViewModels
         }
 
         // ── Helpers ────────────────────────────────────────────────────────────
+        private void ReindexBuiltSteps()
+        {
+            for (int i = 0; i < BuiltSteps.Count; i++)
+                BuiltSteps[i].StepNo = i + 1;
+        }
         public void AppendLog(string message)
         {
             var entry = $"[{DateTime.Now:HH:mm:ss.fff}]  {message}";
@@ -455,6 +537,74 @@ namespace ModuleMotor.ViewModels
                 _logWriter = null;
             }
             _regionManager.RequestNavigate("CoverRegion", "CoverRegion");
+        }
+        // --AddStep------------------------------------------------------------------
+        public void AddSelectedTestCase()
+        {
+            if (SelectedAvailableTestCase == null) return;
+            BuiltSteps.Add(new BuiltTestStep
+            {
+                StepNo = BuiltSteps.Count + 1,
+                TestCaseNumber = SelectedAvailableTestCase.Number,
+                Label = SelectedAvailableTestCase.Label,
+                SendMode = SelectedAvailableTestCase.DefaultSendMode,
+                IntervalMs = SelectedAvailableTestCase.IntervalMs,
+                TimeoutMs = SelectedAvailableTestCase.TimeoutMs,
+                RepeatCount = 1,
+                DelayBeforeMs = 0,
+                IsEnabled = true
+            });
+
+            ReindexBuiltSteps();
+            IsAddTestCasePopupOpen = false;
+        }
+        private void RemoveSelectedStep()
+        {
+            if (SelectedBuiltStep == null) return;
+            BuiltSteps.Remove(SelectedBuiltStep);
+            ReindexBuiltSteps();
+        }
+        private void MoveSelectedStepUp()
+        {
+            if (SelectedBuiltStep == null) return;
+            var index = BuiltSteps.IndexOf(SelectedBuiltStep);
+            if (index <= 0) return;
+
+            BuiltSteps.Move(index, index - 1);
+            ReindexBuiltSteps();
+        }
+        private void MoveSelectedStepDown()
+        {
+            if (SelectedBuiltStep == null) return;
+            var index = BuiltSteps.IndexOf(SelectedBuiltStep);
+            if (index <0 || index >= BuiltSteps.Count - 1) return;
+
+            BuiltSteps.Move(index, index + 1);
+            ReindexBuiltSteps();
+        }
+        private void DuplicateSelectedStep()
+        {
+            if (SelectedBuiltStep == null) return;
+            var copy = new BuiltTestStep
+            {
+                TestCaseNumber = SelectedBuiltStep.TestCaseNumber,
+                Label = SelectedBuiltStep.Label,
+                IsEnabled = SelectedBuiltStep.IsEnabled,
+                SendMode = SelectedBuiltStep.SendMode,
+                IntervalMs = SelectedBuiltStep.IntervalMs,
+                RepeatCount = SelectedBuiltStep.RepeatCount,
+                DelayBeforeMs = SelectedBuiltStep.DelayBeforeMs,
+                TimeoutMs = SelectedBuiltStep.TimeoutMs,
+                State = StepRunState.Pending,
+                LastResult = string.Empty
+            };
+            var index = BuiltSteps.IndexOf(SelectedBuiltStep);
+            BuiltSteps.Insert(index + 1, copy);
+            ReindexBuiltSteps();
+        }
+        private void ClearBuiltSteps()
+        {
+            BuiltSteps.Clear();
         }
     }
 }

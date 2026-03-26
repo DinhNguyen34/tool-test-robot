@@ -690,7 +690,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- Motor State Table -->
-                <Border Grid.Row="0" Margin="2,4,4,2" Padding="10,8" Style="{StaticResource ConfigRowCard}">
+                <!--Border Grid.Row="0" Margin="2,4,4,2" Padding="10,8" Style="{StaticResource ConfigRowCard}">
                     <StackPanel>
                         <TextBlock Text="MOTOR STATE" Style="{StaticResource SectionHeader}"
                                    Foreground="#74C0FC"/>
@@ -749,7 +749,7 @@
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>
-                </Border>
+                <Border-->
 
                 <!-- Config Panel -->
                 <Border Grid.Row="1"
