@@ -1,13 +1,31 @@
 <Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
   <Folder Name="/Common/">
-    <Project Path="../Common/Core/Core.csproj" Id="15c7475b-16fd-4fce-b6f9-3e8855a5fc02" />
-    <Project Path="../Common/Resource/Resource.csproj" Id="90fa7f2b-fec7-4839-af9b-5c1845ec99e4" />
-    <Project Path="../Common/WinStyles/WinStyles.csproj" Id="c8aee942-72b9-4015-9e8c-37c3617fe603" />
+    <Project Path="../Common/Core/Core.csproj" Id="15c7475b-16fd-4fce-b6f9-3e8855a5fc02">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="../Common/Resource/Resource.csproj" Id="90fa7f2b-fec7-4839-af9b-5c1845ec99e4">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="../Common/WinStyles/WinStyles.csproj" Id="c8aee942-72b9-4015-9e8c-37c3617fe603">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
   </Folder>
   <Folder Name="/Modules/">
-    <Project Path="../ModuleMotor/ModuleMotor.csproj" Id="eeb1bc4a-6b86-441c-848b-c36ea1d78f5b" />
-    <Project Path="../Modules/ModuleCover/ModuleCover.csproj" Id="c8a4228d-9e44-4db9-8251-c176a83f9533" />
-    <Project Path="../Modules/ModuleNetwork/ModuleNetwork.csproj" Id="d1b5339e-2f71-4a8c-9d3e-7c8f12e45a01" />
+    <Project Path="../ModuleMotor/ModuleMotor.csproj" Id="eeb1bc4a-6b86-441c-848b-c36ea1d78f5b">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="../Modules/ModuleCover/ModuleCover.csproj" Id="c8a4228d-9e44-4db9-8251-c176a83f9533">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="../Modules/ModuleNetwork/ModuleNetwork.csproj" Id="d1b5339e-2f71-4a8c-9d3e-7c8f12e45a01">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
   </Folder>
-  <Project Path="RobotTesting.csproj" />
+  <Project Path="RobotTesting.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
 </Solution>

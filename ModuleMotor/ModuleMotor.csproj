@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +17,12 @@
   <ItemGroup>
     <ProjectReference Include="..\Common\Core\Core.csproj" />
     <ProjectReference Include="..\Common\Resource\Resource.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="VCanPLib">
+      <HintPath>..\..\03.Libs\Libs\VCanPLib\bin\x64\Release\net10.0-windows\VCanPLib.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

@@ -19,7 +19,7 @@ namespace ModuleMotor.ViewModels
         private const int N_MOTORS = 8;
         private readonly IRegionManager _regionManager;
 
-        // ── Motor channels ─────────────────────────────────────────────────────
+        public MotorModel Model { get; } = new MotorModel();
         public ObservableCollection<MotorChannelModel> Motors { get; } = new();
 
         // ── Test cases ─────────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ namespace ModuleMotor.ViewModels
         }
 
         // ── Commands ───────────────────────────────────────────────────────────
-        public DelegateCommand                      CanConnectCommand     { get; }
+
         public DelegateCommand                      ZeroCmdCommand        { get; }
         public DelegateCommand                      HoldPositionCommand   { get; }
         public DelegateCommand                      SetAllKpCommand       { get; }
@@ -118,6 +118,8 @@ namespace ModuleMotor.ViewModels
         public DelegateCommand<MotorChannelModel>   SendMotorCommand      { get; }
         public DelegateCommand                      SendAllMotorsCommand  { get; }
 
+        public DelegateCommand OpenListCan => new DelegateCommand(_openListCan);
+        public DelegateCommand CanConnectCommand => new DelegateCommand(OnCanConnect);
         // ── Constructor ────────────────────────────────────────────────────────
         public MotorViewModel(IRegionManager regionManager)
         {
@@ -143,7 +145,6 @@ namespace ModuleMotor.ViewModels
                 });
             }
 
-            CanConnectCommand    = new DelegateCommand(OnCanConnect);
             ZeroCmdCommand       = new DelegateCommand(OnZeroCmd);
             HoldPositionCommand  = new DelegateCommand(OnHoldPosition);
             SetAllKpCommand      = new DelegateCommand(OnSetAllKp);
@@ -197,6 +198,17 @@ namespace ModuleMotor.ViewModels
             AppendLog($"Ports refreshed — found: {(AvailablePorts.Count > 0 ? string.Join(", ", AvailablePorts) : "none")}");
         }
 
+        private void _openListCan()
+        {
+            try
+            {
+                Model.GetListCans();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Exception(ex);
+            }
+        }
         // ── Test cases ─────────────────────────────────────────────────────────
         private void OnRunTestCase(int number, string label)
         {

@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:prism="http://prismlibrary.com/"
              prism:ViewModelLocator.AutoWireViewModel="True"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -362,12 +363,21 @@
                                Foreground="#339AF0" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Right-side buttons + status -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                             VerticalAlignment="Center">
 
-                    <!-- CAN Connect / Stop -->
+                    <ComboBox Grid.Column="1"
+                       ItemsSource="{Binding Model.ListcanDevices}"
+                       SelectedItem="{Binding Model.SelectedCan}"  DisplayMemberPath="DisplayName"
+                       Style="{StaticResource ConfigFieldComboBox}" Width="150">
+                        <i:Interaction.Triggers>
+                            <i:EventTrigger EventName="DropDownOpened">
+                                <i:InvokeCommandAction Command="{Binding OpenListCan}" CommandParameter="CAN"/>
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>
+                    </ComboBox>
                     <Button Command="{Binding CanConnectCommand}" Width="110" Margin="0,0,6,0">
+                        
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SuccessBtn}">
                                 <Style.Triggers>
