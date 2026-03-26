@@ -9,6 +9,8 @@
 
     <UserControl.Resources>
 
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+
         <!-- Button styles -->
         <Style x:Key="BtnBase" TargetType="Button">
             <Setter Property="Foreground"       Value="White"/>
@@ -678,7 +680,109 @@
                     <RowDefinition Height="*"/>
                     <!-- log -->
                 </Grid.RowDefinitions>
+                <TabControl Background="#161B27" BorderBrush="#3A425C">
+                    <TabItem Header="Builder">
+                        <Grid Margin="12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0">
+                                <TextBox Text="{Binding TestPlanName}"
+                                         Style="{StaticResource ConfigFieldTextBox}"
+                                         Width="260"/>
+                                <WrapPanel Margin="0,10,0,12">
+                                    <Button Content="Add Testcase" Command="{Binding OpenAddTestCaseCommand}" Style="{StaticResource PrimaryBtn}" Margin="0,0,8,8"/>
+                                    <Button Content="Add Config" Command="{Binding OpenAddConfigCommand}" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,8"/>
+                                    <Button Content="Remove" Command="{Binding RemoveStepCommand}" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,8"/>
+                                    <Button Content="Up" Command="{Binding MoveStepUpCommand}" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,8"/>
+                                    <Button Content="Down" Command="{Binding MoveStepDownCommand}" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,8"/>
+                                    <Button Content="Duplicate" Command="{Binding DuplicateStepCommand}" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,8"/>
+                                    <Button Content="Clear" Command="{Binding ClearBuiltStepCommand}" Style="{StaticResource DangerBtn}" Margin="0,0,8,8"/>
+                                </WrapPanel>
+                            </StackPanel>
 
+                            <DataGrid Grid.Row="1"
+                                      ItemsSource="{Binding BuiltSteps}"
+                                      SelectedItem="{Binding SelectedBuiltStep}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      RowBackground="#1E1E1E"
+                                      AlternatingRowBackground="#222222"
+                                      Foreground="White"
+                                      Background="#1E1E1E"
+                                      BorderThickness="0"
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="#333">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="#" Binding="{Binding StepNo}" Width="40"/>
+                                    <DataGridCheckBoxColumn Header="On" Binding="{Binding IsEnabled}" Width="45"/>
+                                    <DataGridTextColumn Header="Test Case" Binding="{Binding Label}" Width="*"/>
+                                    <DataGridTextColumn Header="Mode" Binding="{Binding SendMode}" Width="90"/>
+                                    <DataGridTextColumn Header="Int(ms)" Binding="{Binding IntervalMs}" Width="76"/>
+                                    <DataGridTextColumn Header="Repeat" Binding="{Binding RepeatCount}" Width="60"/>
+                                    <DataGridTextColumn Header="Delay" Binding="{Binding DelayBeforeMs}" Width="60"/>
+                                    <DataGridTextColumn Header="Timeout" Binding="{Binding TimeoutMs}" Width="70"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <Border Grid.RowSpan="2"
+                                    Background="#AA000000"
+                                    Visibility="{Binding IsAddTestCasePopupOpen, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Border Width="520"
+                                        Padding="16"
+                                        Background="#1A2130"
+                                        BorderBrush="#46506A"
+                                        BorderThickness="1"
+                                        CornerRadius="10"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Text="Select Testcase" FontSize="16" FontWeight="Bold" Foreground="White"/>
+
+                                        <ListBox Grid.Row="1"
+                                                 Margin="0,12,0,12"
+                                                 ItemsSource="{Binding AvailableTestCases}"
+                                                 SelectedItem="{Binding SelectedAvailableTestCase}"
+                                                 Background="#111722"
+                                                 Foreground="White"
+                                                 BorderThickness="0">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Margin="6">
+                                                        <TextBlock Text="{Binding Label}" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding Description}" Foreground="#9AA6C8" FontSize="11"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Button Content="Add" Command="{Binding AddSelectedTestCaseCommand}" Style="{StaticResource PrimaryBtn}" Margin="0,0,8,0"/>
+                                            <Button Content="Cancel" Command="{Binding CloseAddTestCaseCommand}" Style="{StaticResource SecondaryBtn}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                                        
+                            </Border>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="CAN Mode">
+                        <TextBlock Margin="12" Text="MVP: move global CAN setting here." Foreground="White"/>
+                    </TabItem>
+                    <TabItem Header="Log Results">
+                        <ListBox Margin="12"
+                                 ItemsSource="{Binding LogEntries}"
+                                 Background="#1A1A1A"
+                                 Foreground="#CCCCCC"
+                                 BorderThickness="0"
+                                 FontFamily="Consolas"/>
+                    </TabItem>
+                </TabControl>
                 <!-- Motor State Table -->
                 <!--Border Grid.Row="0" Margin="2,4,4,2" Padding="10,8" Style="{StaticResource ConfigRowCard}">
                     <StackPanel>

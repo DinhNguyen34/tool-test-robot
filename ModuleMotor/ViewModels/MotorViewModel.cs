@@ -20,6 +20,10 @@ namespace ModuleMotor.ViewModels
         private const int N_MOTORS = 8;
         private readonly IRegionManager _regionManager;
 
+
+        // add property to import testcase ---------------------------------------
+
+
         // ── Motor channels ─────────────────────────────────────────────────────
         public ObservableCollection<MotorChannelModel> Motors { get; } = new();
 
