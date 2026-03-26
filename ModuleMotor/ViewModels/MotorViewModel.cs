@@ -20,11 +20,7 @@ namespace ModuleMotor.ViewModels
         private const int N_MOTORS = 8;
         private readonly IRegionManager _regionManager;
 
-
-        // add property to import testcase ---------------------------------------
-
-
-        // ── Motor channels ─────────────────────────────────────────────────────
+        public MotorModel Model { get; } = new MotorModel();
         public ObservableCollection<MotorChannelModel> Motors { get; } = new();
 
         // ── Test cases ─────────────────────────────────────────────────────────
@@ -164,7 +160,8 @@ namespace ModuleMotor.ViewModels
         public DelegateCommand DuplicatesStepCommand { get; }
         public DelegateCommand ClearBuiltStepCommand { get; }
 
-
+        public DelegateCommand OpenListCan => new DelegateCommand(_openListCan);
+        public DelegateCommand CanConnectCommand => new DelegateCommand(OnCanConnect);
         // ── Constructor ────────────────────────────────────────────────────────
         public MotorViewModel(IRegionManager regionManager)
         {
@@ -278,6 +275,17 @@ namespace ModuleMotor.ViewModels
             AppendLog($"Ports refreshed — found: {(AvailablePorts.Count > 0 ? string.Join(", ", AvailablePorts) : "none")}");
         }
 
+        private void _openListCan()
+        {
+            try
+            {
+                Model.GetListCans();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Exception(ex);
+            }
+        }
         // ── Test cases ─────────────────────────────────────────────────────────
         private void OnRunTestCase(int number, string label)
         {

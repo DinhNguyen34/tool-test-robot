@@ -2,11 +2,13 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Robot-32.ico</ApplicationIcon>
+    <Platforms>AnyCPU;x64</Platforms>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="LibUsbDotNet" Version="2.2.75" />
+    <PackageReference Include="log4net" Version="3.3.0" />
     <PackageReference Include="MaterialDesignThemes" Version="5.3.1" />
     <PackageReference Include="Prism.Core" Version="9.0.537" />
     <PackageReference Include="Prism.Unity" Version="9.0.537" />
