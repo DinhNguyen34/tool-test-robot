@@ -11,5 +11,6 @@ namespace ModuleMotor.Models
         public string MotorId    { get; set; } = "0x01";
         public string SerialPort { get; set; } = string.Empty;
         public int    BaudRate   { get; set; } = 115200;
+        public int    CanBitrateKbps { get; set; } = 1000;
     }
 }

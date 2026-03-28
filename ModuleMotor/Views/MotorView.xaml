@@ -378,6 +378,22 @@
                             </i:EventTrigger>
                         </i:Interaction.Triggers>
                     </ComboBox>
+                    <TextBlock Text="CAN"
+                               Margin="10,0,6,0"
+                               VerticalAlignment="Center"
+                               Foreground="#D6DEFF"
+                               FontSize="11"
+                               FontWeight="SemiBold"/>
+                    <ComboBox ItemsSource="{Binding CanBitratesKbps}"
+                              SelectedItem="{Binding SelectedCanBitrate}"
+                              Style="{StaticResource ConfigFieldComboBox}"
+                              Width="92"
+                              Margin="0,0,4,0"/>
+                    <TextBlock Text="kbps"
+                               Margin="0,0,8,0"
+                               VerticalAlignment="Center"
+                               Foreground="#9AA6C8"
+                               FontSize="11"/>
                     <Button Command="{Binding CanConnectCommand}" Width="110" Margin="0,0,6,0">
                         
                         <Button.Style>
@@ -416,7 +432,7 @@
                             Style="{StaticResource SecondaryBtn}" Width="90" Margin="0,0,16,0"/>
 
                     <!-- Status -->
-                    <TextBlock VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Margin="0,0,156,0">
+                    <TextBlock VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Margin="0,0,84,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Text"       Value="DISCONNECTED"/>
@@ -484,8 +500,9 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Text="TESTCASE"
+                                <TextBlock Text="QUICK LIBRARY"
                                            Margin="12,0,0,-6"
+                                           Style="{StaticResource SectionHeader}"
                                            FontSize="16"
                                            FontWeight="Bold"
                                            Foreground="#FFF1D8"
@@ -494,6 +511,28 @@
                         </Border>
 
                         <StackPanel Grid.Row="1" Margin="14,12,14,12">
+
+                            <!--ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,8"
+                                            Padding="10,8"
+                                            Background="#1E2433"
+                                            BorderBrush="#37415A"
+                                            BorderThickness="1"
+                                            CornerRadius="8">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Label}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="White"/>
+                                            <TextBlock Text="{Binding Description}"
+                                                       FontSize ="11"
+                                                       Foreground="#9AA6C8"
+                                                       Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate-->
+                            
                             <UniformGrid Rows="4" Columns="2">
                                 <Button Content="Get Device ID" Style="{StaticResource TestCaseBtn}"
                                     Command="{Binding TestCases[0].Command}"
@@ -521,6 +560,11 @@
                                     Background="#BF8700" BorderBrush="#9A6700"/>
                             </UniformGrid>
                         </StackPanel>
+
+                        <!--Button Grid.Row="2"
+                                Content="Add To Builder"
+                                Command="{Binding AddQuickLibraryStepCommand}"
+                                Style="{StaticResource PrimaryBtn}"/-->
                     </Grid>
                 </Border>
 
@@ -707,7 +751,7 @@
                                     <Button Content="Remove" Command="{Binding RemoveStepCommand}" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,8"/>
                                     <Button Content="Up" Command="{Binding MoveStepUpCommand}" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,8"/>
                                     <Button Content="Down" Command="{Binding MoveStepDownCommand}" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,8"/>
-                                    <Button Content="Duplicate" Command="{Binding DuplicateStepCommand}" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,8"/>
+                                    <Button Content="Duplicate" Command="{Binding DuplicatesStepCommand}" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,8"/>
                                     <Button Content="Clear" Command="{Binding ClearBuiltStepCommand}" Style="{StaticResource DangerBtn}" Margin="0,0,8,8"/>
                                 </WrapPanel>
                             </StackPanel>
@@ -718,7 +762,7 @@
                                       AutoGenerateColumns="False"
                                       CanUserAddRows="False"
                                       RowBackground="#1E1E1E"
-                                      AlternatingRowBackground="#222222"
+                                      AlternatingRowBackground="White"
                                       Foreground="White"
                                       Background="#1E1E1E"
                                       BorderThickness="0"
@@ -737,6 +781,7 @@
                             </DataGrid>
 
                             <Border Grid.RowSpan="2"
+                                    Panel.ZIndex="20"
                                     Background="#AA000000"
                                     Visibility="{Binding IsAddTestCasePopupOpen, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <Border Width="520"
@@ -764,10 +809,27 @@
                                                  BorderThickness="0">
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate>
-                                                    <StackPanel Margin="6">
-                                                        <TextBlock Text="{Binding Label}" FontWeight="SemiBold"/>
-                                                        <TextBlock Text="{Binding Description}" Foreground="#9AA6C8" FontSize="11"/>
-                                                    </StackPanel>
+                                                    <Border Margin="0,0,0,8"
+                                                            Padding="10,8"
+                                                            Background="#1E2433"
+                                                            BorderBrush="#37415A"
+                                                            BorderThickness="1"
+                                                            CornerRadius="8">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Label}"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="White"/>
+                                                            <TextBlock Text="{Binding Code}"
+                                                                       FontSize="11"
+                                                                       Foreground="#FFD166"
+                                                                       Margin="0,3,0,0"/>
+                                                            <TextBlock Text="{Binding Description}"
+                                                                       Foreground="#9AA6C8"
+                                                                       FontSize="11"
+                                                                       Margin="0,4,0,0"
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+                                                    </Border>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
                                         </ListBox>
@@ -779,20 +841,162 @@
                                 </Border>
                                         
                             </Border>
-                        </Grid>
-                    </TabItem>
-                    <TabItem Header="CAN Mode">
-                        <TextBlock Margin="12" Text="MVP: move global CAN setting here." Foreground="White"/>
-                    </TabItem>
-                    <TabItem Header="Log Results">
-                        <ListBox Margin="12"
-                                 ItemsSource="{Binding LogEntries}"
-                                 Background="#1A1A1A"
-                                 Foreground="#CCCCCC"
-                                 BorderThickness="0"
-                                 FontFamily="Consolas"/>
-                    </TabItem>
-                </TabControl>
+                            <Border Grid.RowSpan="2"
+                                    Panel.ZIndex="30"
+                                    Background="#AA000000"
+                                    Visibility="{Binding IsAddConfigPopupOpen, Converter={StaticResource BoolToVisibilityConverter}}"> 
+                                <Border Width="560"
+                                        Padding="16"
+                                        Background="#1A2130"
+                                        BorderBrush="#46506A"
+                                        BorderThickness="1"
+                                        CornerRadius="10"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"> 
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Text="Add Testcase Config"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"/>
+
+                                        <Grid Grid.Row="1" Margin="0,12,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,10">
+                                                <TextBlock Text="Code" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewTestCaseCode}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
+                                                <TextBlock Text="Label" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewTestCaseLabel}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,0,10">
+                                                <TextBlock Text="Description" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewTestCaseDescription}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,10">
+                                                <TextBlock Text="CAN Payload" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewCanPayload}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,10">
+                                                <TextBlock Text="Expected Response" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewExpectedRespone}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,12,0">
+                                                <TextBlock Text="Timeout (ms)" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewTimeoutMs}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="3" Grid.Column="1">
+                                                <TextBlock Text="Interval (ms)" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewIntervalMs}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Button Content="Save" Command="{Binding SaveNewConfigCommand}" Style="{StaticResource PrimaryBtn}" Margin="0,0,8,0"/>
+                                            <Button Content="Cancel" Command="{Binding CloseAddConfigCommand}" Style="{StaticResource SecondaryBtn}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </Border>
+                                </Grid>
+                                    </TabItem>
+                                        <TabItem Header="CAN Mode">
+                                            <Grid Margin="12">
+                                                <Border Padding="16"
+                                                        Background="#1A2130"
+                                                        BorderBrush="#46506A"
+                                                        BorderThickness="1"
+                                                        CornerRadius="10">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <StackPanel Grid.Row="0" Grid.ColumnSpan="2">
+                                                            <TextBlock Text="SEND RAW FRAME"
+                                                                       FontSize="16"
+                                                                       FontWeight="Bold"
+                                                                       Foreground="White"/>
+                                                            <TextBlock Text="Nhap CAN ID va day byte hex, vi du: 01 02 03 04"
+                                                                       Margin="0,6,0,0"
+                                                                       Foreground="#9AA6C8"
+                                                                       FontSize="11"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,14,12,10">
+                                                            <TextBlock Text="CAN ID" Style="{StaticResource ConfigLabel}"/>
+                                                            <TextBox Text="{Binding RawCanId}"
+                                                                     Style="{StaticResource ConfigFieldTextBox}"
+                                                                     Width="180"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,12">
+                                                            <TextBlock Text="Data (hex bytes)" Style="{StaticResource ConfigLabel}"/>
+                                                            <TextBox Text="{Binding RawCanData}"
+                                                                     Style="{StaticResource ConfigFieldTextBox}"
+                                                                     MinWidth="420"
+                                                                     TextWrapping="Wrap"
+                                                                     AcceptsReturn="True"
+                                                                     MinHeight="72"/>
+                                                        </StackPanel>
+
+                                                        <Button Grid.Row="1"
+                                                                Grid.Column="1"
+                                                                Grid.RowSpan="2"
+                                                                Content="Send Raw"
+                                                                Command="{Binding SendRawFrameCommand}"
+                                                                Style="{StaticResource PrimaryBtn}"
+                                                                Width="110"
+                                                                Height="38"
+                                                                VerticalAlignment="Center"/>
+
+                                                        <TextBlock Grid.Row="3"
+                                                                   Grid.ColumnSpan="2"
+                                                                   Text="{Binding RawSendStatus}"
+                                                                   Foreground="#FFD166"
+                                                                   TextWrapping="Wrap"/>
+                                                    </Grid>
+                                                </Border>
+                                            </Grid>
+                                        </TabItem>
+                                        <TabItem Header="Log Results">
+                                            <ListBox Margin="12"
+                                                             ItemsSource="{Binding LogEntries}"
+                                                             Background="#1A1A1A"
+                                                             Foreground="#CCCCCC"
+                                                             BorderThickness="0"
+                                                             FontFamily="Consolas"/> 
+                                        </TabItem>
+                                    </TabControl>
                 <!-- Motor State Table -->
                 <!--Border Grid.Row="0" Margin="2,4,4,2" Padding="10,8" Style="{StaticResource ConfigRowCard}">
                     <StackPanel>

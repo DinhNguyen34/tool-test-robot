@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <Reference Include="VCanPLib">
-      <HintPath>..\..\03.Libs\Libs\VCanPLib\bin\x64\Release\net10.0-windows\VCanPLib.dll</HintPath>
+      <HintPath>C:\Users\LAB\Downloads\VCanPLib\VCanPLib.dll</HintPath>
     </Reference>
   </ItemGroup>
 

@@ -12,6 +12,7 @@ using System.Printing;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Automation;
 
 namespace ModuleMotor.ViewModels
 {
@@ -19,6 +20,85 @@ namespace ModuleMotor.ViewModels
     {
         private const int N_MOTORS = 8;
         private readonly IRegionManager _regionManager;
+
+        private string _newTestCaseCode = string.Empty;
+        public string NewTestCaseCode
+        {
+            get => _newTestCaseCode;
+            set => SetProperty(ref _newTestCaseCode, value);
+        }
+        private string _newTestCaseLabel = string.Empty;
+        public string NewTestCaseLabel
+        {
+            get => _newTestCaseLabel;
+            set => SetProperty(ref _newTestCaseLabel, value);
+        }
+        private string _newTestCaseDescription = string.Empty;
+        public string NewTestCaseDescription
+        {
+            get => _newTestCaseDescription;
+            set => SetProperty(ref _newTestCaseDescription, value);
+        }
+        private string _newCanPayload = string.Empty;
+        public string NewCanPayload
+        {
+            get => _newCanPayload;
+            set => SetProperty(ref _newCanPayload, value);
+        }
+        private string _newExpectedRespone = string.Empty;
+        public string NewExpectedRespone
+        {
+            get => _newExpectedRespone;
+            set => SetProperty(ref _newExpectedRespone, value);
+        }
+        private int _newTimeoutMs = 1000;
+        public int NewTimeoutMs
+        {
+            get => _newTimeoutMs;
+            set => SetProperty(ref _newTimeoutMs, value);
+        }
+        private CanSendMode _newDefaultSendMode = CanSendMode.SendOnce;
+        public CanSendMode NewDefaultSendMode
+        {
+            get => _newDefaultSendMode;
+            set => SetProperty(ref _newDefaultSendMode, value);
+        }
+        private int _newIntervalMs = 2;
+        public int NewIntervalMs
+        {
+            get => _newIntervalMs;
+            set => SetProperty(ref _newIntervalMs, value);
+        }
+
+        private string _rawCanId = "0x141";
+        public string RawCanId
+        {
+            get => _rawCanId;
+            set => SetProperty(ref _rawCanId, value);
+        }
+
+        private string _rawCanData = "01 02 03 04 05 06 07 08";
+        public string RawCanData
+        {
+            get => _rawCanData;
+            set => SetProperty(ref _rawCanData, value);
+        }
+
+        private string _rawSendStatus = "Ready to send raw CAN frame.";
+        public string RawSendStatus
+        {
+            get => _rawSendStatus;
+            set => SetProperty(ref _rawSendStatus, value);
+        }
+
+
+        private TestCaseDefinition? _selectedQuickLibraryTestCase;
+        public TestCaseDefinition? SelectedQuickLibraryTestCase
+        {
+            get => _selectedQuickLibraryTestCase;
+            set => SetProperty(ref _selectedQuickLibraryTestCase, value);
+        }
+
 
         public MotorModel Model { get; } = new MotorModel();
         public ObservableCollection<MotorChannelModel> Motors { get; } = new();
@@ -55,6 +135,9 @@ namespace ModuleMotor.ViewModels
         public static IReadOnlyList<int> BaudRates { get; } = new[]
             {19200, 38400, 57600, 115200, 230400, 460800, 921600, 1000000};
 
+        public static IReadOnlyList<int> CanBitratesKbps { get; } = new[]
+            {50, 100, 120, 200, 250, 400, 500, 800, 1000, 1200, 1500, 2000};
+
         private string _selectedPort = string.Empty;
         public string SelectedPort
         {
@@ -74,6 +157,17 @@ namespace ModuleMotor.ViewModels
             {
                 SetProperty(ref _selectedBaud, value);
                 Config.BaudRate = value;
+            }
+        }
+
+        private int _selectedCanBitrate = 1000;
+        public int SelectedCanBitrate
+        {
+            get => _selectedCanBitrate;
+            set
+            {
+                SetProperty(ref _selectedCanBitrate, value);
+                Config.CanBitrateKbps = value;
             }
         }
 
@@ -135,8 +229,15 @@ namespace ModuleMotor.ViewModels
             set => SetProperty(ref _isAddTestCasePopupOpen, value);
         }
 
+        private bool _isAddConfigPopupOpen;
+        public bool IsAddConfigPopupOpen
+        {
+            get => _isAddConfigPopupOpen;
+            set => SetProperty(ref _isAddConfigPopupOpen, value);
+        }
+
         // ── Commands ───────────────────────────────────────────────────────────
-        public DelegateCommand CanConnectCommand { get; }
+        //public DelegateCommand CanConnectCommand { get; }
         public DelegateCommand ZeroCmdCommand { get; }
         public DelegateCommand HoldPositionCommand { get; }
         public DelegateCommand SetAllKpCommand { get; }
@@ -160,8 +261,13 @@ namespace ModuleMotor.ViewModels
         public DelegateCommand DuplicatesStepCommand { get; }
         public DelegateCommand ClearBuiltStepCommand { get; }
 
+        public DelegateCommand SaveNewConfigCommand {  get; }
+        public DelegateCommand SendRawFrameCommand { get; }
+
         public DelegateCommand OpenListCan => new DelegateCommand(_openListCan);
         public DelegateCommand CanConnectCommand => new DelegateCommand(OnCanConnect);
+
+        public DelegateCommand AddQuickLibraryStepCommand { get; }
         // ── Constructor ────────────────────────────────────────────────────────
         public MotorViewModel(IRegionManager regionManager)
         {
@@ -206,12 +312,21 @@ namespace ModuleMotor.ViewModels
                 });
             }
 
-            OpenAddTestCaseCommand = new DelegateCommand(() => IsAddTestCasePopupOpen = true);
+            OpenAddTestCaseCommand = new DelegateCommand(() =>
+            {
+                IsAddConfigPopupOpen = false;
+                IsAddTestCasePopupOpen = true;
+            });
             CloseAddTestCaseCommand = new DelegateCommand(() => IsAddTestCasePopupOpen = false);
             AddSelectedTestCaseCommand = new DelegateCommand(AddSelectedTestCase);
 
-            OpenAddConfigCommand = new DelegateCommand(() => IsAddTestCasePopupOpen = true);
-            CloseAddConfigCommand = new DelegateCommand(() => IsAddTestCasePopupOpen = false);
+            OpenAddConfigCommand = new DelegateCommand(() =>
+            {
+                ResetNewConfigForm();
+                IsAddTestCasePopupOpen = false;
+                IsAddConfigPopupOpen = true;
+            });
+            CloseAddConfigCommand = new DelegateCommand(() => IsAddConfigPopupOpen = false);
 
             RemoveStepCommand = new DelegateCommand(RemoveSelectedStep);
             MoveStepUpCommand = new DelegateCommand(MoveSelectedStepUp);
@@ -220,8 +335,10 @@ namespace ModuleMotor.ViewModels
             ClearBuiltStepCommand = new DelegateCommand(ClearBuiltSteps);
 
 
+            AddQuickLibraryStepCommand = new DelegateCommand(AddQuickLibraryStep);
 
-            CanConnectCommand = new DelegateCommand(OnCanConnect);
+
+
             ZeroCmdCommand = new DelegateCommand(OnZeroCmd);
             HoldPositionCommand = new DelegateCommand(OnHoldPosition);
             SetAllKpCommand = new DelegateCommand(OnSetAllKp);
@@ -234,8 +351,12 @@ namespace ModuleMotor.ViewModels
             RefreshPortsCommand = new DelegateCommand(RefreshPorts);
             SendMotorCommand = new DelegateCommand<MotorChannelModel>(OnSendMotor);
             SendAllMotorsCommand = new DelegateCommand(OnSendAllMotors);
+            SaveNewConfigCommand = new DelegateCommand(SaveNewConfig);
+            SendRawFrameCommand = new DelegateCommand(OnSendRawFrame);
+
 
             RefreshPorts();
+            SelectedCanBitrate = Config.CanBitrateKbps > 0 ? Config.CanBitrateKbps : 1000;
         }
 
         // ── CAN connect ────────────────────────────────────────────────────────
@@ -243,6 +364,9 @@ namespace ModuleMotor.ViewModels
         {
             try
             {
+                if (HandleCanConnect())
+                    return;
+
                 IsConnected = !IsConnected;
                 var msg = IsConnected
                     ? $"CAN connected — Port: {SelectedPort}  Baud: {SelectedBaud}  MotorID: {Config.MotorId}"
@@ -297,6 +421,9 @@ namespace ModuleMotor.ViewModels
 
             try
             {
+                if (TryRunRealTestCase(number, label))
+                    return;
+
                 byte cmdByte = (byte)(0x10 + number);
                 string canId = Config.MotorId;
                 string txFrame = $"ID={canId}  DLC=8  Data=[{cmdByte:X2} {number:X2} 00 00 00 00 00 00]";
@@ -365,6 +492,9 @@ namespace ModuleMotor.ViewModels
                 AppendLog($"[{m.Label}] SEND ERROR — CAN not connected.");
                 return;
             }
+            if (TrySendMotorFrame(m))
+                return;
+
             var frame = BuildMotorFrame(m);
             AppendLog($"[{m.Label}] SEND  {frame}");
             LogHelper.Debug($"{m.Label} TX: {frame}");
@@ -377,6 +507,9 @@ namespace ModuleMotor.ViewModels
                 AppendLog("[SendAll] ERROR — CAN not connected.");
                 return;
             }
+            if (TrySendAllMotors())
+                return;
+
             int sent = 0;
             foreach (var m in Motors)
             {
@@ -391,13 +524,296 @@ namespace ModuleMotor.ViewModels
 
         private string BuildMotorFrame(MotorChannelModel m)
         {
-            // Pack floats into 8-byte CAN frame (placeholder encoding)
+            return FormatCanFrame(Config.MotorId, BuildMotorPayload(m));
+        }
+
+        private bool HandleCanConnect()
+        {
+            if (IsConnected || Model.GetOpenStatus())
+            {
+                Model.Close();
+                IsConnected = false;
+                const string disconnectMessage = "CAN disconnected";
+                AppendLog(disconnectMessage);
+                LogHelper.Debug(disconnectMessage);
+                return true;
+            }
+
+            if (Model.SelectedCan == null)
+            {
+                Model.GetListCans();
+                if (Model.SelectedCan == null)
+                {
+                    AppendLog("CAN connect error - no CAN device selected.");
+                    return true;
+                }
+            }
+
+            var rawLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "can_raw.log");
+            var connected = Model.Connect(SelectedCanBitrate, rawLogPath, out var statusMessage);
+            IsConnected = connected;
+
+            var message = connected
+                ? $"CAN connected - Device: {Model.SelectedCan?.DisplayName ?? "unknown"}  CAN: {SelectedCanBitrate} kbps  MotorID: {Config.MotorId}. {statusMessage}"
+                : $"CAN connect failed - {statusMessage}";
+
+            AppendLog(message);
+            LogHelper.Debug(message);
+            return true;
+        }
+
+        private bool TryRunRealTestCase(int number, string label)
+        {
+            byte cmdByte = (byte)(0x10 + number);
+            string canId = Config.MotorId;
+            var payload = new byte[] { cmdByte, (byte)number, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+            var txFrame = FormatCanFrame(canId, payload);
+            var rxCountBefore = Model.GetCanMessages().Count;
+
+            if (!Model.SendMessage(canId, payload, out var sendMessage))
+            {
+                AppendLog($"[TC{number} {label}] SEND ERROR - {sendMessage}");
+                return true;
+            }
+
+            AppendLog($"[TC{number} {label}] SEND  {txFrame}");
+            LogHelper.Debug($"TC{number} TX: {txFrame}");
+
+            var success = AppendReceivedCanFrames($"TC{number} {label}", rxCountBefore);
+            var result = success.HasValue
+                ? (success.Value ? "OK" : "FAIL")
+                : "NO RESPONSE";
+
+            AppendLog($"[TC{number} {label}] RESULT -> {result}");
+            return true;
+        }
+
+        private bool TrySendMotorFrame(MotorChannelModel m)
+        {
+            var payload = BuildMotorPayload(m);
+            var frame = FormatCanFrame(Config.MotorId, payload);
+            var rxCountBefore = Model.GetCanMessages().Count;
+
+            if (!Model.SendMessage(Config.MotorId, payload, out var sendMessage))
+            {
+                AppendLog($"[{m.Label}] SEND ERROR - {sendMessage}");
+                return true;
+            }
+
+            AppendLog($"[{m.Label}] SEND  {frame}");
+            LogHelper.Debug($"{m.Label} TX: {frame}");
+            AppendReceivedCanFrames(m.Label, rxCountBefore);
+            return true;
+        }
+
+        private bool TrySendAllMotors()
+        {
+            int sent = 0;
+            var rxCountBefore = Model.GetCanMessages().Count;
+
+            foreach (var motor in Motors)
+            {
+                if (!motor.Enabled) continue;
+
+                var payload = BuildMotorPayload(motor);
+                var frame = FormatCanFrame(Config.MotorId, payload);
+
+                if (!Model.SendMessage(Config.MotorId, payload, out var sendMessage))
+                {
+                    AppendLog($"[{motor.Label}] SEND ERROR - {sendMessage}");
+                    continue;
+                }
+
+                AppendLog($"[{motor.Label}] SEND  {frame}");
+                LogHelper.Debug($"{motor.Label} TX: {frame}");
+                sent++;
+            }
+
+            AppendLog($"[SendAll] {sent} motor(s) sent.");
+            AppendReceivedCanFrames("SendAll", rxCountBefore);
+            return true;
+        }
+
+        private static byte[] BuildMotorPayload(MotorChannelModel m)
+        {
             int qRaw = (int)(m.QCmd * 1000);
             int dqRaw = (int)(m.DqCmd * 1000);
             int tauRaw = (int)(m.TauCmd * 100);
-            return $"ID={Config.MotorId}  DLC=8  Data=[{m.Id:X2} {qRaw & 0xFF:X2} {(qRaw >> 8) & 0xFF:X2} {dqRaw & 0xFF:X2} {tauRaw & 0xFF:X2} {(int)(m.Kp):X2} {(int)(m.Kd * 10):X2} 00]";
+
+            return new[]
+            {
+                (byte)m.Id,
+                (byte)(qRaw & 0xFF),
+                (byte)((qRaw >> 8) & 0xFF),
+                (byte)(dqRaw & 0xFF),
+                (byte)(tauRaw & 0xFF),
+                (byte)((int)m.Kp & 0xFF),
+                (byte)(((int)(m.Kd * 10)) & 0xFF),
+                (byte)0x00
+            };
         }
 
+        private static string FormatCanFrame(string canId, byte[] payload)
+        {
+            return $"ID={canId}  DLC={payload.Length}  Data=[{string.Join(" ", payload.Select(b => b.ToString("X2")))}]";
+        }
+
+        private bool? AppendReceivedCanFrames(string context, int previousCount)
+        {
+            Thread.Sleep(20);
+
+            var messages = Model.GetCanMessages();
+            if (messages.Count <= previousCount)
+            {
+                AppendLog($"[{context}] RECV  no response captured.");
+                return null;
+            }
+
+            bool? latestSuccess = null;
+            foreach (var frame in messages.Skip(previousCount))
+            {
+                var payload = frame.data ?? Array.Empty<byte>();
+                AppendLog($"[{context}] RECV  CH={frame.ch} Status={frame.status:X2} Data=[{string.Join(" ", payload.Select(b => b.ToString("X2")))}]");
+                latestSuccess = frame.status == 0;
+            }
+
+            return latestSuccess;
+        }
+
+        private void OnSendRawFrame()
+        {
+            if (!IsConnected)
+            {
+                RawSendStatus = "CAN is not connected.";
+                AppendLog("[RawFrame] SEND ERROR - CAN is not connected.");
+                return;
+            }
+
+            var canId = RawCanId?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(canId))
+            {
+                RawSendStatus = "CAN ID is empty.";
+                AppendLog("[RawFrame] SEND ERROR - CAN ID is empty.");
+                return;
+            }
+
+            if (!TryParseRawPayload(RawCanData, out var payload, out var parseError))
+            {
+                RawSendStatus = parseError;
+                AppendLog($"[RawFrame] PARSE ERROR - {parseError}");
+                return;
+            }
+
+            var rxCountBefore = Model.GetCanMessages().Count;
+            if (!Model.SendMessage(canId, payload, out var sendMessage))
+            {
+                RawSendStatus = sendMessage;
+                AppendLog($"[RawFrame] SEND ERROR - {sendMessage}");
+                return;
+            }
+
+            var frame = FormatCanFrame(canId, payload);
+            AppendLog($"[RawFrame] SEND  {frame}");
+            LogHelper.Debug($"Raw TX: {frame}");
+
+            var success = AppendReceivedCanFrames("RawFrame", rxCountBefore);
+            RawSendStatus = success.HasValue
+                ? (success.Value ? "Frame sent. Response status OK." : "Frame sent. Response status indicates fail.")
+                : "Frame sent. No response captured.";
+        }
+
+        private static bool TryParseRawPayload(string? input, out byte[] payload, out string error)
+        {
+            payload = Array.Empty<byte>();
+            error = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                error = "Raw data is empty.";
+                return false;
+            }
+
+            var normalized = input
+                .Replace(",", " ")
+                .Replace(";", " ")
+                .Replace("-", " ");
+
+            var tokens = normalized.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            if (tokens.Length == 0)
+            {
+                error = "No byte found in raw data.";
+                return false;
+            }
+
+            if (tokens.Length > 64)
+            {
+                error = "Raw CAN payload supports up to 64 bytes.";
+                return false;
+            }
+
+            var bytes = new List<byte>(tokens.Length);
+            foreach (var token in tokens)
+            {
+                var value = token.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                    ? token[2..]
+                    : token;
+
+                if (!byte.TryParse(value, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+                {
+                    error = $"Invalid hex byte: {token}";
+                    return false;
+                }
+
+                bytes.Add(parsed);
+            }
+
+            payload = bytes.ToArray();
+            return true;
+        }
+
+        // --- New Config (save and reset)----------------------------------------
+        private void ResetNewConfigForm()
+        {
+            NewTestCaseCode = string.Empty;
+            NewTestCaseLabel = string.Empty;
+            NewTestCaseDescription = string.Empty;
+            NewCanPayload = string.Empty;
+            NewExpectedRespone = string.Empty;
+            NewTimeoutMs = 1000;
+            NewDefaultSendMode = CanSendMode.SendOnce;
+            NewIntervalMs = 2;
+        }
+
+        private void SaveNewConfig()
+        {
+            if (string.IsNullOrWhiteSpace(NewTestCaseCode))
+                return;
+            var nextNumber = AvailableTestCases.Count == 0
+                ? 1
+                : AvailableTestCases.Max(x => x.Number) + 1;
+            var testCase = new TestCaseDefinition
+            {
+                Number = nextNumber,
+                Code = string.IsNullOrWhiteSpace(NewTestCaseCode) ? $"TC{nextNumber:000}" : NewTestCaseCode,
+                Label = NewTestCaseLabel.Trim(),
+                Description = NewTestCaseDescription.Trim(),
+                CanPayLoad = NewCanPayload.Trim(),
+                ExpectedRespone = NewExpectedRespone.Trim(),
+                TimeoutMs = NewTimeoutMs,
+                DefaultSendMode = NewDefaultSendMode,
+                IntervalMs = NewIntervalMs,
+                IsbuiltIn = false
+            };
+            AvailableTestCases.Add(testCase);
+            SelectedAvailableTestCase = testCase;
+
+            AppendLog($"New Testcase Config Added: {testCase.Label}");
+            
+            IsAddConfigPopupOpen = false;
+            ResetNewConfigForm();
+        }
+        
+        
         // ── Save log ───────────────────────────────────────────────────────────
         public string SaveLogButtonText => _isLogging ? "Stop Log" : "Save Log";
         private void OnSaveLog()
@@ -467,6 +883,7 @@ namespace ModuleMotor.ViewModels
 
                         // Sync port/baud ViewModel properties from the loaded config
                         SelectedBaud = cfg.BaudRate;
+                        SelectedCanBitrate = cfg.CanBitrateKbps > 0 ? cfg.CanBitrateKbps : 1000;
                         SelectedPort = AvailablePorts.Contains(cfg.SerialPort)
                             ? cfg.SerialPort
                             : (AvailablePorts.Count > 0 ? AvailablePorts[0] : string.Empty);
@@ -541,21 +958,10 @@ namespace ModuleMotor.ViewModels
         // --AddStep------------------------------------------------------------------
         public void AddSelectedTestCase()
         {
-            if (SelectedAvailableTestCase == null) return;
-            BuiltSteps.Add(new BuiltTestStep
-            {
-                StepNo = BuiltSteps.Count + 1,
-                TestCaseNumber = SelectedAvailableTestCase.Number,
-                Label = SelectedAvailableTestCase.Label,
-                SendMode = SelectedAvailableTestCase.DefaultSendMode,
-                IntervalMs = SelectedAvailableTestCase.IntervalMs,
-                TimeoutMs = SelectedAvailableTestCase.TimeoutMs,
-                RepeatCount = 1,
-                DelayBeforeMs = 0,
-                IsEnabled = true
-            });
 
-            ReindexBuiltSteps();
+            if (SelectedAvailableTestCase == null) return;
+
+            AddBuiltStepFromDefinition(SelectedAvailableTestCase);
             IsAddTestCasePopupOpen = false;
         }
         private void RemoveSelectedStep()
@@ -582,6 +988,23 @@ namespace ModuleMotor.ViewModels
             BuiltSteps.Move(index, index + 1);
             ReindexBuiltSteps();
         }
+        private void AddBuiltStepFromDefinition(TestCaseDefinition testCase)
+        {
+            BuiltSteps.Add(new BuiltTestStep
+            {
+                StepNo = BuiltSteps.Count + 1,
+                TestCaseNumber = testCase.Number,
+                Label = testCase.Label,
+                SendMode = testCase.DefaultSendMode,
+                IntervalMs = testCase.IntervalMs,
+                TimeoutMs = testCase.TimeoutMs,
+                RepeatCount = 1,
+                DelayBeforeMs = 0,
+                IsEnabled = true
+            }
+                );
+            ReindexBuiltSteps();
+        }
         private void DuplicateSelectedStep()
         {
             if (SelectedBuiltStep == null) return;
@@ -606,5 +1029,13 @@ namespace ModuleMotor.ViewModels
         {
             BuiltSteps.Clear();
         }
+
+        private void AddQuickLibraryStep()
+        {
+            if (SelectedQuickLibraryTestCase == null)
+                return;
+            AddBuiltStepFromDefinition(SelectedQuickLibraryTestCase);
+        }
+
     }
 }

@@ -47,7 +47,7 @@ namespace ModuleMotor.Models
         private int _timeoutMs =1000;
         public int TimeoutMs
         {
-            get =>TimeoutMs;
+            get => _timeoutMs;
             set => SetProperty(ref _timeoutMs, value);
         }
         private CanSendMode _defaultSendMode = CanSendMode.SendOnce;
