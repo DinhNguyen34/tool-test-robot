@@ -8,11 +8,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Ports;
-using System.Printing;
+using System.Linq;
+using System.Security.RightsManagement;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Automation;
 
 namespace ModuleMotor.ViewModels
 {
@@ -100,6 +102,8 @@ namespace ModuleMotor.ViewModels
         }
 
 
+        public IReadOnlyList<CanSendMode> CanSendModes { get; } = Enum.GetValues<CanSendMode>();
+
         public MotorModel Model { get; } = new MotorModel();
         public ObservableCollection<MotorChannelModel> Motors { get; } = new();
 
@@ -124,10 +128,26 @@ namespace ModuleMotor.ViewModels
                 SetProperty(ref _isConnected, value);
                 RaisePropertyChanged(nameof(ConnectLabel));
                 RaisePropertyChanged(nameof(CanStatusText));
+                if (value) StartRxLoop();
+                else       StopRxLoop();
             }
         }
-        public string ConnectLabel => IsConnected ? "Stop" : "CAN Connect";
-        public string CanStatusText => IsConnected ? "CONNECTED" : "DISCONNECTED";
+        public string ConnectLabel  => IsConnected ? "DISCONNECT CAN"        : "CAN Connect";
+        public string CanStatusText => IsConnected ? "CONNECTED"   : "DISCONNECTED";
+
+        // ── Live RX ────────────────────────────────────────────────────────────
+        public ObservableCollection<RxFrameEntry> RxFrames { get; } = new();
+        private CancellationTokenSource? _rxCts;
+        private int _lastRxCount;
+
+        private string _rxStatusText = "Not receiving";
+        public string RxStatusText
+        {
+            get => _rxStatusText;
+            set => SetProperty(ref _rxStatusText, value);
+        }
+
+        public DelegateCommand ClearRxCommand { get; private set; } = null!;
 
         // ── Port selection ─────────────────────────────────────────────────────
         public ObservableCollection<string> AvailablePorts { get; } = new();
@@ -238,6 +258,7 @@ namespace ModuleMotor.ViewModels
 
         // ── Commands ───────────────────────────────────────────────────────────
         //public DelegateCommand CanConnectCommand { get; }
+        public DelegateCommand RunBuiltStepsCommand { get; }
         public DelegateCommand ZeroCmdCommand { get; }
         public DelegateCommand HoldPositionCommand { get; }
         public DelegateCommand SetAllKpCommand { get; }
@@ -337,7 +358,7 @@ namespace ModuleMotor.ViewModels
 
             AddQuickLibraryStepCommand = new DelegateCommand(AddQuickLibraryStep);
 
-
+            RunBuiltStepsCommand = new DelegateCommand(OnRunBuiltSteps);
 
             ZeroCmdCommand = new DelegateCommand(OnZeroCmd);
             HoldPositionCommand = new DelegateCommand(OnHoldPosition);
@@ -353,7 +374,7 @@ namespace ModuleMotor.ViewModels
             SendAllMotorsCommand = new DelegateCommand(OnSendAllMotors);
             SaveNewConfigCommand = new DelegateCommand(SaveNewConfig);
             SendRawFrameCommand = new DelegateCommand(OnSendRawFrame);
-
+            ClearRxCommand      = new DelegateCommand(() => { RxFrames.Clear(); _lastRxCount = 0; });
 
             RefreshPorts();
             SelectedCanBitrate = Config.CanBitrateKbps > 0 ? Config.CanBitrateKbps : 1000;
@@ -377,6 +398,60 @@ namespace ModuleMotor.ViewModels
             catch (Exception ex) { LogHelper.Exception(ex); }
         }
 
+
+        // ---- Send testcase sequence in Builder---------------------------------
+        private async void OnRunBuiltSteps()
+        {
+            if (!IsConnected)
+            {
+                AppendLog("[Builder] Error - Can not Connect.");
+                return;
+            }
+            if (BuiltSteps.Count == 0)
+            {
+                AppendLog("[Builder] No step to run");
+                return;
+            }
+            foreach (var step in BuiltSteps.OrderBy(x => x.StepNo))
+            {
+                if (!step.IsEnabled)
+                {
+                    step.State = StepRunState.Skipped;
+                    step.LastResult = "Skipped";
+                    continue;
+                }
+                step.State = StepRunState.Running;
+                step.LastResult = "Running";
+
+                if (step.DelayBeforeMs > 0)
+                    await Task.Delay(step.DelayBeforeMs);
+
+                var ok = true;
+                var repeat = Math.Max(1, step.RepeatCount);
+
+                for (int i = 0; i < repeat; i++)
+                {
+                    try
+                    {
+                        TryRunRealTestCase(step.TestCaseNumber, step.Label);
+                        if (step.SendMode == CanSendMode.Continuous && i < repeat - 1)
+                            await Task.Delay(Math.Max(1, step.IntervalMs));
+                    }
+                    catch (Exception ex)
+                    {
+                        ok = false;
+                        AppendLog($"[Builder] {step.Label} Error - {ex.Message}");
+                        break;
+                    }
+                }
+
+                step.State = ok ? StepRunState.Passed : StepRunState.Failed;
+                step.LastResult = ok ? "Done" : "Failed";
+            }
+
+            AppendLog("[Builder] Send All complected.");
+
+        }
         // ── Port scanning ──────────────────────────────────────────────────────
         private void RefreshPorts()
         {
@@ -945,8 +1020,72 @@ namespace ModuleMotor.ViewModels
             }
         }
 
+        // ── RX loop ────────────────────────────────────────────────────────────
+        private void StartRxLoop()
+        {
+            StopRxLoop();
+            _lastRxCount = 0;
+            _rxCts = new CancellationTokenSource();
+            Task.Run(() => RxLoopAsync(_rxCts.Token));
+            RxStatusText = "Receiving…";
+        }
+
+        private void StopRxLoop()
+        {
+            _rxCts?.Cancel();
+            _rxCts = null;
+            RxStatusText = "Not receiving";
+        }
+
+        private async Task RxLoopAsync(CancellationToken ct)
+        {
+            var intervalMs = Config.RefreshHz > 0 ? Math.Max(2, 40 / Config.RefreshHz) : 50;
+
+            while (!ct.IsCancellationRequested)
+            {
+                try
+                {
+                    var messages = Model.GetCanMessages();
+                    if (messages.Count > _lastRxCount)
+                    {
+                        var newFrames = messages.Skip(_lastRxCount).ToList();
+                        _lastRxCount  = messages.Count;
+
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            foreach (var raw in newFrames)
+                            {
+                                var entry = new RxFrameEntry
+                                {
+                                    Timestamp = DateTime.Now,
+                                    Channel   = raw.ch,
+                                    Status    = raw.status,
+                                    Data      = raw.data ?? Array.Empty<byte>()
+                                };
+
+                                RxFrames.Insert(0, entry);
+                                if (RxFrames.Count > 1000)
+                                    RxFrames.RemoveAt(RxFrames.Count - 1);
+
+                                AppendLog($"[RX] CH={raw.ch} {entry.StatusText}  {entry.DataHex}");
+                            }
+
+                            RxStatusText = $"Receiving — {_lastRxCount} frame(s) total";
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogHelper.Exception(ex);
+                }
+
+                await Task.Delay(intervalMs, ct).ConfigureAwait(false);
+            }
+        }
+
         private void OnGoBack()
         {
+            StopRxLoop();
             if (_isLogging)
             {
                 _isLogging = false;
@@ -1027,7 +1166,10 @@ namespace ModuleMotor.ViewModels
         }
         private void ClearBuiltSteps()
         {
-            BuiltSteps.Clear();
+
+            foreach (var step in BuiltSteps.Where(s => s.IsEnabled).ToList())
+                BuiltSteps.Remove(step);
+            ReindexBuiltSteps();
         }
 
         private void AddQuickLibraryStep()

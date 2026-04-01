@@ -53,9 +53,9 @@ public class MotorModel : BindableBase
 
         var hasExactBaud = TryMapBaudrate(requestedBaud, out var canBaud);
         if (!hasExactBaud)
-            canBaud = CanBaudrate.BAUDRATE_500;
+            canBaud = CanBaudrate.BAUDRATE_1000;
 
-        var connected = _canCtrl.Connect(SelectedCan, rawLogPath, CanBaudrate.BAUDRATE_500, CanType.CAN_STD);
+        var connected = _canCtrl.Connect(SelectedCan, rawLogPath, CanBaudrate.BAUDRATE_1000, CanType.CAN_STD);
         SelectedCan.IsConnected = connected;
 
         if (connected)
