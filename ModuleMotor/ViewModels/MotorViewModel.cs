@@ -6,15 +6,18 @@ using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.RightsManagement;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media.Animation;
 
 namespace ModuleMotor.ViewModels
 {
@@ -295,26 +298,40 @@ namespace ModuleMotor.ViewModels
             _regionManager = regionManager;
 
             for (int i = 0; i < N_MOTORS; i++)
-                Motors.Add(new MotorChannelModel(i + 1));
-
-            var tcLabels = new[]
             {
-                "Get Device ID", "Motor Enabled", "Motor Stop", "Set Zero Mechanical",
-                "Max Position",  "Min Position",  "Get State Motor", "Max Speed"
+                //Motors.Add(new MotorChannelModel(i + 1));
+                var motor = new MotorChannelModel(i + 1)
+                {
+                    DeviceId = (byte)(i + 1)
+                };
+                Motors.Add(motor);
+            }
+            
+
+            var tcDefs = new (string Label, RsCommandType Cmd)[]
+            {
+                ("Get Device ID",        RsCommandType.GetId),
+                ("Motor Enabled",        RsCommandType.Enable),
+                ("Motor Stop",           RsCommandType.Disable),
+                ("Set Zero Mechanical",  RsCommandType.SetZero),
+                ("Max Position",         RsCommandType.Control),
+                ("Min Position",         RsCommandType.Control),
+                ("Get State Motor",      RsCommandType.None),
+                ("Max Speed",            RsCommandType.Control),
             };
-            for (int i = 0; i < tcLabels.Length; i++)
+            for (int i = 0; i < tcDefs.Length; i++)
             {
                 var tc = new TestCaseDefinition
                 {
                     Number = i + 1,
                     Code = $"TC{i + 1:000}",
-                    Label = tcLabels[i],
-                    Description = $"Built-in testcase: {tcLabels[i]}",
+                    Label = tcDefs[i].Label,
+                    Description = $"Built-in testcase: {tcDefs[i].Label}",
                     IntervalMs = 2,
                     TimeoutMs = 1000,
                     DefaultSendMode = CanSendMode.SendOnce,
-                    IsbuiltIn = true
-
+                    IsbuiltIn = true,
+                    RsCommand = tcDefs[i].Cmd,
                 };
                 AvailableTestCases.Add(tc);
                 if (i < 4)
@@ -324,7 +341,7 @@ namespace ModuleMotor.ViewModels
             for (int i = 0; i < N_MOTORS; i++)
             {
                 var num = i + 1;
-                var label = tcLabels[i];
+                var label = tcDefs[i].Label;
                 TestCases.Add(new TestCaseItem
                 {
                     Number = num,
@@ -369,14 +386,14 @@ namespace ModuleMotor.ViewModels
             SaveConfigCommand = new DelegateCommand(OnSaveConfig);
             ClearLogCommand = new DelegateCommand(() => LogEntries.Clear());
             GoBackCommand = new DelegateCommand(OnGoBack);
-            RefreshPortsCommand = new DelegateCommand(RefreshPorts);
+            //RefreshPortsCommand = new DelegateCommand(RefreshPorts);
             SendMotorCommand = new DelegateCommand<MotorChannelModel>(OnSendMotor);
             SendAllMotorsCommand = new DelegateCommand(OnSendAllMotors);
             SaveNewConfigCommand = new DelegateCommand(SaveNewConfig);
             SendRawFrameCommand = new DelegateCommand(OnSendRawFrame);
             ClearRxCommand      = new DelegateCommand(() => { RxFrames.Clear(); _lastRxCount = 0; });
 
-            RefreshPorts();
+            //RefreshPorts();
             SelectedCanBitrate = Config.CanBitrateKbps > 0 ? Config.CanBitrateKbps : 1000;
         }
 
@@ -389,6 +406,7 @@ namespace ModuleMotor.ViewModels
                     return;
 
                 IsConnected = !IsConnected;
+
                 var msg = IsConnected
                     ? $"CAN connected — Port: {SelectedPort}  Baud: {SelectedBaud}  MotorID: {Config.MotorId}"
                     : "CAN disconnected";
@@ -428,9 +446,19 @@ namespace ModuleMotor.ViewModels
 
                 var ok = true;
                 var repeat = Math.Max(1, step.RepeatCount);
+                var stepStart = Environment.TickCount64;
 
                 for (int i = 0; i < repeat; i++)
                 {
+                    var elapsed = (int)(Environment.TickCount64 - stepStart);
+                    var remaining = step.TimeoutMs - elapsed;
+                    if (remaining <= 0)
+                    {
+                        step.LastResult = "Timeout";
+                        ok = false;
+                        AppendLog("Step Timeout");
+                        break;
+                    }
                     try
                     {
                         TryRunRealTestCase(step.TestCaseNumber, step.Label);
@@ -453,26 +481,26 @@ namespace ModuleMotor.ViewModels
 
         }
         // ── Port scanning ──────────────────────────────────────────────────────
-        private void RefreshPorts()
-        {
-            var ports = SerialPort.GetPortNames();
-            AvailablePorts.Clear();
-            foreach (var p in ports)
-                AvailablePorts.Add(p);
+        //private void RefreshPorts()
+        //{
+        //    var ports = SerialPort.GetPortNames();
+        //    AvailablePorts.Clear();
+        //    foreach (var p in ports)
+        //        AvailablePorts.Add(p);
 
-            if (AvailablePorts.Count > 0)
-            {
-                SelectedPort = AvailablePorts.Contains(Config.SerialPort)
-                    ? Config.SerialPort
-                    : AvailablePorts[0];
-            }
-            else
-            {
-                SelectedPort = string.Empty;
-            }
+        //    if (AvailablePorts.Count > 0)
+        //    {
+        //        SelectedPort = AvailablePorts.Contains(Config.SerialPort)
+        //            ? Config.SerialPort
+        //            : AvailablePorts[0];
+        //    }
+        //    else
+        //    {
+        //        SelectedPort = string.Empty;
+        //    }
 
-            AppendLog($"Ports refreshed — found: {(AvailablePorts.Count > 0 ? string.Join(", ", AvailablePorts) : "none")}");
-        }
+        //    AppendLog($"Ports refreshed — found: {(AvailablePorts.Count > 0 ? string.Join(", ", AvailablePorts) : "none")}");
+        //}
 
         private void _openListCan()
         {
@@ -499,14 +527,7 @@ namespace ModuleMotor.ViewModels
                 if (TryRunRealTestCase(number, label))
                     return;
 
-                byte cmdByte = (byte)(0x10 + number);
-                string canId = Config.MotorId;
-                string txFrame = $"ID={canId}  DLC=8  Data=[{cmdByte:X2} {number:X2} 00 00 00 00 00 00]";
-
-                AppendLog($"[TC{number} {label}] SEND  {txFrame}");
-                LogHelper.Debug($"TC{number} TX: {txFrame}");
-
-                SimulateCanResponse(number, label, canId, cmdByte);
+                AppendLog($"[TC{number} {label}] No RS command mapped for this test case.");
             }
             catch (Exception ex)
             {
@@ -639,13 +660,16 @@ namespace ModuleMotor.ViewModels
 
         private bool TryRunRealTestCase(int number, string label)
         {
-            byte cmdByte = (byte)(0x10 + number);
-            string canId = Config.MotorId;
-            var payload = new byte[] { cmdByte, (byte)number, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-            var txFrame = FormatCanFrame(canId, payload);
+            var def = AvailableTestCases.FirstOrDefault(tc => tc.Number == number);
+            if (def == null) return false;
+
+            var (canId, payload) = BuildRsFrame(def);
+            if (canId == null) return false;
+
+            var txFrame = FormatCanFrame(canId, payload!);
             var rxCountBefore = Model.GetCanMessages().Count;
 
-            if (!Model.SendMessage(canId, payload, out var sendMessage))
+            if (!Model.SendMessage(canId, payload!, out var sendMessage))
             {
                 AppendLog($"[TC{number} {label}] SEND ERROR - {sendMessage}");
                 return true;
@@ -655,21 +679,39 @@ namespace ModuleMotor.ViewModels
             LogHelper.Debug($"TC{number} TX: {txFrame}");
 
             var success = AppendReceivedCanFrames($"TC{number} {label}", rxCountBefore);
-            var result = success.HasValue
-                ? (success.Value ? "OK" : "FAIL")
-                : "NO RESPONSE";
-
-            AppendLog($"[TC{number} {label}] RESULT -> {result}");
+            AppendLog($"[TC{number} {label}] RESULT -> {(success.HasValue ? (success.Value ? "OK" : "FAIL") : "NO RESPONSE")}");
             return true;
+        }
+
+        private (string? CanId, byte[]? Payload) BuildRsFrame(TestCaseDefinition def)
+        {
+            return def.RsCommand switch
+            {
+                RsCommandType.GetId   => RsMotorControl.GetIdMotor(DeviceId),
+                RsCommandType.Enable  => RsMotorControl.EnableMotor(DeviceId),
+                RsCommandType.Disable => RsMotorControl.DisableMotor(DeviceId),
+                RsCommandType.SetZero => RsMotorControl.SetZeroPosition(DeviceId),
+                RsCommandType.Control => RsMotorControl.ControlMotor(
+                    DeviceId, RsMotorControl.Motor6,   // default profile — wire to Config later
+                    torque: 06, position: 0, speed: 0,
+                    kp: (float)Config.DefaultKp, kd: (float)Config.DefaultKd),
+                _ => (null, null)
+            };
         }
 
         private bool TrySendMotorFrame(MotorChannelModel m)
         {
-            var payload = BuildMotorPayload(m);
-            var frame = FormatCanFrame(Config.MotorId, payload);
+            var (canId, payload) = RsMotorControl.ControlMotor(
+                m.DeviceId, m.Profile,
+                torque:   (float)m.TauCmd,
+                position: (float)m.QCmd,
+                speed:    (float)m.DqCmd,
+                kp:       (float)m.Kp,
+                kd:       (float)m.Kd);
+            var frame = FormatCanFrame(canId, payload);
             var rxCountBefore = Model.GetCanMessages().Count;
 
-            if (!Model.SendMessage(Config.MotorId, payload, out var sendMessage))
+            if (!Model.SendMessage(canId, payload, out var sendMessage))
             {
                 AppendLog($"[{m.Label}] SEND ERROR - {sendMessage}");
                 return true;
@@ -677,7 +719,7 @@ namespace ModuleMotor.ViewModels
 
             AppendLog($"[{m.Label}] SEND  {frame}");
             LogHelper.Debug($"{m.Label} TX: {frame}");
-            AppendReceivedCanFrames(m.Label, rxCountBefore);
+            AppendReceivedCanFrames(m.Label, rxCountBefore, m);
             return true;
         }
 
@@ -690,10 +732,16 @@ namespace ModuleMotor.ViewModels
             {
                 if (!motor.Enabled) continue;
 
-                var payload = BuildMotorPayload(motor);
-                var frame = FormatCanFrame(Config.MotorId, payload);
+                var (canId, payload) = RsMotorControl.ControlMotor(
+                    motor.DeviceId, motor.Profile,
+                    torque:   (float)motor.TauCmd,
+                    position: (float)motor.QCmd,
+                    speed:    (float)motor.DqCmd,
+                    kp:       (float)motor.Kp,
+                    kd:       (float)motor.Kd);
+                var frame = FormatCanFrame(canId, payload);
 
-                if (!Model.SendMessage(Config.MotorId, payload, out var sendMessage))
+                if (!Model.SendMessage(canId, payload, out var sendMessage))
                 {
                     AppendLog($"[{motor.Label}] SEND ERROR - {sendMessage}");
                     continue;
@@ -728,15 +776,21 @@ namespace ModuleMotor.ViewModels
             };
         }
 
+        private byte DeviceId => RsMotorControl.ParseDeviceId(Config.MotorId);
+
+        private (string CanId, byte[] Payload) EnableMotor()   => RsMotorControl.EnableMotor(DeviceId);
+        private (string CanId, byte[] Payload) DisableMotor()  => RsMotorControl.DisableMotor(DeviceId);
+        private (string CanId, byte[] Payload) SetZeroPos()    => RsMotorControl.SetZeroPosition(DeviceId);
+
         private static string FormatCanFrame(string canId, byte[] payload)
         {
             return $"ID={canId}  DLC={payload.Length}  Data=[{string.Join(" ", payload.Select(b => b.ToString("X2")))}]";
         }
 
-        private bool? AppendReceivedCanFrames(string context, int previousCount)
+        private bool? AppendReceivedCanFrames(string context, int previousCount,
+                                               MotorChannelModel? motor = null)
         {
             Thread.Sleep(20);
-
             var messages = Model.GetCanMessages();
             if (messages.Count <= previousCount)
             {
@@ -748,8 +802,26 @@ namespace ModuleMotor.ViewModels
             foreach (var frame in messages.Skip(previousCount))
             {
                 var payload = frame.data ?? Array.Empty<byte>();
-                AppendLog($"[{context}] RECV  CH={frame.ch} Status={frame.status:X2} Data=[{string.Join(" ", payload.Select(b => b.ToString("X2")))}]");
                 latestSuccess = frame.status == 0;
+
+                if (motor != null && payload.Length >= 8)
+                {
+                    var fb = RsMotorControl.DecodeFeedback(motor.DeviceId, payload, motor.Profile);
+                    motor.Q           = Math.Round(fb.Angle,       4);
+                    motor.Dq          = Math.Round(fb.Speed,       4);
+                    motor.Tau         = Math.Round(fb.Torque,      4);
+                    motor.Temperature = Math.Round(fb.Temperature, 2);
+
+                    AppendLog($"[{context}] RECV  Motor {motor.Label} | " +
+                              $"Angle={fb.Angle:F4} rad  Speed={fb.Speed:F4} rad/s  " +
+                              $"Torque={fb.Torque:F4} Nm  Temp={fb.Temperature:F1}°C  " +
+                              $"Status={frame.status:X2}");
+                }
+                else
+                {
+                    AppendLog($"[{context}] RECV  Status={frame.status:X2}  " +
+                              $"Data=[{string.Join(" ", payload.Select(b => b.ToString("X2")))}]");
+                }
             }
 
             return latestSuccess;
@@ -1055,19 +1127,43 @@ namespace ModuleMotor.ViewModels
                         {
                             foreach (var raw in newFrames)
                             {
+                                var payload = raw.data ?? Array.Empty<byte>();
                                 var entry = new RxFrameEntry
                                 {
                                     Timestamp = DateTime.Now,
                                     Channel   = raw.ch,
                                     Status    = raw.status,
-                                    Data      = raw.data ?? Array.Empty<byte>()
+                                    Data      = payload
                                 };
 
                                 RxFrames.Insert(0, entry);
                                 if (RxFrames.Count > 1000)
                                     RxFrames.RemoveAt(RxFrames.Count - 1);
 
-                                AppendLog($"[RX] CH={raw.ch} {entry.StatusText}  {entry.DataHex}");
+                                if (payload.Length >= 8)
+                                {
+                                    // Motor ID is from context — match by channel (ch = DeviceId)
+                                    var motor = Motors.FirstOrDefault(m => m.DeviceId == raw.ch);
+                                    var profile = motor?.Profile ?? RsMotorControl.Motor4;
+                                    var fb = RsMotorControl.DecodeFeedback((byte)raw.ch, payload, profile);
+
+                                    if (motor != null)
+                                    {
+                                        motor.Q           = Math.Round(fb.Angle,       4);
+                                        motor.Dq          = Math.Round(fb.Speed,       4);
+                                        motor.Tau         = Math.Round(fb.Torque,      4);
+                                        motor.Temperature = Math.Round(fb.Temperature, 2);
+                                    }
+
+                                    AppendLog($"[RX] Motor {fb.MotorId:D2} | CH={raw.ch} | " +
+                                              $"Angle={fb.Angle:F4} rad  Speed={fb.Speed:F4} rad/s  " +
+                                              $"Torque={fb.Torque:F4} Nm  Temp={fb.Temperature:F1}°C  " +
+                                              $"Status={raw.status:X2}");
+                                }
+                                else
+                                {
+                                    AppendLog($"[RX] CH={raw.ch} {entry.StatusText}  {entry.DataHex}");
+                                }
                             }
 
                             RxStatusText = $"Receiving — {_lastRxCount} frame(s) total";

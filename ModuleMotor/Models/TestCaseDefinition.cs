@@ -68,5 +68,12 @@ namespace ModuleMotor.Models
             get => _isbuiltIn;
             set => SetProperty(ref _isbuiltIn, value);
         }
+
+        private RsCommandType _rsCommand = RsCommandType.None;
+        public RsCommandType RsCommand
+        {
+            get => _rsCommand;
+            set => SetProperty(ref _rsCommand, value);
+        }
     }
 }
