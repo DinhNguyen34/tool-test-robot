@@ -146,6 +146,7 @@ namespace ModuleMotor.Models
             return byte.TryParse(value, out var d) ? d : (byte)0;
         }
 
+
         // ── CAN ID decode (mirrors RS_decode_can_id) ──────────────────────────
         //
         // NOTE: in the feedback frame the motor echoes its own ID in bits[15:8]
@@ -178,6 +179,8 @@ namespace ModuleMotor.Models
             payload[0] = 1;   // byte 0 = 1 per protocol
             return BuildCommand(mode: 6, data: 0, motorId, payload);
         }
+        //public static (string CanId, byte[] Payload MaxSpeed(byte motorId)
+        //    )
 
         // ── TX: motor control (mode 1) ────────────────────────────────────────
         // Mirrors RS_Motor0Control … RS_Motor6Control.
