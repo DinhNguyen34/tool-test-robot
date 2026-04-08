@@ -70,7 +70,7 @@ namespace RobotTesting
 
             return IntPtr.Zero;
         }
-        static MONITORINFO lPrimaryScreenInfo;
+        static MONITORINFO? lPrimaryScreenInfo = null;
 
         private static void WmGetMinMaxInfo(System.IntPtr hwnd, System.IntPtr lParam)
         {
