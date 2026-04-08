@@ -1046,15 +1046,15 @@
                                                 <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
-                                            <!--StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,10">
-                                                <TextBlock Text="Code" Style="{StaticResource ConfigLabel}"/>
+                                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,10">
+                                                <TextBlock Text="N.o TC" Style="{StaticResource ConfigLabel}"/>
                                                 <TextBox Text="{Binding NewTestCaseCode}" Style="{StaticResource ConfigFieldTextBox}"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
-                                                <TextBlock Text="Label" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBlock Text="Name TC" Style="{StaticResource ConfigLabel}"/>
                                                 <TextBox Text="{Binding NewTestCaseLabel}" Style="{StaticResource ConfigFieldTextBox}"/>
-                                            </StackPanel-->
+                                            </StackPanel>
 
                                             <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,0,10">
                                                 <TextBlock Text="Description" Style="{StaticResource ConfigLabel}"/>

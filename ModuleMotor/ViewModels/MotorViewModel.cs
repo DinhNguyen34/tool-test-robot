@@ -1029,7 +1029,7 @@ namespace ModuleMotor.ViewModels
 
         private void SaveNewConfig()
         {
-            if (string.IsNullOrWhiteSpace(NewTestCaseCode))
+            if (string.IsNullOrWhiteSpace(NewTestCaseDescription))
                 return;
             var nextNumber = AvailableTestCases.Count == 0
                 ? 1
