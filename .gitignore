@@ -106,3 +106,11 @@ Thumbs.db
 /ModuleMotor/obj/project.nuget.cache
 /ModuleMotor/obj/Debug/net10.0-windows/ModuleMotor.GlobalUsings.g.cs
 /Modules/ModuleNetwork/obj/Debug/net10.0-windows/ModuleNetwork.GlobalUsings.g.cs
+/ModuleCamera/obj/Debug/net10.0-windows/ModuleCamera.designer.deps.json
+/ModuleCamera/obj/Debug/net10.0-windows/Views/CameraView.g.i.cs
+/ModuleCamera/obj/Debug/net10.0-windows/ModuleCamera_MarkupCompile.i.lref
+/ModuleLidar/obj/Debug/net10.0-windows/Views/LidarView.g.i.cs
+/ModuleCamera/bin
+/ModuleCamera/obj
+/ModuleLidar/bin
+/ModuleLidar/obj

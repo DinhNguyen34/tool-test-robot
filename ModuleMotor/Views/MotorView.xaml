@@ -348,6 +348,10 @@
     </UserControl.Resources>
 
     <Grid Background="#1E1E1E">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="119*"/>
+            <ColumnDefinition Width="1129*"/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <!-- header bar -->
@@ -356,7 +360,7 @@
         </Grid.RowDefinitions>
 
         <!-- ═══ HEADER BAR ════════════════════════════════════════════════════ -->
-        <Border Grid.Row="0" Background="#252526" Padding="10,7">
+        <Border Grid.Row="0" Background="#252526" Padding="10,7" Grid.ColumnSpan="2">
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Image Source="/Resource;component/Images/Robot-32.png"
@@ -395,7 +399,7 @@
                                Foreground="#9AA6C8"
                                FontSize="11"/>
                     <Button Command="{Binding CanConnectCommand}" Width="110" Margin="0,0,6,0">
-                        
+
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SuccessBtn}">
                                 <Style.Triggers>
@@ -457,7 +461,7 @@
         </Border>
 
         <!-- ═══ MAIN CONTENT (two columns) ════════════════════════════════════ -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="500"/>
                 <!-- LEFT: test cases + motor control -->
@@ -532,7 +536,7 @@
                                     </Border>
                                 </DataTemplate>
                             </ListBox.ItemTemplate-->
-                            
+
                             <UniformGrid Rows="4" Columns="2">
                                 <Button Content="Get Device ID" Style="{StaticResource TestCaseBtn}"
                                     Command="{Binding TestCases[0].Command}"
@@ -839,12 +843,12 @@
                                         </StackPanel>
                                     </Grid>
                                 </Border>
-                                        
+
                             </Border>
                             <Border Grid.RowSpan="2"
                                     Panel.ZIndex="30"
                                     Background="#AA000000"
-                                    Visibility="{Binding IsAddConfigPopupOpen, Converter={StaticResource BoolToVisibilityConverter}}"> 
+                                    Visibility="{Binding IsAddConfigPopupOpen, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <Border Width="560"
                                         Padding="16"
                                         Background="#1A2130"
@@ -852,7 +856,7 @@
                                         BorderThickness="1"
                                         CornerRadius="10"
                                         HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"> 
+                                        VerticalAlignment="Center">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -920,56 +924,56 @@
                                     </Grid>
                                 </Border>
                             </Border>
-                                </Grid>
-                                    </TabItem>
-                                        <TabItem Header="CAN Mode">
-                                            <Grid Margin="12">
-                                                <Border Padding="16"
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="CAN Mode">
+                        <Grid Margin="12">
+                            <Border Padding="16"
                                                         Background="#1A2130"
                                                         BorderBrush="#46506A"
                                                         BorderThickness="1"
                                                         CornerRadius="10">
-                                                    <Grid>
-                                                        <Grid.RowDefinitions>
-                                                            <RowDefinition Height="Auto"/>
-                                                            <RowDefinition Height="Auto"/>
-                                                            <RowDefinition Height="Auto"/>
-                                                            <RowDefinition Height="Auto"/>
-                                                        </Grid.RowDefinitions>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
 
-                                                        <StackPanel Grid.Row="0" Grid.ColumnSpan="2">
-                                                            <TextBlock Text="SEND RAW FRAME"
+                                    <StackPanel Grid.Row="0" Grid.ColumnSpan="2">
+                                        <TextBlock Text="SEND RAW FRAME"
                                                                        FontSize="16"
                                                                        FontWeight="Bold"
                                                                        Foreground="White"/>
-                                                            <TextBlock Text="Nhap CAN ID va day byte hex, vi du: 01 02 03 04"
+                                        <TextBlock Text="Nhap CAN ID va day byte hex, vi du: 01 02 03 04"
                                                                        Margin="0,6,0,0"
                                                                        Foreground="#9AA6C8"
                                                                        FontSize="11"/>
-                                                        </StackPanel>
+                                    </StackPanel>
 
-                                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,14,12,10">
-                                                            <TextBlock Text="CAN ID" Style="{StaticResource ConfigLabel}"/>
-                                                            <TextBox Text="{Binding RawCanId}"
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,14,12,10">
+                                        <TextBlock Text="CAN ID" Style="{StaticResource ConfigLabel}"/>
+                                        <TextBox Text="{Binding RawCanId}"
                                                                      Style="{StaticResource ConfigFieldTextBox}"
                                                                      Width="180"/>
-                                                        </StackPanel>
+                                    </StackPanel>
 
-                                                        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,12">
-                                                            <TextBlock Text="Data (hex bytes)" Style="{StaticResource ConfigLabel}"/>
-                                                            <TextBox Text="{Binding RawCanData}"
+                                    <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,12">
+                                        <TextBlock Text="Data (hex bytes)" Style="{StaticResource ConfigLabel}"/>
+                                        <TextBox Text="{Binding RawCanData}"
                                                                      Style="{StaticResource ConfigFieldTextBox}"
                                                                      MinWidth="420"
                                                                      TextWrapping="Wrap"
                                                                      AcceptsReturn="True"
                                                                      MinHeight="72"/>
-                                                        </StackPanel>
+                                    </StackPanel>
 
-                                                        <Button Grid.Row="1"
+                                    <Button Grid.Row="1"
                                                                 Grid.Column="1"
                                                                 Grid.RowSpan="2"
                                                                 Content="Send Raw"
@@ -979,24 +983,24 @@
                                                                 Height="38"
                                                                 VerticalAlignment="Center"/>
 
-                                                        <TextBlock Grid.Row="3"
+                                    <TextBlock Grid.Row="3"
                                                                    Grid.ColumnSpan="2"
                                                                    Text="{Binding RawSendStatus}"
                                                                    Foreground="#FFD166"
                                                                    TextWrapping="Wrap"/>
-                                                    </Grid>
-                                                </Border>
-                                            </Grid>
-                                        </TabItem>
-                                        <TabItem Header="Log Results">
-                                            <ListBox Margin="12"
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="Log Results">
+                        <ListBox Margin="12"
                                                              ItemsSource="{Binding LogEntries}"
                                                              Background="#1A1A1A"
                                                              Foreground="#CCCCCC"
                                                              BorderThickness="0"
-                                                             FontFamily="Consolas"/> 
-                                        </TabItem>
-                                    </TabControl>
+                                                             FontFamily="Consolas"/>
+                    </TabItem>
+                </TabControl>
                 <!-- Motor State Table -->
                 <!--Border Grid.Row="0" Margin="2,4,4,2" Padding="10,8" Style="{StaticResource ConfigRowCard}">
                     <StackPanel>

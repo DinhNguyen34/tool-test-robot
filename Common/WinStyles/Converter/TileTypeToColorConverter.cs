@@ -23,6 +23,8 @@ namespace WinStyles.Converter
                 case TileType.Hand: brush.Color = Colors.DarkOrange; break;
                 case TileType.LLB: brush.Color = Colors.Navy; break;
                 case TileType.Network: brush.Color = Colors.SaddleBrown; break;
+                case TileType.Camera: brush.Color = Colors.SkyBlue; break;
+                case TileType.Lidar: brush.Color = Colors.Orange; break;
             }
             return brush;
         }

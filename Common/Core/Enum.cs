@@ -10,5 +10,7 @@
             Hand,
             LLB,
             Network,
+            Camera,
+            Lidar
         }
 }

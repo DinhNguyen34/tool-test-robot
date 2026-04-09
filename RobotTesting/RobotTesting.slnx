@@ -15,6 +15,8 @@
     </Project>
   </Folder>
   <Folder Name="/Modules/">
+    <Project Path="../ModuleCamera/ModuleCamera.csproj" Id="cf86655a-cd68-444f-8f88-963a3e0b7be2" />
+    <Project Path="../ModuleLidar/ModuleLidar.csproj" Id="d82e8713-6095-4680-bbe9-a755b7fa453b" />
     <Project Path="../ModuleMotor/ModuleMotor.csproj" Id="eeb1bc4a-6b86-441c-848b-c36ea1d78f5b">
       <Platform Solution="*|x64" Project="x64" />
     </Project>

@@ -2,6 +2,8 @@
 using ModuleCover;
 using ModuleMotor;
 using ModuleNetwork;
+using ModuleCamera;
+using ModuleLidar;
 using Prism.Unity;
 using System.ComponentModel;
 using System.Configuration;
@@ -42,6 +44,8 @@ namespace RobotTesting
             moduleCatalog.AddModule<ModuleCoverModule>();
             moduleCatalog.AddModule<ModuleMotorModule>();
             moduleCatalog.AddModule<ModuleNetworkModule>();
+            moduleCatalog.AddModule<ModuleCameraModule>();
+            moduleCatalog.AddModule<ModuleLidarModule>();
             // Log các module đã tìm thấy
             LogHelper.Debug("=== Modules Found ===");
             foreach (var module in moduleCatalog.Modules)

@@ -1,0 +1,179 @@
+﻿<UserControl x:Class="ModuleLidar.Views.LidarView"
+             xmlns:prism="http://prismlibrary.com/"
+             prism:ViewModelLocator.AutoWireViewModel="True"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:helix="http://helix-toolkit.org/wpf"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1280"
+             Background="Black">
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="90"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Background="#1E2129" Margin="5 10 5 5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0">
+                <Button Content="← Back" Command="{Binding BackCommand}" Width="85" Height="32" Background="#3E3E42" Foreground="White"/>
+                <Image Source="/Resource;component/Images/Robot-32.png" Width="24" Height="24" Margin="15,0,10,0"/>
+                <TextBlock Text="Lidar Control" Foreground="#46A3FF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+            </StackPanel> <!--Button Back-->
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="50,0">
+                <TextBlock Text="View: " Foreground="#46A3FF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
+                <Button Content="Reset" Command="{Binding ResetViewCommand}" Width="80" Height="28" Margin="5,0" Background="#3E3E42" Foreground="White"/>
+                <Button Content="Right" Command="{Binding RightViewCommand}" Width="80" Height="28" Margin="5,0" Background="#3E3E42" Foreground="White"/>
+                <Button Content="Front" Command="{Binding FrontViewCommand}" Width="80" Height="28" Margin="5,0" Background="#3E3E42" Foreground="White"/>
+                <Button Content="Top"   Command="{Binding TopViewCommand}"   Width="80" Height="28" Margin="5,0" Background="#3E3E42" Foreground="White"/>
+                <Button Content="Back"  Command="{Binding BackViewCommand}"  Width="80" Height="28" Margin="5,0" Background="#3E3E42" Foreground="White"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0">
+                <TextBlock Text="Adapter : " Foreground="White" FontSize="16" VerticalAlignment="Center" FontWeight="SemiBold"/>
+
+                <ComboBox Width="180" Height="28" 
+                  Background="#333333" 
+                  Foreground="#FCAE1F" 
+                  VerticalContentAlignment="Center"
+                  ItemsSource="{Binding AdapterList}" 
+                  SelectedItem="{Binding SelectedAdapter}">
+                    <ComboBox.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#333333" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#FCAE1F" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black" />
+                    </ComboBox.Resources>
+
+                </ComboBox>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="#1E2129" CornerRadius="5" Margin="5">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Height="35" CornerRadius="5,5,0,0">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                <GradientStop Color="#FF8E2D" Offset="0"/>
+                                <GradientStop Color="#FF4BA4" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <TextBlock Text="SETTINGS" Foreground="White" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                    </Border> <!--Settings-->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#474F5A">
+                        <StackPanel Margin="10">
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Point Size:" Foreground="#B0BCC7" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" Width="80" Height="25" SelectedItem="{Binding CameraSettings.PointSize}"  Background="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" >
+                                    <ComboBoxItem Content="1 pixel" />
+                                    <ComboBoxItem Content="2 pixel" />
+                                    <ComboBoxItem Content="3 pixel" />
+                                    <ComboBoxItem Content="4 pixel" />
+                                    <ComboBoxItem Content="5 pixel" />
+                                </ComboBox>
+                            </Grid> <!--Point Size-->
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Color:" Foreground="#B0BCC7" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" Width="80" Height="25" SelectedItem="{Binding CameraSettings.Color}"  Background="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" >
+                                    <ComboBoxItem Content="Reflectivity" />
+                                    <ComboBoxItem Content="Distance" />
+                                    <ComboBoxItem Content="Solid Color" />
+                                    <ComboBoxItem Content="Elevation" />
+                                    <ComboBoxItem Content="Lidar ID" />
+                                </ComboBox>
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="FrameTime:" Foreground="#B0BCC7" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" Width="80" Height="25" SelectedItem="{Binding CameraSettings.FrameTime}"  Background="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" >
+                                    <ComboBoxItem Content="100 ms" />
+                                    <ComboBoxItem Content="200 ms" />
+                                    <ComboBoxItem Content="500 ms" />
+                                    <ComboBoxItem Content="1000 ms" />
+                                    <ComboBoxItem Content="3000 ms" />
+                                </ComboBox>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+            <Border Grid.Column="1" Background="Black" CornerRadius="5" Margin="5" xmlns:helix="http://helix-toolkit.org/wpf">
+    <Grid>
+        <helix:HelixViewport3D x:Name="LidarView3D" ZoomExtentsWhenLoaded="True" ShowCoordinateSystem="True" 
+                               CoordinateSystemLabelForeground="White" Background="#050505">
+            <helix:DefaultLights/>
+
+            <helix:GridLinesVisual3D Width="1000" Length="1000" MajorDistance="100" MinorDistance="10" Thickness="0.2" Fill="#15FFFFFF"/>
+
+            <ModelVisual3D x:Name="RingsGroup">
+                <ModelVisual3D.Transform>
+                    <TranslateTransform3D OffsetZ="0.1"/>
+                </ModelVisual3D.Transform>
+                
+                <helix:PieSliceVisual3D InnerRadius="4.8"   OuterRadius="5.2"   StartAngle="0" EndAngle="360" Fill="#88FFFFFF"/>
+                <helix:PieSliceVisual3D InnerRadius="9.8"   OuterRadius="10.2"  StartAngle="0" EndAngle="360" Fill="#AAFFFFFF"/>
+                <helix:PieSliceVisual3D InnerRadius="19.8"  OuterRadius="20.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                <helix:PieSliceVisual3D InnerRadius="29.8"  OuterRadius="30.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                <helix:PieSliceVisual3D InnerRadius="39.8"  OuterRadius="40.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                <helix:PieSliceVisual3D InnerRadius="49.5"  OuterRadius="50.5"  StartAngle="0" EndAngle="360" Fill="Gold"/> 
+                <helix:PieSliceVisual3D InnerRadius="59.8"  OuterRadius="60.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                <helix:PieSliceVisual3D InnerRadius="69.8"  OuterRadius="70.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                <helix:PieSliceVisual3D InnerRadius="79.8"  OuterRadius="80.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                <helix:PieSliceVisual3D InnerRadius="89.8"  OuterRadius="90.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                <helix:PieSliceVisual3D InnerRadius="99.5"  OuterRadius="100.5" StartAngle="0" EndAngle="360" Fill="Gold"/> 
+
+                <helix:PieSliceVisual3D InnerRadius="149.5" OuterRadius="150.5" StartAngle="0" EndAngle="360" Fill="#AAFFFFFF"/>
+                <helix:PieSliceVisual3D InnerRadius="199.5" OuterRadius="200.5" StartAngle="0" EndAngle="360" Fill="#AAFFFFFF"/>
+                <helix:PieSliceVisual3D InnerRadius="249.5" OuterRadius="250.5" StartAngle="0" EndAngle="360" Fill="#CCFFFFFF"/>
+            </ModelVisual3D>
+
+            <helix:LinesVisual3D Points="-500,0,0 500,0,0" Color="#FF4444" Thickness="2"/>
+            <helix:LinesVisual3D Points="0,-500,0 0,500,0" Color="#44FF44" Thickness="2"/>
+
+            <helix:BillboardTextVisual3D Text="5m"  Position="10,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="10m" Position="15,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="20m" Position="25,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="30m" Position="35,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="40m" Position="45,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="50m"  Position="55,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="60m"  Position="65,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="70m"  Position="75,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="80m"  Position="85,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="90m"  Position="95,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="100m" Position="105,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="150m" Position="155,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="200m" Position="205,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+            <helix:BillboardTextVisual3D Text="250m" Position="255,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+
+            <helix:PointsVisual3D x:Name="LidarPoints" Color="#00FFFF" Size="4"/>
+        </helix:HelixViewport3D>
+    </Grid>
+</Border>
+        </Grid>
+    </Grid>
+</UserControl>
