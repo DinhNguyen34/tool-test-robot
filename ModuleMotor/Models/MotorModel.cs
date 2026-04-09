@@ -53,9 +53,9 @@ public class MotorModel : BindableBase
 
         var hasExactBaud = TryMapBaudrate(requestedBaud, out var canBaud);
         if (!hasExactBaud)
-            canBaud = CanBaudrate.BAUDRATE_500;
+            canBaud = CanBaudrate.BAUDRATE_1000;
 
-        var connected = _canCtrl.Connect(SelectedCan, rawLogPath, CanBaudrate.BAUDRATE_500, CanType.CAN_STD);
+        var connected = _canCtrl.Connect(SelectedCan, rawLogPath, CanBaudrate.BAUDRATE_1000, CanType.CAN_STD);
         SelectedCan.IsConnected = connected;
 
         if (connected)
@@ -92,9 +92,16 @@ public class MotorModel : BindableBase
             return false;
         }
 
-        bool sent = _canCtrl.SendMessage(canId, data);
+        if (!TryParseCanId(canId, out uint numericId))
+        {
+            message = $"Invalid CAN ID: {canId}";
+            return false;
+        }
 
-        message = sent ? string.Empty : $"Failed to send CAN frame to ID {canId}.";
+        string sanitizedId = $"0x{numericId:X}";
+        bool sent = _canCtrl.SendMessage(sanitizedId, data, true);
+
+        message = sent ? string.Empty : $"Failed to send CAN frame to ID {sanitizedId}.";
         return sent;
     }
 
@@ -129,6 +136,8 @@ public class MotorModel : BindableBase
         return canBaud != CanBaudrate.Unknow;
     }
 
+    private const uint CanExtendedIdMask = 0x1FFF_FFFF;
+
     private static bool TryParseCanId(string canId, out uint numericCanId)
     {
         numericCanId = 0;
@@ -137,9 +146,13 @@ public class MotorModel : BindableBase
             return false;
 
         canId = canId.Trim();
-        if (canId.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-            return uint.TryParse(canId[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out numericCanId);
+        bool parsed = canId.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+            ? uint.TryParse(canId[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out numericCanId)
+            : uint.TryParse(canId, NumberStyles.Integer, CultureInfo.InvariantCulture, out numericCanId);
 
-        return uint.TryParse(canId, NumberStyles.Integer, CultureInfo.InvariantCulture, out numericCanId);
+        if (parsed)
+            numericCanId &= CanExtendedIdMask;
+
+        return parsed;
     }
 }

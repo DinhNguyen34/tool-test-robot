@@ -7,6 +7,30 @@ namespace ModuleMotor.Models
         public int Id { get; }
         public string Label => $"M{Id:D2}";
 
+        // ── Per-motor RS profile (mirrors motorControlFunc[] in defind.c) ──────
+        /// <summary>CAN device byte — same as Id (mirrors motorID[i] = i+1 in defind.c).</summary>
+
+        private byte _deviceId;
+        public byte DeviceId
+        {
+            get => _deviceId;
+            set
+            {
+                if (SetProperty(ref _deviceId, value))
+                    Profile = RsMotorProfileMap.Resolve(value);
+            }
+        }
+
+       
+
+        private RsMotorProfile _profile = RsMotorControl.Motor4;
+        /// <summary>RS motor profile that defines the physical limits for encode/decode.</summary>
+        public RsMotorProfile Profile
+        {
+            get => _profile;
+            set => SetProperty(ref _profile, value);
+        }
+
         // ── Command inputs ─────────────────────────────────────────────────────
         private bool _enabled = true;
         public bool Enabled { get => _enabled; set => SetProperty(ref _enabled, value); }

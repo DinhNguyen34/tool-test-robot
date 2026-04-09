@@ -276,9 +276,9 @@
         </Style>
 
         <Style x:Key="ConfigFieldComboBox" TargetType="ComboBox">
-            <Setter Property="Background" Value="#0F1421"/>
-            <Setter Property="Foreground" Value="Black"/>
-            <Setter Property="BorderBrush" Value="#56627F"/>
+            <Setter Property="Background" Value="#243047"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="White"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="FontSize" Value="12"/>
@@ -297,11 +297,90 @@
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter Property="Background" Value="#3E2B61"/>
                             </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter Property="Background" Value="#243047"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="BorderBrush" Value="#4B638C"/>
+                            </Trigger>
                         </Style.Triggers>
                     </Style>
                 </Setter.Value>
             </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="20"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter Grid.Column="0"
+                                                  Margin="{TemplateBinding Padding}"
+                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                  VerticalAlignment="Center"
+                                                  IsHitTestVisible="False"/>
+                                <Path Grid.Column="1"
+                                      Data="M 0 0 L 4 4 L 8 0 Z"
+                                      Fill="{TemplateBinding Foreground}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      IsHitTestVisible="False"/>
+                                <ToggleButton Grid.ColumnSpan="2"
+                                              Focusable="False"
+                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="Transparent"/>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <Popup Grid.ColumnSpan="2"
+                                       IsOpen="{TemplateBinding IsDropDownOpen}"
+                                       Placement="Bottom"
+                                       AllowsTransparency="True"
+                                       Focusable="False">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="1"
+                                            MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="200">
+                                            <ItemsPresenter/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+        <Style x:Key="BuilderModeComboBox"
+       TargetType="ComboBox"
+       BasedOn="{StaticResource ConfigFieldComboBox}">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#1B2230"/>
+            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="Padding" Value="4,0"/>
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                    <Setter Property="Background" Value="#2B3A55"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="#4B638C"/>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="False">
+                    <Setter Property="Background" Value="#1B2230"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="#333333"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
 
         <Style x:Key="ConfigIconButton" TargetType="Button" BasedOn="{StaticResource SecondaryBtn}">
             <Setter Property="Height" Value="32"/>
@@ -348,10 +427,6 @@
     </UserControl.Resources>
 
     <Grid Background="#1E1E1E">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="119*"/>
-            <ColumnDefinition Width="1129*"/>
-        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <!-- header bar -->
@@ -360,7 +435,7 @@
         </Grid.RowDefinitions>
 
         <!-- ═══ HEADER BAR ════════════════════════════════════════════════════ -->
-        <Border Grid.Row="0" Background="#252526" Padding="10,7" Grid.ColumnSpan="2">
+        <Border Grid.Row="0" Background="#252526" Padding="10,7">
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Image Source="/Resource;component/Images/Robot-32.png"
@@ -388,17 +463,17 @@
                                Foreground="#D6DEFF"
                                FontSize="11"
                                FontWeight="SemiBold"/>
-                    <ComboBox ItemsSource="{Binding CanBitratesKbps}"
+                    <!--ComboBox ItemsSource="{Binding CanBitratesKbps}"
                               SelectedItem="{Binding SelectedCanBitrate}"
                               Style="{StaticResource ConfigFieldComboBox}"
                               Width="92"
-                              Margin="0,0,4,0"/>
-                    <TextBlock Text="kbps"
+                              Margin="0,0,4,0"/-->
+                    <!--TextBlock Text="kbps"
                                Margin="0,0,8,0"
                                VerticalAlignment="Center"
                                Foreground="#9AA6C8"
-                               FontSize="11"/>
-                    <Button Command="{Binding CanConnectCommand}" Width="110" Margin="0,0,6,0">
+                               FontSize="11"/-->
+                    <Button Command="{Binding CanConnectCommand}" Width="120" Margin="0,0,6,0">
 
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SuccessBtn}">
@@ -433,10 +508,10 @@
                     <Button Content="Load Config" Command="{Binding LoadConfigCommand}"
                             Style="{StaticResource SecondaryBtn}" Width="90" Margin="0,0,6,0"/>
                     <Button Content="Save Config" Command="{Binding SaveConfigCommand}"
-                            Style="{StaticResource SecondaryBtn}" Width="90" Margin="0,0,16,0"/>
+                            Style="{StaticResource SecondaryBtn}" Width="90" Margin="0,0,150,0"/>
 
                     <!-- Status -->
-                    <TextBlock VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Margin="0,0,84,0">
+                    <!--TextBlock VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Margin="0,0,84,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Text"       Value="DISCONNECTED"/>
@@ -449,7 +524,7 @@
                                 </Style.Triggers>
                             </Style>
                         </TextBlock.Style>
-                    </TextBlock>
+                    </TextBlock-->
 
 
                 </StackPanel>
@@ -461,7 +536,7 @@
         </Border>
 
         <!-- ═══ MAIN CONTENT (two columns) ════════════════════════════════════ -->
-        <Grid Grid.Row="1" Grid.ColumnSpan="2">
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="500"/>
                 <!-- LEFT: test cases + motor control -->
@@ -668,9 +743,9 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="En" FontSize="14"   Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,-19,23,0" Grid.RowSpan="2" VerticalAlignment="Top"/>
                                 <TextBlock Grid.Column="1" Text="ID" FontSize="14"   Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-9,-19,70,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
-                                <TextBlock Grid.Column="2" Text="q_cmd" FontSize="14" Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-15,-19,55,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
-                                <TextBlock Grid.Column="3" Text="dq" FontSize="14"   Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-12,-19,50,0" Grid.RowSpan="2" VerticalAlignment="Top"/>
-                                <TextBlock Grid.Column="4" Text="tau" FontSize="14"  Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-12,-19,40,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="2" Text="Position" FontSize="14" Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-15,-19,55,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="3" Text="speed" FontSize="14"   Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-12,-19,50,0" Grid.RowSpan="2" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="4" Text="Torque" FontSize="14"  Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-12,-19,40,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
                                 <TextBlock Grid.Column="5" Text="Kp" FontSize="14"   Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-12,-19,40,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
                                 <TextBlock Grid.Column="6" Text="Kd" FontSize="14"   Style="{StaticResource ColLabel}" Grid.Row="1" Margin="-12,-19,-15,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
                                 <TextBlock Grid.Column="7" Text="Send" FontSize="14" Style="{StaticResource ColLabel}" Grid.Row="1" Margin="-12,-19,-15,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
@@ -739,14 +814,44 @@
                     <!-- log -->
                 </Grid.RowDefinitions>
                 <TabControl Background="#161B27" BorderBrush="#3A425C">
-                    <TabItem Header="Builder">
+                    <!--TabControl.Resources>
+                        <Style TargetType="TabItem">
+                            <Setter Property="HeaderTemplate">
+                                <Setter.Value>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Foreground="White" />
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </TabControl.Resources-->
+                    <TabItem>
+                        <TabItem.Header>
+                            <TextBlock Text="Builder">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}}" Value="False">
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </TabItem.Header>
+
+
                         <Grid Margin="12">
+
+
+
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <StackPanel Grid.Row="0">
                                 <TextBox Text="{Binding TestPlanName}"
+                            
                                          Style="{StaticResource ConfigFieldTextBox}"
                                          Width="260"/>
                                 <WrapPanel Margin="0,10,0,12">
@@ -757,27 +862,82 @@
                                     <Button Content="Down" Command="{Binding MoveStepDownCommand}" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,8"/>
                                     <Button Content="Duplicate" Command="{Binding DuplicatesStepCommand}" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,8"/>
                                     <Button Content="Clear" Command="{Binding ClearBuiltStepCommand}" Style="{StaticResource DangerBtn}" Margin="0,0,8,8"/>
+                                    <Button Content="Send All" Command="{Binding RunBuiltStepsCommand}" Style="{StaticResource SuccessBtn}" Margin="0,0,8,8"/>
                                 </WrapPanel>
                             </StackPanel>
 
                             <DataGrid Grid.Row="1"
-                                      ItemsSource="{Binding BuiltSteps}"
-                                      SelectedItem="{Binding SelectedBuiltStep}"
-                                      AutoGenerateColumns="False"
-                                      CanUserAddRows="False"
-                                      RowBackground="#1E1E1E"
-                                      AlternatingRowBackground="White"
-                                      Foreground="White"
-                                      Background="#1E1E1E"
-                                      BorderThickness="0"
-                                      GridLinesVisibility="Horizontal"
-                                      HorizontalGridLinesBrush="#333">
+                                                              ItemsSource="{Binding BuiltSteps}"
+                                                              SelectedItem="{Binding SelectedBuiltStep}"
+                                                              AutoGenerateColumns="False"
+                                                              CanUserAddRows="False"
+                                                              RowBackground="#1B2230"
+                                                              AlternatingRowBackground="#1B2230"
+                                                              Foreground="White"
+                                                              Background="#1E1E1E"
+                                                              BorderThickness="0"
+                                                              GridLinesVisibility="Horizontal"
+                                                              HorizontalGridLinesBrush="#333"
+                                                              SelectionMode="Single"
+                                                              SelectionUnit="FullRow">
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Background" Value="#1E1E1E"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEnabled}" Value="False">
+                                                <Setter Property="Background" Value="#181818"/>
+                                                <Setter Property="Foreground" Value="#555555"/>
+                                            </DataTrigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#2B3A55"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#2B3A55"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="BorderBrush" Value="#4B638C"/>
+                                                <Setter Property="BorderThickness" Value="1"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="Background" Value="#1E1E1E"/>
+                                        <Setter Property="BorderBrush" Value="#333333"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="#" Binding="{Binding StepNo}" Width="40"/>
+                                    <DataGridTextColumn Header="#" Binding="{Binding StepNo}" Width="40"  />
                                     <DataGridCheckBoxColumn Header="On" Binding="{Binding IsEnabled}" Width="45"/>
                                     <DataGridTextColumn Header="Test Case" Binding="{Binding Label}" Width="*"/>
-                                    <DataGridTextColumn Header="Mode" Binding="{Binding SendMode}" Width="90"/>
-                                    <DataGridTextColumn Header="Int(ms)" Binding="{Binding IntervalMs}" Width="76"/>
+                                    <!--DataGridTextColumn Header="Mode" Binding="{Binding SendMode}" Width="90"/-->
+                                    <DataGridTemplateColumn Header="Mode" Width="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding DataContext.CanSendModes, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                                          SelectedItem="{Binding SendMode, Mode = TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                          Style="{StaticResource BuilderModeComboBox}"
+                                                                          
+                                                                          MinWidth="96"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Int(ms)" Binding="{Binding IntervalMs}" Width="76" />
                                     <DataGridTextColumn Header="Repeat" Binding="{Binding RepeatCount}" Width="60"/>
                                     <DataGridTextColumn Header="Delay" Binding="{Binding DelayBeforeMs}" Width="60"/>
                                     <DataGridTextColumn Header="Timeout" Binding="{Binding TimeoutMs}" Width="70"/>
@@ -785,17 +945,17 @@
                             </DataGrid>
 
                             <Border Grid.RowSpan="2"
-                                    Panel.ZIndex="20"
-                                    Background="#AA000000"
-                                    Visibility="{Binding IsAddTestCasePopupOpen, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                            Panel.ZIndex="20"
+                                                            Background="#AA000000" 
+                                                            Visibility="{Binding IsAddTestCasePopupOpen, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <Border Width="520"
-                                        Padding="16"
-                                        Background="#1A2130"
-                                        BorderBrush="#46506A"
-                                        BorderThickness="1"
-                                        CornerRadius="10"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center">
+                                                                Padding="16"
+                                                                Background="#1A2130"
+                                                                BorderBrush="#46506A"
+                                                                BorderThickness="1"
+                                                                CornerRadius="10"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -805,33 +965,37 @@
                                         <TextBlock Text="Select Testcase" FontSize="16" FontWeight="Bold" Foreground="White"/>
 
                                         <ListBox Grid.Row="1"
-                                                 Margin="0,12,0,12"
-                                                 ItemsSource="{Binding AvailableTestCases}"
-                                                 SelectedItem="{Binding SelectedAvailableTestCase}"
-                                                 Background="#111722"
-                                                 Foreground="White"
-                                                 BorderThickness="0">
+                                                                         Margin="0,12,0,12"
+                                                                         MaxHeight="280"
+                                                                         ItemsSource="{Binding AvailableTestCases}"
+                                                                         SelectedItem="{Binding SelectedAvailableTestCase}"
+                                                                         Background="#111722"
+                                                                         Foreground="White"
+                                                                         BorderThickness="0"
+                                                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                                         ScrollViewer.CanContentScroll="True">
+
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate>
                                                     <Border Margin="0,0,0,8"
-                                                            Padding="10,8"
-                                                            Background="#1E2433"
-                                                            BorderBrush="#37415A"
-                                                            BorderThickness="1"
-                                                            CornerRadius="8">
+                                                                                    Padding="10,8"
+                                                                                    Background="#1E2433"
+                                                                                    BorderBrush="#37415A"
+                                                                                    BorderThickness="1"
+                                                                                    CornerRadius="8">
                                                         <StackPanel>
                                                             <TextBlock Text="{Binding Label}"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="White"/>
+                                                                                               FontWeight="SemiBold"
+                                                                                               Foreground="White"/>
                                                             <TextBlock Text="{Binding Code}"
-                                                                       FontSize="11"
-                                                                       Foreground="#FFD166"
-                                                                       Margin="0,3,0,0"/>
+                                                                                               FontSize="11"
+                                                                                               Foreground="#FFD166"
+                                                                                               Margin="0,3,0,0"/>
                                                             <TextBlock Text="{Binding Description}"
-                                                                       Foreground="#9AA6C8"
-                                                                       FontSize="11"
-                                                                       Margin="0,4,0,0"
-                                                                       TextWrapping="Wrap"/>
+                                                                                               Foreground="#9AA6C8"
+                                                                                               FontSize="11"
+                                                                                               Margin="0,4,0,0"
+                                                                                               TextWrapping="Wrap"/>
                                                         </StackPanel>
                                                     </Border>
                                                 </DataTemplate>
@@ -846,17 +1010,17 @@
 
                             </Border>
                             <Border Grid.RowSpan="2"
-                                    Panel.ZIndex="30"
-                                    Background="#AA000000"
-                                    Visibility="{Binding IsAddConfigPopupOpen, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                            Panel.ZIndex="30"
+                                                            Background="#AA000000"
+                                                            Visibility="{Binding IsAddConfigPopupOpen, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <Border Width="560"
-                                        Padding="16"
-                                        Background="#1A2130"
-                                        BorderBrush="#46506A"
-                                        BorderThickness="1"
-                                        CornerRadius="10"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center">
+                                                                Padding="16"
+                                                                Background="#1A2130"
+                                                                BorderBrush="#46506A"
+                                                                BorderThickness="1"
+                                                                CornerRadius="10"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -865,9 +1029,9 @@
                                         </Grid.RowDefinitions>
 
                                         <TextBlock Text="Add Testcase Config"
-                                                   FontSize="16"
-                                                   FontWeight="Bold"
-                                                   Foreground="White"/>
+                                                                           FontSize="16"
+                                                                           FontWeight="Bold"
+                                                                           Foreground="White"/>
 
                                         <Grid Grid.Row="1" Margin="0,12,0,12">
                                             <Grid.ColumnDefinitions>
@@ -879,15 +1043,16 @@
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
                                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,10">
-                                                <TextBlock Text="Code" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBlock Text="N.o TC" Style="{StaticResource ConfigLabel}"/>
                                                 <TextBox Text="{Binding NewTestCaseCode}" Style="{StaticResource ConfigFieldTextBox}"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
-                                                <TextBlock Text="Label" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBlock Text="Name TC" Style="{StaticResource ConfigLabel}"/>
                                                 <TextBox Text="{Binding NewTestCaseLabel}" Style="{StaticResource ConfigFieldTextBox}"/>
                                             </StackPanel>
 
@@ -897,23 +1062,37 @@
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,10">
-                                                <TextBlock Text="CAN Payload" Style="{StaticResource ConfigLabel}"/>
-                                                <TextBox Text="{Binding NewCanPayload}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                                <TextBlock Text="Position" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewTargetPosition}" Style="{StaticResource ConfigFieldTextBox}"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,10">
-                                                <TextBlock Text="Expected Response" Style="{StaticResource ConfigLabel}"/>
-                                                <TextBox Text="{Binding NewExpectedRespone}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                                <TextBlock Text="Speed" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewTargetSpeed}" Style="{StaticResource ConfigFieldTextBox}"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,12,0">
+                                                <TextBlock Text="Torque" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewTargetTorque}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,0,0,10">
+                                                <TextBlock Text="Kp" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewTargetKp}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="4" Grid.Column="0" Margin="0,0,12,0">
                                                 <TextBlock Text="Timeout (ms)" Style="{StaticResource ConfigLabel}"/>
                                                 <TextBox Text="{Binding NewTimeoutMs}" Style="{StaticResource ConfigFieldTextBox}"/>
                                             </StackPanel>
 
-                                            <StackPanel Grid.Row="3" Grid.Column="1">
+                                            <StackPanel Grid.Row="4" Grid.Column="1">
                                                 <TextBlock Text="Interval (ms)" Style="{StaticResource ConfigLabel}"/>
-                                                <TextBox Text="{Binding NewIntervalMs}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBox Text="{Binding NewIntervalMs}" Style="{StaticResource ConfigFieldTextBox}" Width="120"/>
+                                                    <TextBlock Text="Kd" Style="{StaticResource ConfigLabel}" Margin="12,7,8,0"/>
+                                                    <TextBox Text="{Binding NewTargetKd}" Style="{StaticResource ConfigFieldTextBox}" Width="120"/>
+                                                </StackPanel>
                                             </StackPanel>
                                         </Grid>
 
@@ -925,14 +1104,30 @@
                                 </Border>
                             </Border>
                         </Grid>
+
                     </TabItem>
-                    <TabItem Header="CAN Mode">
+                    <TabItem>
+                        <TabItem.Header>
+                            <TextBlock Text="CAN Mode">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}}" Value="False">
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </TabItem.Header>
+
+
                         <Grid Margin="12">
                             <Border Padding="16"
-                                                        Background="#1A2130"
-                                                        BorderBrush="#46506A"
-                                                        BorderThickness="1"
-                                                        CornerRadius="10">
+                                    Background="#1A2130"
+                                    BorderBrush="#46506A"
+                                    BorderThickness="1" 
+                                    CornerRadius="10">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -992,13 +1187,29 @@
                             </Border>
                         </Grid>
                     </TabItem>
-                    <TabItem Header="Log Results">
+                    <TabItem>
+                        <TabItem.Header>
+                            <TextBlock Text="Log Results">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}}" Value="False">
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </TabItem.Header>
                         <ListBox Margin="12"
-                                                             ItemsSource="{Binding LogEntries}"
-                                                             Background="#1A1A1A"
-                                                             Foreground="#CCCCCC"
-                                                             BorderThickness="0"
-                                                             FontFamily="Consolas"/>
+                                 ItemsSource="{Binding TestResultEntries}"
+                                 MaxHeight="260"
+                                 Background="#1A1A1A"
+                                 Foreground="#CCCCCC"
+                                 BorderThickness="0"
+                                 FontFamily="Consolas"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
                     </TabItem>
                 </TabControl>
                 <!-- Motor State Table -->
@@ -1105,7 +1316,7 @@
                         <StackPanel Grid.Row="1" Margin="14,12,14,12">
 
                             <!-- Row 1: Port device + baud rate -->
-                            <Border Style="{StaticResource ConfigRowCard}">
+                            <!--Border Style="{StaticResource ConfigRowCard}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
@@ -1158,7 +1369,7 @@
                                                VerticalAlignment="Center"
                                                Margin="8,0,0,0"/>
                                 </Grid>
-                            </Border>
+                            </Border-->
 
                             <Border Style="{StaticResource ConfigRowCard}" Margin="0">
                                 <Grid>
@@ -1196,40 +1407,157 @@
                     </Grid>
                 </Border>
 
-                <!-- Log Panel -->
-                <Border Grid.Row="2" Margin="2,2,4,4" Padding="10,8" Style="{StaticResource ConfigRowCard}">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
-                            <TextBlock Text="LOG" Style="{StaticResource ConfigLabel}"
-                                       FontSize="17"
-                                       Foreground="#69DB7C" VerticalAlignment="Center"/>
-                            <Button Content="Clear" Command="{Binding ClearLogCommand}"
-                                    Style="{StaticResource ConfigIconButton}"
-                                    Height="20" Width="44" FontSize="11" Margin="10,-5,9,0"/>
-                        </StackPanel>
-                        <ListBox Grid.Row="1"
-                                 ItemsSource="{Binding LogEntries}"
-                                 Background="Black"
-                                 Foreground="#CCCCCC"
-                                 BorderThickness="0"
-                                 FontFamily="Consolas"
-                                 FontSize="12"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Auto" d:ItemsSource="{d:SampleData ItemCount=5}">
-                            <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem">
-                                    <Setter Property="Padding"          Value="8,2"/>
-                                    <Setter Property="BorderThickness"  Value="0"/>
-                                    <Setter Property="Background"       Value="Transparent"/>
-                                </Style>
-                            </ListBox.ItemContainerStyle>
-                        </ListBox>
-                    </Grid>
-                </Border>
+                <!-- RX Live + LOG tabs -->
+                <TabControl Grid.Row="2" Margin="2,2,4,4"
+                            Background="#161B27"
+                            BorderBrush="#3A425C">
+
+                    <!-- ── RX Live ── -->
+                    <TabItem>
+                        <TabItem.Header>
+                            <TextBlock Text="RX Live">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}}" Value="False">
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </TabItem.Header>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- toolbar -->
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,4,0,4">
+                                <TextBlock Text="RX LIVE"
+                                           Style="{StaticResource ConfigLabel}"
+                                           FontSize="14" Foreground="#74C0FC"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding RxStatusText}"
+                                           FontSize="11" Foreground="#98A6CA"
+                                           VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                <Button Content="Clear"
+                                        Command="{Binding ClearRxCommand}"
+                                        Style="{StaticResource ConfigIconButton}"
+                                        Height="20" Width="44" FontSize="11" Margin="10,0,0,0"/>
+                            </StackPanel>
+
+                            <!-- frame table -->
+                            <DataGrid Grid.Row="1"
+                                      ItemsSource="{Binding RxFrames}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      RowBackground="#1A1F2E"
+                                      AlternatingRowBackground="#1E2435"
+                                      Foreground="#D4D4D4"
+                                      Background="#161B27"
+                                      BorderThickness="0"
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="#2A2F40"
+                                      FontFamily="Consolas"
+                                      FontSize="12">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background"      Value="#1E2435"/>
+                                        <Setter Property="Foreground"      Value="#8899BB"/>
+                                        <Setter Property="Padding"         Value="6,3"/>
+                                        <Setter Property="BorderBrush"     Value="#3A425C"/>
+                                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="Padding"         Value="6,2"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                    </Style>
+                                </DataGrid.CellStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Time"   Binding="{Binding TimeText}"   Width="90"/>
+                                    <DataGridTextColumn Header="CH"     Binding="{Binding Channel}"    Width="38"/>
+                                    <DataGridTemplateColumn Header="Status" Width="70">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding StatusText}" Padding="4,2">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#69DB7C"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Status}" Value="0">
+                                                                    <Setter Property="Foreground" Value="#69DB7C"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="1">
+                                                                    <Setter Property="Foreground" Value="#FF6B6B"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Data (hex)" Binding="{Binding DataHex}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- ── LOG ── -->
+                    <TabItem>
+                        <TabItem.Header>
+                            <TextBlock Text="LOG">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}}" Value="False">
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </TabItem.Header>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,4,0,4">
+                                <TextBlock Text="LOG"
+                                           Style="{StaticResource ConfigLabel}"
+                                           FontSize="14" Foreground="#69DB7C"
+                                           VerticalAlignment="Center"/>
+                                <Button Content="Clear" Command="{Binding ClearLogCommand}"
+                                        Style="{StaticResource ConfigIconButton}"
+                                        Height="20" Width="44" FontSize="11" Margin="10,0,0,0"/>
+                            </StackPanel>
+                            <ListBox Grid.Row="1"
+                                     ItemsSource="{Binding LogEntries}"
+                                     Background="Black"
+                                     Foreground="#CCCCCC"
+                                     BorderThickness="0"
+                                     FontFamily="Consolas"
+                                     FontSize="12"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Padding"         Value="8,2"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Background"      Value="Transparent"/>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                        </Grid>
+                    </TabItem>
+
+                </TabControl>
 
             </Grid>
         </Grid>
