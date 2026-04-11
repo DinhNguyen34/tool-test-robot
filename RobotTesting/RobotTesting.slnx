@@ -24,6 +24,9 @@
     <Project Path="../Modules/ModuleNetwork/ModuleNetwork.csproj" Id="d1b5339e-2f71-4a8c-9d3e-7c8f12e45a01">
       <Platform Solution="*|x64" Project="x64" />
     </Project>
+    <Project Path="../Modules/ModuleTestLed/ModuleTestLed.csproj" Id="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
   </Folder>
   <Project Path="RobotTesting.csproj">
     <Platform Solution="*|x64" Project="x64" />

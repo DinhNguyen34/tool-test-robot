@@ -30,6 +30,11 @@
     <ProjectReference Include="..\Modules\ModuleCover\ModuleCover.csproj" />
     <ProjectReference Include="..\Modules\ModuleNetwork\ModuleNetwork.csproj" />
     <ProjectReference Include="..\ModuleMotor\ModuleMotor.csproj" />
+    <ProjectReference Include="..\Modules\ModuleTestLed\ModuleTestLed.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Modules\ModuleCover\Views\" />
   </ItemGroup>
 
 </Project>
