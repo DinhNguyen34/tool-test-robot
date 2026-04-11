@@ -148,3 +148,6 @@ Thumbs.db
 /ModuleCamera/obj
 /ModuleLidar/bin
 /ModuleLidar/obj
+/RobotTesting/Properties/PublishProfiles/FolderProfile.pubxml
+/RobotTesting/Properties/PublishProfiles/FolderProfile.pubxml.user
+/RobotTesting/RobotTesting.csproj.user
