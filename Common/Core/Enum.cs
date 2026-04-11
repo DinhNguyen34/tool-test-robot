@@ -10,6 +10,7 @@
             Hand,
             LLB,
             Network,
+            Led,
             Camera,
             Lidar
         }

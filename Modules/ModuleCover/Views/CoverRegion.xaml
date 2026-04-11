@@ -32,7 +32,7 @@
                 <DataTemplate DataType="local:TileModel">
                     <Button x:Name="ItemGrid" Content="{Binding Text}" FontSize="18" Background="{Binding TileType, Converter={StaticResource TileTypeToColorConverter}}"
                                Command="{Binding DataContext.OnCommandBtn, 
-                              RelativeSource={RelativeSource AncestorType=ItemsControl}}" Width="260" Height="180"  Margin="15" RenderTransformOrigin="0.5, 0.5" CommandParameter="{Binding TileType}">
+                              RelativeSource={RelativeSource AncestorType=ItemsControl}}" Width="200" Height="160"  Margin="15" RenderTransformOrigin="0.5, 0.5" CommandParameter="{Binding TileType}">
                         <Button.RenderTransform>
                             <TransformGroup>
                                 <ScaleTransform />

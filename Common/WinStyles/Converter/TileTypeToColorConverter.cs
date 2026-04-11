@@ -25,6 +25,7 @@ namespace WinStyles.Converter
                 case TileType.Network: brush.Color = Colors.SaddleBrown; break;
                 case TileType.Camera: brush.Color = Colors.SkyBlue; break;
                 case TileType.Lidar: brush.Color = Colors.Orange; break;
+                case TileType.Led: brush.Color = Colors.Teal; break;
             }
             return brush;
         }

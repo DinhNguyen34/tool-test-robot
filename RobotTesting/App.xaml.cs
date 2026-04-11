@@ -2,6 +2,7 @@
 using ModuleCover;
 using ModuleMotor;
 using ModuleNetwork;
+using ModuleTestLed;
 using Prism.Unity;
 using System.ComponentModel;
 using System.Configuration;
@@ -46,7 +47,6 @@ namespace RobotTesting
             bootstrapper.Run();
 
         }
-
     }
 
 }

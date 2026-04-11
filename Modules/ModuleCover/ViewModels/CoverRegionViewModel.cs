@@ -41,6 +41,9 @@ namespace ModuleCover.ViewModels
                     case TileType.Lidar:
                         _regionManager.RequestNavigate("CoverRegion", "LidarView");
                         break;
+                    case TileType.Led:
+                        _regionManager.RequestNavigate("CoverRegion", "TestLedView");
+                        break;
                 }
             }
             catch (Exception ex)

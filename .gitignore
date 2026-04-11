@@ -137,6 +137,9 @@ Thumbs.db
 /ModuleMotor/obj/Debug/net10.0/ModuleMotor.assets.cache
 /ModuleMotor/obj/Debug/net10.0/ModuleMotor.GeneratedMSBuildEditorConfig.editorconfig
 /ModuleMotor/obj/Debug/net10.0/ModuleMotor.GlobalUsings.g.cs
+/Modules/ModuleTestLed/bin/Debug/net10.0-windows
+/Modules/ModuleTestLed/obj
+*.dll
 /.tmp/vcan-inspector/obj/Debug/net10.0
 /.tmp/vcan-inspector/bin/Debug/net10.0
 /.tmp/vcan-inspector/obj
@@ -151,3 +154,5 @@ Thumbs.db
 /RobotTesting/Properties/PublishProfiles/FolderProfile.pubxml
 /RobotTesting/Properties/PublishProfiles/FolderProfile.pubxml.user
 /RobotTesting/RobotTesting.csproj.user
+/Modules/ModuleTestLed/bin/Debug/net10.0-windows10.0.26100.0
+/Modules/ModuleCover/bin/Debug/net10.0-windows10.0.26100.0
