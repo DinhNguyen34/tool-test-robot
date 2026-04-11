@@ -398,11 +398,11 @@ namespace ModuleTestLed.Models
         private void RunTC4_RandomStress(byte maxVal, Action<string> log)
         {
             var rng = new Random();
-            int maxLeds = Config.MaxLedsPerPort;
 
             for (int i = 0; i < 50; i++)
             {
                 byte port = (byte)rng.Next(0, Config.MaxPorts);
+                int maxLeds = Config.GetLedsForPort(port);
                 var addresses = Enumerable.Range(0, maxLeds)
                     .OrderBy(_ => rng.Next())
                     .Take(10)

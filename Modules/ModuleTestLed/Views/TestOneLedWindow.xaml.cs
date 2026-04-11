@@ -26,7 +26,8 @@ namespace ModuleTestLed.Views
             for (int p = 0; p < config.MaxPorts; p++)
             {
                 var group = new PortLedGroup { PortIndex = p };
-                for (int a = 0; a < config.MaxLedsPerPort; a++)
+                int ledCount = config.GetLedsForPort(p);
+                for (int a = 0; a < ledCount; a++)
                 {
                     group.Leds.Add(new LedItem { Port = p, Address = a });
                 }
