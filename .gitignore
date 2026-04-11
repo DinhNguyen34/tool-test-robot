@@ -137,3 +137,6 @@ Thumbs.db
 /ModuleMotor/obj/Debug/net10.0/ModuleMotor.assets.cache
 /ModuleMotor/obj/Debug/net10.0/ModuleMotor.GeneratedMSBuildEditorConfig.editorconfig
 /ModuleMotor/obj/Debug/net10.0/ModuleMotor.GlobalUsings.g.cs
+/Modules/ModuleTestLed/bin/Debug/net10.0-windows
+/Modules/ModuleTestLed/obj
+*.dll
