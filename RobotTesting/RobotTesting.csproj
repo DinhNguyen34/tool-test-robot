@@ -1,14 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Condition=" '$(EAZFUSCATOR_NET_HOME)' != '' and Exists('$(EAZFUSCATOR_NET_HOME)\Integration\MSBuild\Eazfuscator.NET.targets') " Project="$(EAZFUSCATOR_NET_HOME)\Integration\MSBuild\Eazfuscator.NET.targets" />
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows7.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Robot-32.ico</ApplicationIcon>
     <Platforms>AnyCPU;x64</Platforms>
-    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion>10.0.26100.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Eazfuscator.NET is integrated with this project at MSBuild level: https://help.gapotchenko.com/eazfuscator.net/kb/100036 -->
+    <EazfuscatorIntegration>MSBuild</EazfuscatorIntegration>
+    <EazfuscatorActiveConfiguration>Release</EazfuscatorActiveConfiguration>
+    <EazfuscatorCompatibilityVersion>2025.3</EazfuscatorCompatibilityVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,6 +36,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Common\Core\Core.csproj" />
     <ProjectReference Include="..\Common\WinStyles\WinStyles.csproj" />
+    <ProjectReference Include="..\ModuleCamera\ModuleCamera.csproj" />
     <ProjectReference Include="..\Modules\ModuleCover\ModuleCover.csproj" />
     <ProjectReference Include="..\Modules\ModuleNetwork\ModuleNetwork.csproj" />
     <ProjectReference Include="..\ModuleMotor\ModuleMotor.csproj" />
@@ -35,6 +45,7 @@
 
   <ItemGroup>
     <Folder Include="Modules\ModuleCover\Views\" />
+	<ProjectReference Include="..\ModuleLidar\ModuleLidar.csproj" />
   </ItemGroup>
 
 </Project>

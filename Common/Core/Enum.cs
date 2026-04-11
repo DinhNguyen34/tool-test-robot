@@ -11,5 +11,7 @@
             LLB,
             Network,
             Led,
+            Camera,
+            Lidar
         }
 }

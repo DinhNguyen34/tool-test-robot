@@ -75,5 +75,47 @@ namespace ModuleMotor.Models
             get => _rsCommand;
             set => SetProperty(ref _rsCommand, value);
         }
+
+        private float _targetPosition;
+        public float TargetPosition
+        {
+            get => _targetPosition;
+            set => SetProperty(ref _targetPosition, value);
+        }
+
+        private float _targetSpeed;
+        public float TargetSpeed
+        {
+            get => _targetSpeed;
+            set => SetProperty(ref _targetSpeed, value);
+        }
+
+        private float _targetTorque;
+        public float TargetTorque
+        {
+            get => _targetTorque;
+            set => SetProperty(ref _targetTorque, value);
+        }
+
+        private float _targetKp = 20f;
+        public float TargetKp
+        {
+            get => _targetKp;
+            set => SetProperty(ref _targetKp, value);
+        }
+
+        private float _targetKd = 1f;
+        public float TargetKd
+        {
+            get => _targetKd;
+            set => SetProperty(ref _targetKd, value);
+        }
+
+        private bool _useResolvedProfileMaxSpeed;
+        public bool UseResolvedProfileMaxSpeed
+        {
+            get => _useResolvedProfileMaxSpeed;
+            set => SetProperty(ref _useResolvedProfileMaxSpeed, value);
+        }
     }
 }

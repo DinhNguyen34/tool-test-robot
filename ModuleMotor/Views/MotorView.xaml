@@ -743,9 +743,9 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="En" FontSize="14"   Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,-19,23,0" Grid.RowSpan="2" VerticalAlignment="Top"/>
                                 <TextBlock Grid.Column="1" Text="ID" FontSize="14"   Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-9,-19,70,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
-                                <TextBlock Grid.Column="2" Text="q_cmd" FontSize="14" Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-15,-19,55,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
-                                <TextBlock Grid.Column="3" Text="dq" FontSize="14"   Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-12,-19,50,0" Grid.RowSpan="2" VerticalAlignment="Top"/>
-                                <TextBlock Grid.Column="4" Text="tau" FontSize="14"  Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-12,-19,40,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="2" Text="Position" FontSize="14" Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-15,-19,55,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="3" Text="speed" FontSize="14"   Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-12,-19,50,0" Grid.RowSpan="2" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="4" Text="Torque" FontSize="14"  Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-12,-19,40,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
                                 <TextBlock Grid.Column="5" Text="Kp" FontSize="14"   Style="{StaticResource ColLabel}" Grid.Row="1" Grid.ColumnSpan="2" Margin="-12,-19,40,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
                                 <TextBlock Grid.Column="6" Text="Kd" FontSize="14"   Style="{StaticResource ColLabel}" Grid.Row="1" Margin="-12,-19,-15,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
                                 <TextBlock Grid.Column="7" Text="Send" FontSize="14" Style="{StaticResource ColLabel}" Grid.Row="1" Margin="-12,-19,-15,0" Grid.RowSpan="3" VerticalAlignment="Top"/>
@@ -1043,15 +1043,16 @@
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
                                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,10">
-                                                <TextBlock Text="Code" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBlock Text="N.o TC" Style="{StaticResource ConfigLabel}"/>
                                                 <TextBox Text="{Binding NewTestCaseCode}" Style="{StaticResource ConfigFieldTextBox}"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
-                                                <TextBlock Text="Label" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBlock Text="Name TC" Style="{StaticResource ConfigLabel}"/>
                                                 <TextBox Text="{Binding NewTestCaseLabel}" Style="{StaticResource ConfigFieldTextBox}"/>
                                             </StackPanel>
 
@@ -1061,23 +1062,37 @@
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,10">
-                                                <TextBlock Text="CAN Payload" Style="{StaticResource ConfigLabel}"/>
-                                                <TextBox Text="{Binding NewCanPayload}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                                <TextBlock Text="Position" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewTargetPosition}" Style="{StaticResource ConfigFieldTextBox}"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,10">
-                                                <TextBlock Text="Expected Response" Style="{StaticResource ConfigLabel}"/>
-                                                <TextBox Text="{Binding NewExpectedRespone}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                                <TextBlock Text="Speed" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewTargetSpeed}" Style="{StaticResource ConfigFieldTextBox}"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,12,0">
+                                                <TextBlock Text="Torque" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewTargetTorque}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,0,0,10">
+                                                <TextBlock Text="Kp" Style="{StaticResource ConfigLabel}"/>
+                                                <TextBox Text="{Binding NewTargetKp}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="4" Grid.Column="0" Margin="0,0,12,0">
                                                 <TextBlock Text="Timeout (ms)" Style="{StaticResource ConfigLabel}"/>
                                                 <TextBox Text="{Binding NewTimeoutMs}" Style="{StaticResource ConfigFieldTextBox}"/>
                                             </StackPanel>
 
-                                            <StackPanel Grid.Row="3" Grid.Column="1">
+                                            <StackPanel Grid.Row="4" Grid.Column="1">
                                                 <TextBlock Text="Interval (ms)" Style="{StaticResource ConfigLabel}"/>
-                                                <TextBox Text="{Binding NewIntervalMs}" Style="{StaticResource ConfigFieldTextBox}"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBox Text="{Binding NewIntervalMs}" Style="{StaticResource ConfigFieldTextBox}" Width="120"/>
+                                                    <TextBlock Text="Kd" Style="{StaticResource ConfigLabel}" Margin="12,7,8,0"/>
+                                                    <TextBox Text="{Binding NewTargetKd}" Style="{StaticResource ConfigFieldTextBox}" Width="120"/>
+                                                </StackPanel>
                                             </StackPanel>
                                         </Grid>
 
@@ -1187,11 +1202,14 @@
                             </TextBlock>
                         </TabItem.Header>
                         <ListBox Margin="12"
-                                 ItemsSource="{Binding LogEntries}"
+                                 ItemsSource="{Binding TestResultEntries}"
+                                 MaxHeight="260"
                                  Background="#1A1A1A"
                                  Foreground="#CCCCCC"
                                  BorderThickness="0"
-                                 FontFamily="Consolas"/>
+                                 FontFamily="Consolas"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
                     </TabItem>
                 </TabControl>
                 <!-- Motor State Table -->

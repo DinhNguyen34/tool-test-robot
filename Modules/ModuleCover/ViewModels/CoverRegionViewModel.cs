@@ -35,6 +35,12 @@ namespace ModuleCover.ViewModels
                     case TileType.Network:
                         _regionManager.RequestNavigate("CoverRegion", "NetworkView");
                         break;
+                    case TileType.Camera:
+                        _regionManager.RequestNavigate("CoverRegion", "CameraView");
+                        break;
+                    case TileType.Lidar:
+                        _regionManager.RequestNavigate("CoverRegion", "LidarView");
+                        break;
                     case TileType.Led:
                         _regionManager.RequestNavigate("CoverRegion", "TestLedView");
                         break;

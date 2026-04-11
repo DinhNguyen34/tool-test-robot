@@ -140,3 +140,14 @@ Thumbs.db
 /Modules/ModuleTestLed/bin/Debug/net10.0-windows
 /Modules/ModuleTestLed/obj
 *.dll
+/.tmp/vcan-inspector/obj/Debug/net10.0
+/.tmp/vcan-inspector/bin/Debug/net10.0
+/.tmp/vcan-inspector/obj
+/ModuleCamera/obj/Debug/net10.0-windows/ModuleCamera.designer.deps.json
+/ModuleCamera/obj/Debug/net10.0-windows/Views/CameraView.g.i.cs
+/ModuleCamera/obj/Debug/net10.0-windows/ModuleCamera_MarkupCompile.i.lref
+/ModuleLidar/obj/Debug/net10.0-windows/Views/LidarView.g.i.cs
+/ModuleCamera/bin
+/ModuleCamera/obj
+/ModuleLidar/bin
+/ModuleLidar/obj

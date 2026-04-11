@@ -15,6 +15,7 @@ using System.Security.RightsManagement;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Animation;
@@ -73,6 +74,41 @@ namespace ModuleMotor.ViewModels
         {
             get => _newIntervalMs;
             set => SetProperty(ref _newIntervalMs, value);
+        }
+
+        private float _newTargetPosition;
+        public float NewTargetPosition
+        {
+            get => _newTargetPosition;
+            set => SetProperty(ref _newTargetPosition, value);
+        }
+
+        private float _newTargetSpeed;
+        public float NewTargetSpeed
+        {
+            get => _newTargetSpeed;
+            set => SetProperty(ref _newTargetSpeed, value);
+        }
+
+        private float _newTargetTorque;
+        public float NewTargetTorque
+        {
+            get => _newTargetTorque;
+            set => SetProperty(ref _newTargetTorque, value);
+        }
+
+        private float _newTargetKp = 20f;
+        public float NewTargetKp
+        {
+            get => _newTargetKp;
+            set => SetProperty(ref _newTargetKp, value);
+        }
+
+        private float _newTargetKd = 1f;
+        public float NewTargetKd
+        {
+            get => _newTargetKd;
+            set => SetProperty(ref _newTargetKd, value);
         }
 
         private string _rawCanId = "0x141";
@@ -141,7 +177,8 @@ namespace ModuleMotor.ViewModels
         // ── Live RX ────────────────────────────────────────────────────────────
         public ObservableCollection<RxFrameEntry> RxFrames { get; } = new();
         private CancellationTokenSource? _rxCts;
-        private int _lastRxCount;
+        private int    _lastRxCount;
+        private double _lastRxTime = -1.0;
 
         private string _rxStatusText = "Not receiving";
         public string RxStatusText
@@ -210,7 +247,8 @@ namespace ModuleMotor.ViewModels
         }
 
         // ── Log ────────────────────────────────────────────────────────────────
-        public ObservableCollection<string> LogEntries { get; } = new();
+        public ObservableCollection<string> LogEntries       { get; } = new();
+        public ObservableCollection<string> TestResultEntries { get; } = new();
         private bool _isLogging;
         private StreamWriter? _logWriter;
 
@@ -271,7 +309,7 @@ namespace ModuleMotor.ViewModels
         public DelegateCommand SaveConfigCommand { get; }
         public DelegateCommand ClearLogCommand { get; }
         public DelegateCommand GoBackCommand { get; }
-        public DelegateCommand RefreshPortsCommand { get; }
+        public DelegateCommand? RefreshPortsCommand { get; }
         public DelegateCommand<MotorChannelModel> SendMotorCommand { get; }
         public DelegateCommand SendAllMotorsCommand { get; }
         public DelegateCommand OpenAddTestCaseCommand { get; }
@@ -316,7 +354,7 @@ namespace ModuleMotor.ViewModels
                 ("Set Zero Mechanical",  RsCommandType.SetZero),
                 ("Max Position",         RsCommandType.Control),
                 ("Min Position",         RsCommandType.Control),
-                ("Get State Motor",      RsCommandType.None),
+                ("Get State Motor",      RsCommandType.Enable),
                 ("Max Speed",            RsCommandType.Control),
             };
             for (int i = 0; i < tcDefs.Length; i++)
@@ -332,7 +370,27 @@ namespace ModuleMotor.ViewModels
                     DefaultSendMode = CanSendMode.SendOnce,
                     IsbuiltIn = true,
                     RsCommand = tcDefs[i].Cmd,
+                    TargetTorque = 0f,
+                    TargetPosition = 0f,
+                    TargetSpeed = 0f,
+                    TargetKp = (float)Config.DefaultKp,
+                    TargetKd = (float)Config.DefaultKd,
                 };
+
+                switch (tc.Label)
+                {
+                    case "Max Position":
+                        tc.TargetPosition = 12.57f;
+                        break;
+                    case "Min Position":
+                        tc.TargetPosition = -12.57f;
+                        break;
+                    case "Max Speed":
+                        tc.UseResolvedProfileMaxSpeed = true;
+                        tc.TargetKp = 0;
+                        break;
+                }
+
                 AvailableTestCases.Add(tc);
                 if (i < 4)
                     QuickLibraryTestCases.Add(tc);
@@ -391,7 +449,7 @@ namespace ModuleMotor.ViewModels
             SendAllMotorsCommand = new DelegateCommand(OnSendAllMotors);
             SaveNewConfigCommand = new DelegateCommand(SaveNewConfig);
             SendRawFrameCommand = new DelegateCommand(OnSendRawFrame);
-            ClearRxCommand      = new DelegateCommand(() => { RxFrames.Clear(); _lastRxCount = 0; });
+            ClearRxCommand      = new DelegateCommand(() => { RxFrames.Clear(); _lastRxCount = 0; _lastRxTime = -1.0; });
 
             //RefreshPorts();
             SelectedCanBitrate = Config.CanBitrateKbps > 0 ? Config.CanBitrateKbps : 1000;
@@ -461,7 +519,7 @@ namespace ModuleMotor.ViewModels
                     }
                     try
                     {
-                        TryRunRealTestCase(step.TestCaseNumber, step.Label);
+                        await TryRunRealTestCaseAsync(step.TestCaseNumber, step.Label);
                         if (step.SendMode == CanSendMode.Continuous && i < repeat - 1)
                             await Task.Delay(Math.Max(1, step.IntervalMs));
                     }
@@ -514,7 +572,7 @@ namespace ModuleMotor.ViewModels
             }
         }
         // ── Test cases ─────────────────────────────────────────────────────────
-        private void OnRunTestCase(int number, string label)
+        private async void OnRunTestCase(int number, string label)
         {
             if (!IsConnected)
             {
@@ -524,7 +582,7 @@ namespace ModuleMotor.ViewModels
 
             try
             {
-                if (TryRunRealTestCase(number, label))
+                if (await TryRunRealTestCaseAsync(number, label))
                     return;
 
                 AppendLog($"[TC{number} {label}] No RS command mapped for this test case.");
@@ -544,7 +602,7 @@ namespace ModuleMotor.ViewModels
             string result = success ? "OK" : "FAIL";
 
             AppendLog($"[TC{number} {label}] RECV  {rxFrame}");
-            AppendLog($"[TC{number} {label}] RESULT → {result}");
+            AppendResult($"[TC{number} {label}] RESULT → {result}");
             LogHelper.Debug($"TC{number} RX: {rxFrame}  Result={result}");
         }
 
@@ -658,16 +716,18 @@ namespace ModuleMotor.ViewModels
             return true;
         }
 
-        private bool TryRunRealTestCase(int number, string label)
+        private async Task<bool> TryRunRealTestCaseAsync(int number, string label)
         {
             var def = AvailableTestCases.FirstOrDefault(tc => tc.Number == number);
             if (def == null) return false;
+
+            if (def.RsCommand == RsCommandType.GetId)
+                return await ScanAllMotorIdsAsync(number, label);
 
             var (canId, payload) = BuildRsFrame(def);
             if (canId == null) return false;
 
             var txFrame = FormatCanFrame(canId, payload!);
-            var rxCountBefore = Model.GetCanMessages().Count;
 
             if (!Model.SendMessage(canId, payload!, out var sendMessage))
             {
@@ -677,10 +737,77 @@ namespace ModuleMotor.ViewModels
 
             AppendLog($"[TC{number} {label}] SEND  {txFrame}");
             LogHelper.Debug($"TC{number} TX: {txFrame}");
-
-            var success = AppendReceivedCanFrames($"TC{number} {label}", rxCountBefore);
-            AppendLog($"[TC{number} {label}] RESULT -> {(success.HasValue ? (success.Value ? "OK" : "FAIL") : "NO RESPONSE")}");
             return true;
+        }
+
+        private async Task<bool> ScanAllMotorIdsAsync(int number, string label)
+        {
+            AppendLog($"[TC{number} {label}] SCAN START 0x01 -> 0x7F");
+
+            var discovered = new HashSet<byte>();
+            var snapshot = Model.GetCanMessages();
+            var lastSeenTime = snapshot.Count > 0 ? snapshot.Max(m => m.time) : -1.0;
+
+            for (byte id = 0x01; id <= 0x7F; id++)
+            {
+                var (canId, payload) = RsMotorControl.GetIdMotor(id);
+                if (!Model.SendMessage(canId, payload, out var sendMessage))
+                {
+                    AppendLog($"[TC{number} {label}] SEND ERROR - ID 0x{id:X2}: {sendMessage}");
+                    continue;
+                }
+
+                await Task.Delay(2);
+                lastSeenTime = DrainScanResponses(lastSeenTime, discovered, number, label);
+            }
+
+            await Task.Delay(30);
+            lastSeenTime = DrainScanResponses(lastSeenTime, discovered, number, label);
+
+            if (discovered.Count == 0)
+            {
+                AppendLog($"[TC{number} {label}] SCAN DONE - no motor responded.");
+            }
+            else
+            {
+                var ids = string.Join(", ", discovered.OrderBy(id => id).Select(id => $"0x{id:X2}"));
+                AppendLog($"[TC{number} {label}] SCAN DONE - found: {ids}");
+            }
+
+            return true;
+        }
+
+        private double DrainScanResponses(double lastSeenTime, ISet<byte> discovered, int number, string label)
+        {
+            var newFrames = Model.GetCanMessages()
+                .Where(m => m.status == 0 && m.time > lastSeenTime)
+                .OrderBy(m => m.time)
+                .ToList();
+
+            if (newFrames.Count == 0)
+                return lastSeenTime;
+
+            foreach (var raw in newFrames)
+            {
+                var entry = new RxFrameEntry
+                {
+                    Timestamp = DateTime.Now,
+                    Channel = raw.ch,
+                    Status = raw.status,
+                    Data = raw.data ?? Array.Empty<byte>()
+                };
+
+                if (entry.MotorId is not byte motorId)
+                    continue;
+
+                if (!discovered.Add(motorId))
+                    continue;
+
+                var profile = RsMotorProfileMap.Resolve(motorId);
+                AppendLog($"[TC{number} {label}] FOUND ID=0x{motorId:X2} | Profile={profile.Name} | CH={entry.Channel}");
+            }
+
+            return newFrames.Max(m => m.time);
         }
 
         private (string? CanId, byte[]? Payload) BuildRsFrame(TestCaseDefinition def)
@@ -691,12 +818,24 @@ namespace ModuleMotor.ViewModels
                 RsCommandType.Enable  => RsMotorControl.EnableMotor(DeviceId),
                 RsCommandType.Disable => RsMotorControl.DisableMotor(DeviceId),
                 RsCommandType.SetZero => RsMotorControl.SetZeroPosition(DeviceId),
-                RsCommandType.Control => RsMotorControl.ControlMotor(
-                    DeviceId, RsMotorControl.Motor6,   // default profile — wire to Config later
-                    torque: 06, position: 0, speed: 0,
-                    kp: (float)Config.DefaultKp, kd: (float)Config.DefaultKd),
+                RsCommandType.Control => BuildControlFrame(def),
                 _ => (null, null)
             };
+        }
+
+        private (string CanId, byte[] Payload) BuildControlFrame(TestCaseDefinition def)
+        {
+            var profile = RsMotorProfileMap.Resolve(DeviceId);
+            var speed = def.UseResolvedProfileMaxSpeed ? profile.VMax : def.TargetSpeed;
+
+            return RsMotorControl.ControlMotor(
+                DeviceId,
+                profile,
+                torque: def.TargetTorque,
+                position: def.TargetPosition,
+                speed: speed,
+                kp: def.TargetKp,
+                kd: def.TargetKd);
         }
 
         private bool TrySendMotorFrame(MotorChannelModel m)
@@ -709,7 +848,6 @@ namespace ModuleMotor.ViewModels
                 kp:       (float)m.Kp,
                 kd:       (float)m.Kd);
             var frame = FormatCanFrame(canId, payload);
-            var rxCountBefore = Model.GetCanMessages().Count;
 
             if (!Model.SendMessage(canId, payload, out var sendMessage))
             {
@@ -719,14 +857,12 @@ namespace ModuleMotor.ViewModels
 
             AppendLog($"[{m.Label}] SEND  {frame}");
             LogHelper.Debug($"{m.Label} TX: {frame}");
-            AppendReceivedCanFrames(m.Label, rxCountBefore, m);
             return true;
         }
 
         private bool TrySendAllMotors()
         {
             int sent = 0;
-            var rxCountBefore = Model.GetCanMessages().Count;
 
             foreach (var motor in Motors)
             {
@@ -753,7 +889,6 @@ namespace ModuleMotor.ViewModels
             }
 
             AppendLog($"[SendAll] {sent} motor(s) sent.");
-            AppendReceivedCanFrames("SendAll", rxCountBefore);
             return true;
         }
 
@@ -778,54 +913,15 @@ namespace ModuleMotor.ViewModels
 
         private byte DeviceId => RsMotorControl.ParseDeviceId(Config.MotorId);
 
-        private (string CanId, byte[] Payload) EnableMotor()   => RsMotorControl.EnableMotor(DeviceId);
-        private (string CanId, byte[] Payload) DisableMotor()  => RsMotorControl.DisableMotor(DeviceId);
-        private (string CanId, byte[] Payload) SetZeroPos()    => RsMotorControl.SetZeroPosition(DeviceId);
+        //private (string CanId, byte[] Payload) EnableMotor()   => RsMotorControl.EnableMotor(DeviceId);
+        //private (string CanId, byte[] Payload) DisableMotor()  => RsMotorControl.DisableMotor(DeviceId);
+        //private (string CanId, byte[] Payload) SetZeroPos()    => RsMotorControl.SetZeroPosition(DeviceId);
 
         private static string FormatCanFrame(string canId, byte[] payload)
         {
             return $"ID={canId}  DLC={payload.Length}  Data=[{string.Join(" ", payload.Select(b => b.ToString("X2")))}]";
         }
 
-        private bool? AppendReceivedCanFrames(string context, int previousCount,
-                                               MotorChannelModel? motor = null)
-        {
-            Thread.Sleep(20);
-            var messages = Model.GetCanMessages();
-            if (messages.Count <= previousCount)
-            {
-                AppendLog($"[{context}] RECV  no response captured.");
-                return null;
-            }
-
-            bool? latestSuccess = null;
-            foreach (var frame in messages.Skip(previousCount))
-            {
-                var payload = frame.data ?? Array.Empty<byte>();
-                latestSuccess = frame.status == 0;
-
-                if (motor != null && payload.Length >= 8)
-                {
-                    var fb = RsMotorControl.DecodeFeedback(motor.DeviceId, payload, motor.Profile);
-                    motor.Q           = Math.Round(fb.Angle,       4);
-                    motor.Dq          = Math.Round(fb.Speed,       4);
-                    motor.Tau         = Math.Round(fb.Torque,      4);
-                    motor.Temperature = Math.Round(fb.Temperature, 2);
-
-                    AppendLog($"[{context}] RECV  Motor {motor.Label} | " +
-                              $"Angle={fb.Angle:F4} rad  Speed={fb.Speed:F4} rad/s  " +
-                              $"Torque={fb.Torque:F4} Nm  Temp={fb.Temperature:F1}°C  " +
-                              $"Status={frame.status:X2}");
-                }
-                else
-                {
-                    AppendLog($"[{context}] RECV  Status={frame.status:X2}  " +
-                              $"Data=[{string.Join(" ", payload.Select(b => b.ToString("X2")))}]");
-                }
-            }
-
-            return latestSuccess;
-        }
 
         private void OnSendRawFrame()
         {
@@ -851,7 +947,6 @@ namespace ModuleMotor.ViewModels
                 return;
             }
 
-            var rxCountBefore = Model.GetCanMessages().Count;
             if (!Model.SendMessage(canId, payload, out var sendMessage))
             {
                 RawSendStatus = sendMessage;
@@ -862,11 +957,7 @@ namespace ModuleMotor.ViewModels
             var frame = FormatCanFrame(canId, payload);
             AppendLog($"[RawFrame] SEND  {frame}");
             LogHelper.Debug($"Raw TX: {frame}");
-
-            var success = AppendReceivedCanFrames("RawFrame", rxCountBefore);
-            RawSendStatus = success.HasValue
-                ? (success.Value ? "Frame sent. Response status OK." : "Frame sent. Response status indicates fail.")
-                : "Frame sent. No response captured.";
+            RawSendStatus = "Frame sent.";
         }
 
         private static bool TryParseRawPayload(string? input, out byte[] payload, out string error)
@@ -929,11 +1020,16 @@ namespace ModuleMotor.ViewModels
             NewTimeoutMs = 1000;
             NewDefaultSendMode = CanSendMode.SendOnce;
             NewIntervalMs = 2;
+            NewTargetPosition = 0f;
+            NewTargetSpeed = 0f;
+            NewTargetTorque = 0f;
+            NewTargetKp = (float)Config.DefaultKp;
+            NewTargetKd = (float)Config.DefaultKd;
         }
 
         private void SaveNewConfig()
         {
-            if (string.IsNullOrWhiteSpace(NewTestCaseCode))
+            if (string.IsNullOrWhiteSpace(NewTestCaseDescription))
                 return;
             var nextNumber = AvailableTestCases.Count == 0
                 ? 1
@@ -944,12 +1040,18 @@ namespace ModuleMotor.ViewModels
                 Code = string.IsNullOrWhiteSpace(NewTestCaseCode) ? $"TC{nextNumber:000}" : NewTestCaseCode,
                 Label = NewTestCaseLabel.Trim(),
                 Description = NewTestCaseDescription.Trim(),
-                CanPayLoad = NewCanPayload.Trim(),
-                ExpectedRespone = NewExpectedRespone.Trim(),
+                CanPayLoad = string.Empty,
+                ExpectedRespone = string.Empty,
                 TimeoutMs = NewTimeoutMs,
                 DefaultSendMode = NewDefaultSendMode,
                 IntervalMs = NewIntervalMs,
-                IsbuiltIn = false
+                IsbuiltIn = false,
+                RsCommand = RsCommandType.Control,
+                TargetPosition = NewTargetPosition,
+                TargetSpeed = NewTargetSpeed,
+                TargetTorque = NewTargetTorque,
+                TargetKp = NewTargetKp,
+                TargetKd = NewTargetKd
             };
             AvailableTestCases.Add(testCase);
             SelectedAvailableTestCase = testCase;
@@ -1080,6 +1182,12 @@ namespace ModuleMotor.ViewModels
             for (int i = 0; i < BuiltSteps.Count; i++)
                 BuiltSteps[i].StepNo = i + 1;
         }
+        public void AppendResult(string message)
+        {
+            var entry = $"[{DateTime.Now:HH:mm:ss.fff}]  {message}";
+            TestResultEntries.Insert(0, entry);
+        }
+
         public void AppendLog(string message)
         {
             var entry = $"[{DateTime.Now:HH:mm:ss.fff}]  {message}";
@@ -1097,6 +1205,7 @@ namespace ModuleMotor.ViewModels
         {
             StopRxLoop();
             _lastRxCount = 0;
+            _lastRxTime  = -1.0;
             _rxCts = new CancellationTokenSource();
             Task.Run(() => RxLoopAsync(_rxCts.Token));
             RxStatusText = "Receiving…";
@@ -1118,34 +1227,42 @@ namespace ModuleMotor.ViewModels
                 try
                 {
                     var messages = Model.GetCanMessages();
-                    if (messages.Count > _lastRxCount)
+                    // Use time-based filtering so we work correctly with both
+                    // accumulating lists and fixed-size rolling buffers.
+                    var newFrames = messages
+                        .Where(m => m.time > _lastRxTime)
+                        .ToList();
+                    if (newFrames.Count > 0)
                     {
-                        var newFrames = messages.Skip(_lastRxCount).ToList();
-                        _lastRxCount  = messages.Count;
+                        _lastRxTime  = newFrames.Max(m => m.time);
+                        _lastRxCount = messages.Count;
 
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             foreach (var raw in newFrames)
                             {
-                                var payload = raw.data ?? Array.Empty<byte>();
+                                if (raw.status != 0)
+                                    continue;
+
                                 var entry = new RxFrameEntry
                                 {
                                     Timestamp = DateTime.Now,
                                     Channel   = raw.ch,
                                     Status    = raw.status,
-                                    Data      = payload
+                                    Data      = raw.data ?? Array.Empty<byte>()
                                 };
+                                var payload = entry.PayloadData;
 
                                 RxFrames.Insert(0, entry);
                                 if (RxFrames.Count > 1000)
                                     RxFrames.RemoveAt(RxFrames.Count - 1);
 
-                                if (payload.Length >= 8)
+                                if (entry.MotorId is byte motorId && payload.Length >= 8)
                                 {
                                     // Motor ID is from context — match by channel (ch = DeviceId)
-                                    var motor = Motors.FirstOrDefault(m => m.DeviceId == raw.ch);
-                                    var profile = motor?.Profile ?? RsMotorControl.Motor4;
-                                    var fb = RsMotorControl.DecodeFeedback((byte)raw.ch, payload, profile);
+                                    var motor = Motors.FirstOrDefault(m => m.DeviceId == motorId);
+                                    var profile = motor?.Profile ?? RsMotorProfileMap.Resolve(motorId);
+                                    var fb = RsMotorControl.DecodeFeedback(motorId, payload, profile);
 
                                     if (motor != null)
                                     {
@@ -1155,14 +1272,14 @@ namespace ModuleMotor.ViewModels
                                         motor.Temperature = Math.Round(fb.Temperature, 2);
                                     }
 
-                                    AppendLog($"[RX] Motor {fb.MotorId:D2} | CH={raw.ch} | " +
+                                    AppendLog($"[RX] {entry.CanIdText} | CH={entry.Channel} | " +
                                               $"Angle={fb.Angle:F4} rad  Speed={fb.Speed:F4} rad/s  " +
-                                              $"Torque={fb.Torque:F4} Nm  Temp={fb.Temperature:F1}°C  " +
-                                              $"Status={raw.status:X2}");
+                                              $"Torque={fb.Torque:F4} Nm  Temp={fb.Temperature:F1}°C");
+                                    //AppendLog($"[RY] {entry.DataLight}");
                                 }
                                 else
                                 {
-                                    AppendLog($"[RX] CH={raw.ch} {entry.StatusText}  {entry.DataHex}");
+                                    AppendLog($"[RX] CH={entry.Channel}  {entry.CanIdText}  {entry.DataHex}");
                                 }
                             }
 
