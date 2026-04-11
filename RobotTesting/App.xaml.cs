@@ -47,21 +47,6 @@ namespace RobotTesting
             bootstrapper.Run();
 
         }
-
-        protected override void ConfigureModuleCatalog(IModuleCatalog moduleCatalog)
-        {
-            //base.ConfigureModuleCatalog(moduleCatalog);
-            moduleCatalog.AddModule<ModuleCoverModule>();
-            moduleCatalog.AddModule<ModuleMotorModule>();
-            moduleCatalog.AddModule<ModuleNetworkModule>();
-            moduleCatalog.AddModule<ModuleTestLedModule>();
-            // Log các module đã tìm thấy
-            LogHelper.Debug("=== Modules Found ===");
-            foreach (var module in moduleCatalog.Modules)
-            {
-                LogHelper.Debug($"Module: {module.ModuleName} - {module.State}");
-            }
-        }
     }
 
 }

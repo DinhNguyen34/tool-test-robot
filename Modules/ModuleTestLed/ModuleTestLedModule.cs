@@ -13,6 +13,7 @@ namespace ModuleTestLed
 
         public void RegisterTypes(IContainerRegistry containerRegistry)
         {
+            containerRegistry.RegisterForNavigation<TestLedView>();
         }
     }
 }

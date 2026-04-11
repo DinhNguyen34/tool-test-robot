@@ -19,7 +19,7 @@
     <EazfuscatorActiveConfiguration>Release</EazfuscatorActiveConfiguration>
     <EazfuscatorCompatibilityVersion>2025.3</EazfuscatorCompatibilityVersion>
   </PropertyGroup>
-
+ 
   <ItemGroup>
     <Content Include="Robot-32.ico" />
   </ItemGroup>
