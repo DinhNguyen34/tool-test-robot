@@ -127,10 +127,10 @@ namespace ModuleTestLed.Models
         #region CAN Send
 
         /// <summary>
-        /// CAN FD max data = 64 bytes. SendControlLed format: [port(1), addr...(N), R, G, B, W(4)].
-        /// Max LED addresses per single CAN FD message = 64 - 1 - 4 = 59.
+        /// CAN FD max data = 64 bytes. New format: [CMD(1), len(1), port(1), addr...(N), R, G, B, W(4)].
+        /// Max LED addresses per single CAN FD message = 64 - 2 - 1 - 4 = 57.
         /// </summary>
-        private const int MaxLedsPerCanFdMessage = 59;
+        private const int MaxLedsPerCanFdMessage = 57;
 
         /// <summary>
         /// Valid CAN FD data lengths (DLC). Lengths 0-8 are always valid;
@@ -162,19 +162,23 @@ namespace ModuleTestLed.Models
 
         /// <summary>
         /// CMD Control All: control all LEDs of a port.
-        /// Data = [port, R, G, B, W]
+        /// Data = [CMD(0x00), len, port, R, G, B, W]
         /// </summary>
         private bool SendControlAll(byte port, byte r, byte g, byte b, byte w)
         {
-            byte[] data = { port, r, g, b, w };
-            return SendCanMessage(Config.CmdControlAll, data);
+            byte[] payload = [port, r, g, b, w];
+            byte[] data = new byte[2 + payload.Length];
+            data[0] = (byte)Config.CmdControlAll;
+            data[1] = (byte)payload.Length;
+            Array.Copy(payload, 0, data, 2, payload.Length);
+            return SendCanMessage(Config.MessageId, data);
         }
 
         /// <summary>
         /// CMD Control Led: control specific LEDs on a port.
-        /// Data = [port, addr1..addrN, R, G, B, W]
-        /// Automatically splits into multiple CAN FD messages (max 59 addresses each)
-        /// with 20ms delay between messages when ledAddresses.Length > 59.
+        /// Data = [CMD(0x01), len, port, addr1..addrN, R, G, B, W]
+        /// Automatically splits into multiple CAN FD messages (max 57 addresses each)
+        /// with 100ms delay between messages when ledAddresses.Length > 57.
         /// </summary>
         private bool SendControlLed(byte port, byte[] ledAddresses, byte r, byte g, byte b, byte w)
         {
@@ -199,15 +203,20 @@ namespace ModuleTestLed.Models
 
         private bool SendControlLedSingle(byte port, byte[] ledAddresses, byte r, byte g, byte b, byte w)
         {
-            byte[] data = new byte[1 + ledAddresses.Length + 4];
-            data[0] = port;
-            Array.Copy(ledAddresses, 0, data, 1, ledAddresses.Length);
+            byte[] payload = new byte[1 + ledAddresses.Length + 4];
+            payload[0] = port;
+            Array.Copy(ledAddresses, 0, payload, 1, ledAddresses.Length);
             int offset = 1 + ledAddresses.Length;
-            data[offset] = r;
-            data[offset + 1] = g;
-            data[offset + 2] = b;
-            data[offset + 3] = w;
-            return SendCanMessage(Config.CmdControlLed, data);
+            payload[offset] = r;
+            payload[offset + 1] = g;
+            payload[offset + 2] = b;
+            payload[offset + 3] = w;
+
+            byte[] data = new byte[2 + payload.Length];
+            data[0] = (byte)Config.CmdControlLed;
+            data[1] = (byte)payload.Length;
+            Array.Copy(payload, 0, data, 2, payload.Length);
+            return SendCanMessage(Config.MessageId, data);
         }
 
         /// <summary>
@@ -359,6 +368,7 @@ namespace ModuleTestLed.Models
 
             log("TC1: Turning all LEDs OFF...");
             TurnOffAll();
+            Thread.Sleep(2000);
         }
 
         private void RunTC2_PerPortSequential(byte maxVal, Action<string> log)
@@ -372,6 +382,7 @@ namespace ModuleTestLed.Models
 
             log("TC2: Turning all LEDs OFF...");
             TurnOffAll();
+            Thread.Sleep(2000);
         }
 
         private void RunTC3_RgbwCycle(int port, byte maxVal, Action<string> log)

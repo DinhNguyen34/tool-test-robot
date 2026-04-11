@@ -5,6 +5,7 @@ namespace ModuleTestLed.Models
 {
     public class LedConfig
     {
+        public uint MessageId { get; set; } = 0x01;
         public uint CmdControlAll { get; set; } = 0x00;
         public uint CmdControlLed { get; set; } = 0x01;
         public int MaxPorts { get; set; } = 7;

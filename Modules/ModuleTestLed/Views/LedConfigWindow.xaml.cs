@@ -20,6 +20,7 @@ namespace ModuleTestLed.Views
             InitializeComponent();
             _config = config;
 
+            TxtMessageId.Text = $"0x{config.MessageId:X2}";
             TxtCmdAll.Text = $"0x{config.CmdControlAll:X2}";
             TxtCmdLed.Text = $"0x{config.CmdControlLed:X2}";
             TxtMaxPorts.Text = config.MaxPorts.ToString();
@@ -67,6 +68,9 @@ namespace ModuleTestLed.Views
 
         private void OnSave(object sender, RoutedEventArgs e)
         {
+            if (TryParseHex(TxtMessageId.Text, out uint msgId))
+                _config.MessageId = msgId;
+
             if (TryParseHex(TxtCmdAll.Text, out uint cmdAll))
                 _config.CmdControlAll = cmdAll;
 
