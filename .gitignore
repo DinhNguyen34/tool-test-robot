@@ -140,3 +140,4 @@ Thumbs.db
 /.tmp/vcan-inspector/obj/Debug/net10.0
 /.tmp/vcan-inspector/bin/Debug/net10.0
 /.tmp/vcan-inspector/obj
+*.png
