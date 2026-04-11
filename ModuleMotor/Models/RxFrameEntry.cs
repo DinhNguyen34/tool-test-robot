@@ -75,8 +75,7 @@ namespace ModuleMotor.Models
                 if (DecodedRawId is not uint rawId)
                     return "--";
 
-                RsMotorControl.DecodeCanId(rawId, out var motorId, out var commMode, out var operationMode);
-                return $"ID=0x{motorId:X2} CM={commMode} OP={operationMode}";
+                return $"ID=0x{(rawId & 0x1FFF_FFFF):X}";
             }
         }
 

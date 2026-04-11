@@ -613,30 +613,30 @@
                             </ListBox.ItemTemplate-->
 
                             <UniformGrid Rows="4" Columns="2">
-                                <Button Content="Get Device ID" Style="{StaticResource TestCaseBtn}"
+                                <Button Content="{Binding TestCases[0].Label}" Style="{StaticResource TestCaseBtn}"
                                     Command="{Binding TestCases[0].Command}"
-                                    Background="#1F6FEB" BorderBrush="#0D3B66"/>
-                                <Button Content="Motor Enabled" Style="{StaticResource TestCaseBtn}"
+                                    Background="DodgerBlue" BorderBrush="DodgerBlue"/>
+                                <Button Content="{Binding TestCases[1].Label}" Style="{StaticResource TestCaseBtn}"
                                     Command="{Binding TestCases[1].Command}"
-                                    Background="#2EA043" BorderBrush="#1B7F37"/>
-                                <Button Content="Motor Stop" Style="{StaticResource TestCaseBtn}"
+                                    Background="DodgerBlue" BorderBrush="#0D3B66"/>
+                                <Button Content="{Binding TestCases[2].Label}" Style="{StaticResource TestCaseBtn}"
                                     Command="{Binding TestCases[2].Command}"
-                                    Background="#BF8700" BorderBrush="#9A6700"/>
-                                <Button Content="Set Zero Mechanical" Style="{StaticResource TestCaseBtn}"
+                                    Background="IndianRed" BorderBrush="PaleVioletRed"/>
+                                <Button Content="{Binding TestCases[3].Label}" Style="{StaticResource TestCaseBtn}"
                                     Command="{Binding TestCases[3].Command}"
-                                    Background="#1F6FEB" BorderBrush="#0D3B66"/>
-                                <Button Content="Max Position" Style="{StaticResource TestCaseBtn}"
+                                    Background="DodgerBlue" BorderBrush="#0D3B66"/>
+                                <Button Content="{Binding TestCases[4].Label}" Style="{StaticResource TestCaseBtn}"
                                     Command="{Binding TestCases[4].Command}"
-                                    Background="#2EA043" BorderBrush="#1B7F37"/>
-                                <Button Content="Min Position" Style="{StaticResource TestCaseBtn}"
+                                    Background="DodgerBlue" BorderBrush="#0D3B66"/>
+                                <Button Content="{Binding TestCases[5].Label}" Style="{StaticResource TestCaseBtn}"
                                     Command="{Binding TestCases[5].Command}"
-                                    Background="#BF8700" BorderBrush="#9A6700"/>
-                                <Button Content="Get State Motor" Style="{StaticResource TestCaseBtn}"
+                                    Background="DodgerBlue" BorderBrush="#0D3B66"/>
+                                <Button Content="{Binding TestCases[6].Label}" Style="{StaticResource TestCaseBtn}"
                                     Command="{Binding TestCases[6].Command}"
-                                    Background="#2EA043" BorderBrush="#1B7F37"/>
-                                <Button Content="Max Speed" Style="{StaticResource TestCaseBtn}"
+                                    Background="DodgerBlue" BorderBrush="#0D3B66"/>
+                                <Button Content="{Binding TestCases[7].Label}" Style="{StaticResource TestCaseBtn}"
                                     Command="{Binding TestCases[7].Command}"
-                                    Background="#BF8700" BorderBrush="#9A6700"/>
+                                    Background="DodgerBlue" BorderBrush="#0D3B66"/>
                             </UniformGrid>
                         </StackPanel>
 
@@ -1376,22 +1376,30 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="1.35*"/>
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0" Margin="0,0,14,0">
+                                        <TextBlock Text="Protocol" Style="{StaticResource ConfigLabel}"/>
+                                        <ComboBox ItemsSource="{Binding SupportedProtocols}"
+                                                  SelectedItem="{Binding SelectedProtocol}"
+                                                  Style="{StaticResource ConfigFieldComboBox}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Margin="0,0,14,0">
                                         <TextBlock Text="Motor ID" Style="{StaticResource ConfigLabel}"/>
                                         <TextBox Text="{Binding Config.MotorId, UpdateSourceTrigger=PropertyChanged}"
                                                  Style="{StaticResource ConfigFieldTextBox}"/>
                                     </StackPanel>
 
-                                    <StackPanel Grid.Column="1" Margin="0,0,14,0">
+                                    <StackPanel Grid.Column="2" Margin="0,0,14,0">
                                         <TextBlock Text="Net Port" Style="{StaticResource ConfigLabel}"/>
                                         <TextBox Text="{Binding Config.Port, UpdateSourceTrigger=PropertyChanged}"
                                                  Style="{StaticResource ConfigFieldTextBox}"/>
                                     </StackPanel>
 
-                                    <StackPanel Grid.Column="2">
+                                    <StackPanel Grid.Column="3">
                                         <TextBlock Text="Log File" Style="{StaticResource ConfigLabel}"/>
                                         <TextBox Text="{Binding Config.LogFile, UpdateSourceTrigger=PropertyChanged}"
                                                  Style="{StaticResource ConfigFieldTextBox}"/>

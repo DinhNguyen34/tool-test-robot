@@ -1,6 +1,6 @@
 namespace ModuleMotor.Models
 {
-    // ── Feedback & fault result types ────────────────────────────────────────
+    //  Feedback & fault result types 
 
     public record RsMotorFeedback(
         byte  MotorId,
@@ -18,7 +18,7 @@ namespace ModuleMotor.Models
         string[] ActiveWarnings
     );
 
-    // ── Motor profile ─────────────────────────────────────────────────────────
+    // Motor profile 
 
     public record RsMotorProfile(
         string Name,
@@ -71,7 +71,7 @@ namespace ModuleMotor.Models
             => Map.TryGetValue(deviceId, out var profile) ? profile : RsMotorControl.Motor4;
     }
 
-    // ── Main class — direct C# port of rs_motor_control.c ────────────────────
+    //  Main class — direct C# port of rs_motor_control.c
 
     public static class RsMotorControl
     {
@@ -79,7 +79,7 @@ namespace ModuleMotor.Models
         private const float P_MIN = -12.57f;
         private const float P_MAX =  12.57f;
 
-        // ── Motor profiles (mirrors rs_motor_control.h) ───────────────────────
+        // Motor profiles (mirrors rs_motor_control.h) 
         public static readonly RsMotorProfile Motor0 = new("RS Motor0",  -33,  33,    0,  500,  0,   5, -14,   14);
         public static readonly RsMotorProfile Motor2 = new("RS Motor2",  -44,  44,    0,  500,  0,   5, -17,   17);
         public static readonly RsMotorProfile Motor3 = new("RS Motor3",  -20,  20,    0, 5000,  0, 100, -60,   60);
@@ -90,7 +90,7 @@ namespace ModuleMotor.Models
         public static readonly IReadOnlyList<RsMotorProfile> AllProfiles =
             [Motor0, Motor2, Motor3, Motor4, Motor5, Motor6];
 
-        // ── Fault / warning bit masks (mirrors rs_motor_control.h) ───────────
+        //  Fault / warning bit masks (mirrors rs_motor_control.h) 
         private const uint PHASE_A_OVERCURRENT_FAULT      = 1u << 16;
         private const uint GRIDLOCK_OVERLOAD_FAULT         = 1u << 14;
         private const uint POSITION_INITIALIZATION_FAULT   = 1u << 9;
@@ -111,7 +111,7 @@ namespace ModuleMotor.Models
         private const uint PHASE_B_OVERCURRENT_WARNING      = 1u << 4;
         private const uint OVERTEMPERATURE_WARNING          = 1u << 0;
 
-        // ── Signal conversion (mirrors float_to_uint / uint_to_float) ─────────
+        // Signal conversion (mirrors float_to_uint / uint_to_float) 
 
         private static ushort FloatToUint(float x, float min, float max, int bits)
         {
@@ -122,7 +122,7 @@ namespace ModuleMotor.Models
         private static float UintToFloat(ushort x, float min, float max, int bits)
             => min + (float)x / ((1 << bits) - 1) * (max - min);
 
-        // ── CAN ID encode (mirrors encode_can_id) ─────────────────────────────
+        // CAN ID encode (mirrors encode_can_id) 
         //
         // Bit layout:
         //   [31:29]  reserved (3 bits)
@@ -147,7 +147,7 @@ namespace ModuleMotor.Models
         }
 
 
-        // ── CAN ID decode (mirrors RS_decode_can_id) ──────────────────────────
+        // CAN ID decode (mirrors RS_decode_can_id) 
         //
         // NOTE: in the feedback frame the motor echoes its own ID in bits[15:8]
         // (lower byte of the data field), NOT in bits[7:0].
@@ -159,7 +159,7 @@ namespace ModuleMotor.Models
             operation_mode = (byte)((rawId >> 22) & 0x03);     // mode status = 0 -> reset mode; 1: Cali mode; 2: Motor mode[Run]
         }
 
-        // ── TX: utility commands ──────────────────────────────────────────────
+        // TX: utility commands 
 
         /// <summary>Mode 3 — enable motor. Returns (canId, payload).</summary>
         public static (string CanId, byte[] Payload) EnableMotor(byte motorId)
@@ -182,7 +182,7 @@ namespace ModuleMotor.Models
         //public static (string CanId, byte[] Payload MaxSpeed(byte motorId)
         //    )
 
-        // ── TX: motor control (mode 1) ────────────────────────────────────────
+        // TX: motor control (mode 1) 
         // Mirrors RS_Motor0Control … RS_Motor6Control.
         // Torque is encoded in the CAN ID data field; position/speed/Kp/Kd in payload.
         // All signals are big-endian 16-bit scaled integers.
@@ -206,7 +206,7 @@ namespace ModuleMotor.Models
             return BuildCommand(mode: 1, data: torqueU, motorId, payload);
         }
 
-        // ── RX: feedback decode (mode 2) ──────────────────────────────────────
+        // RX: feedback decode (mode 2) 
         // Mirrors RS_Decode_Motor0_Feedback … RS_Decode_Motor6_Feedback.
 
         public static RsMotorFeedback DecodeFeedback(
@@ -227,7 +227,7 @@ namespace ModuleMotor.Models
             );
         }
 
-        // ── RX: fault decode (mode 21) ────────────────────────────────────────
+        // RX: fault decode (mode 21) 
         // Mirrors RS_decode_fault_feedback.
         // buf[0..3] = fault bits (little-endian), buf[4..7] = warning bits.
 
@@ -242,7 +242,7 @@ namespace ModuleMotor.Models
             return new RsFaultStatus(motorId, fault, warning, faults, warnings);
         }
 
-        // ── Helpers ───────────────────────────────────────────────────────────
+        // Helpers
 
         private static (string CanId, byte[] Payload) BuildCommand(
             byte mode, ushort data, byte motorId, byte[] payload)

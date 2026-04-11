@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using ModuleMotor.Models;
 using VCanPLib;
 
 public class MotorModel : BindableBase
@@ -44,6 +45,9 @@ public class MotorModel : BindableBase
     }
 
     public bool Connect(int requestedBaud, string rawLogPath, out string message)
+        => Connect(requestedBaud, rawLogPath, useCanFd: false, out message);
+
+    public bool Connect(int requestedBaud, string rawLogPath, bool useCanFd, out string message)
     {
         if (SelectedCan == null)
         {
@@ -55,15 +59,16 @@ public class MotorModel : BindableBase
         if (!hasExactBaud)
             canBaud = CanBaudrate.BAUDRATE_1000;
 
-        var connected = _canCtrl.Connect(SelectedCan, rawLogPath, CanBaudrate.BAUDRATE_1000, CanType.CAN_STD);
+        var canType = useCanFd ? CanType.CAN_FD : CanType.CAN_STD;
+        var connected = _canCtrl.Connect(SelectedCan, rawLogPath, canBaud, canType);
         SelectedCan.IsConnected = connected;
 
         if (connected)
         {
             _canCtrl.EnableReadLog(true);
             message = hasExactBaud
-                ? $"Connected to {SelectedCan.DisplayName} at {canBaud}."
-                : $"Connected to {SelectedCan.DisplayName} using fallback bitrate {canBaud} for unsupported setting {requestedBaud}.";
+                ? $"Connected to {SelectedCan.DisplayName} at {canBaud} ({canType})."
+                : $"Connected to {SelectedCan.DisplayName} using fallback bitrate {canBaud} ({canType}) for unsupported setting {requestedBaud}.";
         }
         else
         {
@@ -85,6 +90,9 @@ public class MotorModel : BindableBase
     public bool GetOpenStatus() => _canCtrl.GetOpenStatus();
 
     public bool SendMessage(string canId, byte[] data, out string message)
+        => SendMessage(canId, data, isExtendedId: true, out message);
+
+    public bool SendMessage(string canId, byte[] data, bool isExtendedId, out string message)
     {
         if (!_canCtrl.GetOpenStatus())
         {
@@ -99,11 +107,14 @@ public class MotorModel : BindableBase
         }
 
         string sanitizedId = $"0x{numericId:X}";
-        bool sent = _canCtrl.SendMessage(sanitizedId, data, true);
+        bool sent = _canCtrl.SendMessage(sanitizedId, data, isExtendedId);
 
         message = sent ? string.Empty : $"Failed to send CAN frame to ID {sanitizedId}.";
         return sent;
     }
+
+    public bool SendFrame(CanFrameSpec frame, out string message)
+        => SendMessage(frame.CanId, frame.Payload, frame.IsExtendedId, out message);
 
     public IReadOnlyList<RawDataCan> GetCanMessages()
     {

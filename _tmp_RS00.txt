@@ -1,0 +1,819 @@
+
+
+===== PAGE 1 =====
+RS00-EN 
+RS00-EN 
+RS00 instruction manual 
+Precautions 
+1.Please use according to the working parameters specified in this article, otherwise it may cause serious damage to the 
+product! 
+2.Do not switch the control mode when the joint is running. If you need to switch, send the command to stop the 
+operation before switching. 
+3.Check whether the parts are in good condition before use. If the parts are missing or damaged, contact technical support 
+in time. 
+4.Do not disassemble the motor at will, so as to avoid unrecoverable failure. 
+5.Ensure that there is no short circuit when the motor is connected, and the interface is correctly connected as required. 
+Legal Statement 
+Before using this product, please read this manual carefully and operate the product according to the contents of this 
+manual. If the user violates the contents of this manual to use this product, resulting in any property damage, personal 
+injury accident, the company does not assume any responsibility. Because this product is composed of many parts, do not 
+allow children to touch this product to avoid accidents. In order to prolong the service life of the product, do not use this 
+product in high temperature and high pressure environment. This manual has been printed to the extent possible to include 
+a description of the functions and instructions for use. However, due to the continuous improvement of product functions, 
+design changes, etc., there may still be discrepancies with the products purchased by users. 
+The color and appearance of this manual may differ from the actual product. Please refer to the actual product. This manual 
+is published by Beijing Lingfoot Times Technology Co., LTD. (hereinafter referred to as Lingfoot), and Lingfoot may at any 
+time make necessary improvements and changes to the inaccurate and up-to-date information in this manual, or make 
+improvements to procedures and/or equipment. Such changes will be uploaded to the company's official website in electronic 
+format. Details can be found in the download center (www.robstride.com). All images are for reference only. Please refer to 
+actual objects. 
+After-sales Policy 
+The after-sales service of this product is implemented in strict accordance with the Law of the People's Republic of China on 
+the Protection of Consumer Rights and Interests and the Product Quality Law of the People's Republic of China. The service 
+content is as follows: 
+1.Warranty period and contents  
+a.Users who place orders on the online channel to purchase this product can enjoy the return service without reason 
+within seven days from the day after signing. When returning goods, the user must present a valid proof of purchase 
+and return the invoice. The user must ensure that the returned goods maintain the original quality and function, the 
+appearance is intact, the trademarks and various logos of the goods themselves and accessories are complete, and if 
+there are gifts, they should be returned together. If the goods are artificially damaged, artificially disassembled, 
+missing packaging boxes, missing parts and accessories, they will not be returned. The logistics cost incurred during 
+the return shall be borne by the user (see "After-sales Service Fee Standard"). If the user does not settle the logistics 
+cost, it will be deducted from the refund amount according to the actual amount incurred. Refund the amount paid to 
+the user within seven days from the date of receipt of the returned item. Refund method is the same as payment 
+method. The specific arrival date may be affected by factors such as banks and payment institutions. 
+b.The warranty period of this product is 1 year. 
+c.Within 7 days after the user signs for the next day, non-human damage performance failure occurs, through the 
+Lingzhu after-sales service center test and confirmation, for the user to handle the return business, the user must 
+present a valid purchase voucher, and return the invoice. Any freebies should be returned. 
+
+===== PAGE 2 =====
+d.From 7 days to 15 days after the user signs for the next day, non-human damage performance failure occurs, through 
+the Lingfoot after-sales service center test and confirmation, for the user to replace the whole set of goods. After the 
+replacement, the three guarantee period of the goods themselves is recalculated. 
+e.From 15 days to 365 days after the user signed the next day, after the inspection and confirmation of the Lingfoot 
+after-sales service center, it is a quality fault of the product itself, and can provide free maintenance services. The 
+replacement of the faulty product is owned by Lingzu Company. The product is not faulty and will be returned as is. 
+This product has been strictly tested after the factory, if there is a quality fault other than the product itself, we will 
+have the right to refuse the user's return demand. 
+2.Non-warranty regulations The following circumstances are not covered by the warranty: 
+3.Exceed the warranty period specified in the warranty terms. 
+4.Failure to follow the instructions, resulting in product damage caused by wrong use. 
+5.Damage caused by improper operation, maintenance, installation, modification, testing and other improper use. 
+6.Non-quality failure caused by conventional mechanical loss, wear. 
+7.Damage caused by abnormal working conditions, including but not limited to falling, impact, liquid immersion, violent 
+impact, etc. 
+8.Damage caused by natural disasters (such as floods, fires, lightning strikes, earthquakes, etc.) or incapacitated forces. 
+9.Damage caused by exceeding peak torque. 
+10.Damage caused by exceeding peak torque. 
+11.Failure or damage caused by other non-product design, technology, manufacturing, quality and other problems. 
+In the case of the above situation, the user must pay the cost. 
+Motor specification 
+Outline and mounting dimensions 
+When fixing, the screw depth should not exceed the depth of the casing thread 
+Standard service condition 
+1.Rated voltage: 48 VDC 
+2.Operating voltage range: 24V-60 VDC 
+3.Rated load (CW) : 5 N.m 
+4.Operation direction: CW/CCW from the direction of the exit shaft 
+5.Use posture: the direction of the exit axis is horizontal or vertical 
+6.Standard operating temperature: 25±5℃ 
+7.Operating temperature range: -20 ~ 50℃ 
+8.Standard operating humidity: 65% 
+9.Humidity range: 5 ~ 85%, no condensation 
+10.Storage temperature range: -30 ~ 70℃ 
+11.Insulation Class: Class B 
+Electrical characteristic 
+1.No load speed: 315 rpm±10% 
+
+===== PAGE 3 =====
+2.No-load current: 0.5 Arms 
+3.Rated load: 5 N.m 
+4.Rated load speed: 260rpm±10% 
+5.Rated load phase current (peak) : 4.7Apk±10% 
+6.Peak load: 14 N.m 
+7.Maximum load phase current (peak) : 15.5Apk±10% 
+8.Insulation resistance/stator winding: DC 500VAC, 100M Ohms 
+9.High voltage/stator and housing: 600 VAC, 1s, 2mA 
+10.Motor back potential: 9.5Vrms/kRPM±10% 
+11.Torque constant(Valid value): 1.48N.m/Arms 
+12.T-N curve (48V) 
+13.Maximum overload curve 
+Test conditions: Ambient temperature: 25℃ 
+Winding limit temperature: 145℃ (this is the constraint temperature, the actual is 180 degrees) 
+Speed: 24rpm 
+Test data 
+
+
+===== PAGE 4 =====
+Mechanical characteristic 
+1.Weight: 310g±3g 
+2.Number of poles: 28 
+3.Phase number: 3 phases 
+4.Drive mode: FOC 
+5.Deceleration ratio: 10:1 
+Driver Product Information 
+Driver product Specifications 
+Driver interface definition 
+Recommended driver interface brand and model 
+Main devices and specifications 
+Upper computer instructions 
+Please go to www.robstride.com website download center 
+
+===== PAGE 5 =====
+Hardware disposition 
+The articulated motor uses the CAN communication mode and has two communication cables. It is connected to the 
+debugger through the can to USB tool. The debugger needs to be installed with the ch340 driver in advance and works in AT 
+mode by default. 
+It should be noted that we are based on the specific can to USB tool development of the debugger, so we need to use our 
+recommended serial port tool to debug the debugger, if you want to transplant to other debugger platform can refer to the 
+third chapter of the instructions for development. 
+The CAN to USB tool is recommended to use the official USB-CAN module of Lingzu Times. The frame header of the 
+corresponding serial port protocol is 41 54, and the frame tail is 0D 0A. 
+When using the CAN-to-USB module, pay attention to the settings of the DIP switches on the module: When DIP switch 1 is 
+in the ON position, the module enters Boot mode and cannot establish a connection with the host computer. When DIP 
+switch 2 is in the ON position, a 120Ω terminal resistor is connected to the module port, allowing normal communication with 
+the host computer. 
+Upper computer interface and description 
+Mainly includes: 
+A. Motor Connection Module 
+•
+Refreshing the Serial Port 
+•
+Opening the Serial Port 
+•
+ Testing the Device 
+B. Motor Configuration Module 
+•
+Starting the Upgrade 
+•
+Opening a File 
+•
+Starting the Upgrade 
+•
+Modifying the Motor CAN ID 
+•
+Setting the Motor's Mechanical Zero Position 
+C. Motor Upgrade Module 
+•
+Magnetic Encoder Calibration
+•
+Motor Active Reporting Switch 
+•
+Setting the Motor Active Reporting Time 
+•
+Modifying the Motor CAN ID 
+
+===== PAGE 6 =====
+•
+Setting the Motor's Mechanical Zero Position 
+D. Motor Main Interface 
+•
+Parameter Settings 
+•
+Motor Oscilloscope 
+E. Run and Debug Area 
+•
+Parameter Debugging Buttons 
+•
+Motor Mode Configuration and Parameter Modification 
+•
+Sine Signal Testing 
+Motor settings 
+Motor connection settings 
+Connect the CAN to USB tool (install the ch340 driver, which works in AT mode by default), click Refresh Serial Port, open the 
+serial port, and click Detect Device to detect the corresponding motor. The green text below is the motor type. 
+Motor configuration module 
+1.Recalibrate the motor magnetic encoder. Reinstalling the motor board and motor, or reconnecting the motor's three-
+phase wiring requires recalibrating the magnetic encoder. 
+2.Enable active motor reporting. Click Start Reporting to enable active motor reporting in communication type 2. You can 
+set the interval below, with a minimum of 10ms. 
+3.Set ID: Set the motor's CAN ID. 
+4.Set Zero Position: Set the current position to 0. 
+Motor upgrade module 
+1.1. Click to open the file and select the firmware to upgrade. The rs-0x in the firmware name is the selected motor type. 
+
+
+===== PAGE 7 =====
+2.Click Start Upgrade, and the motor will enter the upgrade preparation stage. 
+3.When the green text "Device has entered upgrade mode" pops up, click to start the upgrade 
+4.When the green text "Upgrade Successfully" pops up, the upgrade is complete. 
+If the green progress bar gets stuck halfway through the upgrade, you can click to stop the upgrade, or re-power on and re-
+enter the upgrade process. The internal program of the motor will not be lost after the upgrade fails. Please check whether 
+the communication environment is good before upgrading again. 
+Parameter settings 
+
+
+===== PAGE 8 =====
+After successfully connecting to the motor, 
+1. Click Refresh Parameter Table. "Updated Parameter Table Successfully" will appear at the top, indicating that the motor 
+parameters have been successfully read (Note: The parameter table must be configured while the motor is in standby 
+mode. If the motor is running, the parameter table refresh cannot be performed). The interface will display the motor's 
+parameters. Parameters in blue are stored internally in the motor and can be modified in the Current Value field following 
+the corresponding parameter. 
+2.Click Read Parameters to upload the motor parameters to the debugger. Parameters in light blue are observed 
+parameters, which are collected and can be observed in real time. 
+3.Click Write Parameters to download the debugger parameters to the motor. 
+4.Click Restore Factory to restore the motor's default parameters for the latest firmware. 
+5.Click Export to export the current motor parameters in the parameter table. 
+6.Click Open Multi-Device Connection to connect the host computer to multiple motors. Note that because the parameter 
+interfaces for different motor types vary, multi-device connection is only used for upgrades. After upgrading and 
+debugging the motor, close multi-device connection and search for the motor again. 
+Note: Please do not change the torque limit, protection temperature and overtemperature time of the motor. 
+Our company will not bear any legal responsibility for any damage to human body or irreversible damage to 
+joints caused by illegal operation of this product. 
+
+===== PAGE 9 =====
+
+
+===== PAGE 10 =====
+
+
+===== PAGE 11 =====
+
+
+===== PAGE 12 =====
+Oscilloscope 
+The interface supports viewing and observing the graph generated by real-time data, including motor Id/Iq current, 
+temperature, real-time speed at the output end, rotor (encoder) position, output end position, etc. 
+Click on the oscilloscope module in the analysis module, select the appropriate parameters in the channel (parameter 
+meaning can be referred to the parameter table), set the output frequency, click on the start plot to observe the data graph, 
+stop the plot to stop the observation graph. 
+The command sent is in the communication command box below 
+
+
+===== PAGE 13 =====
+Communication box instruction example: 
+41 54 90 07 e8 0c 08 05 70 00 00 01 00 00 00 0d 0a 
+The meaning is as follows 
+The translation of extended frame canid into real canid requires the following transformations: 
+90 07 e8 0c converts to binary as 1001 0000 0000 0111 1110 1000 0000 1100, remove the 100 on the right and it becomes 
+1 0010 0000 0000 1111 1101 0000 0001, convert it to hexadecimal, It is 12 00 FD 01. According to the communication 
+protocol, the meaning is as follows: 
+can communication failure protection 
+When the value of CAN_TIMEOUT is 0, this function is disabled 
+When the CAN_TIMEOUT value is non-0, when the motor does not receive the can command within a certain period of time, 
+the motor enters the reset mode, and 20000 is 1s 
+Motor fault instructions 
+Function code 0x3022 indicates the fault code, where 
+bit14: motor blocking overload algorithm protection 
+bit7: Encoder uncalibrated: Motor uncalibrated encoder 
+bit3: Overvoltage fault: the motor voltage exceeds the protection voltage by 60V 
+bit2: Undervoltage fault: the motor voltage is lower than the protection voltage of 12V 
+bit1: Driver chip failure: Motor driver chip failure reported 
+bit0: Motor overtemperature fault: motor thermistor temperature exceeds 145 degrees 
+Function code 0x3024 is driver chip fault code 1. The specific faults are as follows 
+
+
+===== PAGE 14 =====
+Function code 0x3025 is driver chip fault code 2. The specific faults are as follows 
+Control Demo 
+
+
+===== PAGE 15 =====
+Jog Run 
+Click JOG +/- to run the motor forward and reverse at a speed of 1 rad/s. 
+Control Mode Switching 
+Select the desired control mode in the command box to the right of the run mode. 
+Operation and control mode 
+1.Switch the control mode to operation mode. 
+
+===== PAGE 16 =====
+2.The motor starts running and enters motor_mode. 
+3.Set five parameter values and click Start or Send continuously. The motor will return feedback frames and run according 
+to the target command. 
+4.Click Stop to stop the motor and terminate the continuous sending of commands. 
+Current mode 
+1.Switch the control mode to current mode. 
+2.The motor starts running and enters motor_mode. 
+3.Set the current command value for Iq Command 1 (A). Click the >> button on the right. The motor will follow the 
+current command.
+4.Click Stop to stop the motor. 
+Motor Current Sine Test 
+1.Switch the control mode to current mode. 
+2.The motor starts running and enters motor_mode. 
+3.Set the amplitude and frequency, click OK, and then click Start. The corresponding mode target command will be planned 
+according to the sine law. 
+4.Click Stop to stop the motor. 
+Speed Mode 
+
+
+===== PAGE 17 =====
+1.Switch the control mode to speed mode.
+2.The motor starts running and enters motor_mode. 
+3.First, set the current limit (maximum phase current) and speed step value (motor acceleration). If no settings are made, 
+the motor will operate at the default values. Finally, set the speed command (target speed). The motor will follow the 
+command. 
+4.Click Stop to stop the motor. 
+Motor Speed Sine Test 
+1.Switch the control mode to speed mode.
+2.The motor starts running and enters motor_mode. 
+3.Set the amplitude and frequency, click OK, and then click Start. The corresponding mode target command will be planned 
+according to the sine law. 
+4.Click Stop to stop the motor. 
+Position Mode (PP) 
+
+
+===== PAGE 18 =====
+1.Switch the control mode to interpolation position mode. 
+2.Start the motor and enter motor_mode. 
+3.First, set the speed and acceleration. If not set, the motor will operate at the default values. Finally, set the position 
+command (target position). The motor will follow the command. 
+4.Set the speed to 0 to stop the motor at the current position. To continue operation, re-issue the speed and position. 
+5.Click Stop to stop the motor. 
+Motor Position Sine Test 
+1.Switch the control mode to interpolation position mode. 
+2.Start the motor and enter motor_mode. 
+3.Set the amplitude and frequency, click OK, and then click Start. The corresponding mode target command will be planned 
+according to the sine law. 
+4.Click Stop to stop the motor. 
+位置模式（CSP） 
+1.Switch the control mode to position mode. 
+2.The motor starts running and enters motor_mode. 
+3.Set the speed first. If no speed setting is made, the motor will run at the default value. Finally, set the position command 
+(target position). The motor will follow the command. 
+4.Click Stop to stop the motor. 
+Motor position sinusoidal test 
+1.Switch the control mode to position mode. 
+2.The motor starts running and enters motor_mode. 
+
+===== PAGE 19 =====
+3.Set the amplitude and frequency, click OK, and then click Start. The corresponding mode target command is then 
+sinusoidally planned. 
+4.Click Stop to stop the motor. 
+Driver protocol and instructions 
+The motor communication is the CAN 2.0 communication interface, the baud rate is 1Mbps, and the extended frame format 
+is adopted as follows: 
+The control modes supported by the motor include: 
+•
+Operation control mode: set 5 parameters of motor operation control; 
+•
+Current mode: the specified Iq current of the given motor; 
+•
+Velocity mode: the specified running speed of the given motor; 
+•
+Position mode: Given the specified position of the motor, the motor will run to the specified position; 
+Description of the communication protocol type
+Communication type 0: Get device ID 
+Gets the device's ID and 64-bit MCU unique identifier 
+Reply frame: 
+Communication Type 1: operation control mode motor control instruction 
+Response frame: Response motor feedback frame (see communication type 2) 
+Communication Type 2: motor feedback data 
+
+===== PAGE 20 =====
+Communication Type 3: Motor enabled to run 
+Response frame: Response motor feedback frame (see communication type 2) 
+Communication Type 4: Motor stops running 
+Response frame: Response motor feedback frame (see communication type 2) 
+Communication type 6: Set motor mechanical zero 
+Response frame: Response motor feedback frame (see communication type 2) 
+Communication type 7: Set motor CAN_ID 
+Change the current motor CAN_ID, effective immediately. 
+Answer frame: Answer motor broadcast frame (see communication type 0) 
+
+===== PAGE 21 =====
+Communication type 17: Single parameter read 
+Reply frame: 
+Communication type 18: Single parameter write (lost in power failure) 
+With type 22, the parameter starting with function code 0x20 of the parameter table in the upper computer module can be 
+saved 
+Response frame: Response motor feedback frame (see communication type 2) 
+Communication type 21: Fault feedback frame 
+
+===== PAGE 22 =====
+Communication type 22: Motor data save frame
+Response frame: Response motor feedback frame (see communication type 2) 
+Communication type 23: Motor baud rate modification frame (re-power-on effect) 
+Response frame: Response motor feedback frame (see communication type 0) 
+Communication type 24: The motor actively reports frames 
+Response frame: 
+
+===== PAGE 23 =====
+Communication type 25: Motor protocol modification frame (re-power-on effect) 
+Response frame: Response motor feedback frame (see communication type 0) 
+Communication type 26 ： Version number read frame 
+Response frame: 
+
+===== PAGE 24 =====
+Read and write a single parameter list 
+
+===== PAGE 25 =====
+
+
+===== PAGE 26 =====
+Read example: 
+Take reading loc_kp as an example: 
+Read instruction is 
+The feedback instruction is 
+Motor Function Description 
+(If the following features are unavailable, please upgrade to the latest version via the official Git repository.) 
+1.Active Reporting 
+•
+Disabled by default. Enable via Type 24. 
+•
+Report type: Type 2 (default interval: 10ms). Adjust interval by modifying EPScan_time via Type 18. 
+2.Zero-Point Flag (zero_sta) 
+•
+Modify via:  
+◦
+Host computer (上位机) 
+◦
+Type 18 (requires saving via Type 22 for communication) 
+•
+Default flag: 0 → Power-on position range: 0–2π. 
+•
+If set to 1: Power-on position range: π–π. 
+3.Type 2 Update 
+•
+Updated to periodic looping within -4π–4π (enables cycle counting). 
+•
+Note: Position interface parameters must be adjusted:  
+◦
+P_MIN: 12.57f 
+◦
+P_MAX: 12.57f 
+4.Protocol Switching (Requires CAN adapter) 
+•
+Methods:  
+◦
+Modify protocol_1 via host computer. 
+◦
+Send Type 25 command. 
+
+===== PAGE 27 =====
+•
+Reboot required after switching. 
+•
+Post-switch CAN commands:  
+◦
+CANopen: Send extended frame (protocol switch frame). 
+◦
+MIT Protocol: Send standard frame (Command 8). 
+5.Post-Power-Off Anti-Backdrive Protection 
+•
+Default: Motor imposes damping if rotated rapidly while powered off (prevents surge). 
+•
+Disable: Set damper = 1. 
+6.Zero Calibration Rules 
+•
+Supported modes: CSP and Motion Control. 
+•
+PP Mode: Zero calibration is blocked.
+•
+Old vs. New Versions:  
+◦
+Old: Zero calibration causes large deviation → motor immediately moves to target. 
+◦
+New (CSP/Motion Control): Target updates to 0 instantly → motor remains stationary. 
+7.Position Offset (add_offset) 
+•
+Example: If offset = 1, the current zero shifts to (current position + 1 rad). 
+•
+Use case: Bypass mechanical limits (e.g., set zero at 1 rad → power-on treats 1 rad as new zero). 
+8.CANopen ID 
+•
+Old version: Fixed to 1. 
+•
+New version: Matches the private protocol CAN ID. 
+Notes for Implementation 
+•
+Always save settings (e.g., Type 22 for zero_sta). 
+•
+Verify CAN adapter compatibility for protocol switching. 
+•
+For zero offsets, ensure mechanical safety limits are respected. 
+Control mode instructions 
+Program sample 
+Examples of various mode control motors are provided below (take gd32f303 as an example) 
+The following are library, function, and macro definitions for the various instances 
+代码块
+#define P_MIN -12.57f //0.0.2.6 is 12.5 before and 12.57 after 
+#define P_MAX 12.57f  //0.0.2.6 is 12.5 before and 12.57 after 
+#define V_MIN 33.0f 
+#define V_MAX 33.0f 
+#define KP_MIN 0.0f 
+#define KP_MAX 500.0f 
+#define KD_MIN 0.0f 
+#define KD_MAX 5.0f 
+#define T_MIN -14.0f
+1234567891011121314151617
+
+===== PAGE 28 =====
+#define T_MAX 14.0f 
+struct exCanIdInfo{ 
+    uint32_t id:8; 
+    uint32_t data:16; 
+    uint32_t mode:5;
+    uint32_t res:3; 
+}; 
+can_receive_message_struct rxMsg; 
+can_trasnmit_message_struct txMsg={
+    .tx_sfid = 0, 
+    .tx_efid = 0xff,
+    .tx_ft = CAN_FT_DATA,
+    .tx_ff = CAN_FF_EXTENDED, 
+    .tx_dlen = 8, 
+}; 
+#define txCanIdEx (*((struct exCanIdInfo*)&(txMsg.tx_efid)))
+#define rxCanIdEx (*((struct exCanIdInfo*)&(rxMsg.rx_efid))) //Parses the extend
+int float_to_uint(float x, float x_min, float x_max, int bits){ 
+    float span = x_max - x_min; 
+    float offset = x_min;
+    if(x > x_max) x=x_max; 
+    else if(x < x_min) x= x_min; 
+    return (int) ((x-offset)*((float)((1<<bits)-1))/span); 
+} 
+#define can_txd() can_message_transmit(CAN0, &txMsg) 
+#define can_rxd() can_message_receive(CAN0, CAN_FIFO1, &rxMsg) 
+The following lists the common types of communication sent: 
+Motor Enabled Run frame (communication type 3) 
+代码块
+void motor_enable(uint8_t id, uint16_t master_id) {     txCanIdEx.mode = 3;     txCanIdEx.id = id;     txCanIdEx.res = 0;     txCanIdEx.data = master_id;     txMsg.tx_dlen = 8;     txCanIdEx.data = 0;     can_txd(); } 
+18192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869
+12345678910
+
+===== PAGE 29 =====
+Operation control mode Motor control instruction (communication type 1) 
+代码块
+void motor_controlmode(uint8_t id, float torque, float MechPosition, float speed
+{ 
+    txCanIdEx.mode = 1; 
+    txCanIdEx.id = id; 
+    txCanIdEx.res = 0; 
+    txCanIdEx.data = float_to_uint(torque,T_MIN,T_MAX,16); 
+    txMsg.tx_dlen = 8; 
+    txMsg.tx_data[0]=float_to_uint(MechPosition,P_MIN,P_MAX,16)>>8; 
+    txMsg.tx_data[1]=float_to_uint(MechPosition,P_MIN,P_MAX,16); 
+    txMsg.tx_data[2]=float_to_uint(speed,V_MIN,V_MAX,16)>>8;
+    txMsg.tx_data[3]=float_to_uint(speed,V_MIN,V_MAX,16); 
+    txMsg.tx_data[4]=float_to_uint(kp,KP_MIN,KP_MAX,16)>>8; 
+    txMsg.tx_data[5]=float_to_uint(kp,KP_MIN,KP_MAX,16); 
+    txMsg.tx_data[6]=float_to_uint(kd,KD_MIN,KD_MAX,16)>>8; 
+    txMsg.tx_data[7]=float_to_uint(kd,KD_MIN,KD_MAX,16); 
+    can_txd(); 
+} 
+Motor stop frame (communication type 4) 
+代码块
+void motor_reset(uint8_t id, uint16_t master_id) 
+{ 
+    txCanIdEx.mode = 4; 
+    txCanIdEx.id = id; 
+    txCanIdEx.res = 0; 
+    txCanIdEx.data = master_id; 
+    txMsg.tx_dlen = 8; 
+    for(uint8_t i=0;i<8;i++) 
+    {
+            txMsg.tx_data[i]=0; 
+    }
+    can_txd(); 
+} 
+Motor mode parameter write command (communication type 18, running mode switch) 
+123456789101112131415161718192021222324252627282930313233
+12345678910111213141516171819202122232425
+
+===== PAGE 30 =====
+代码块
+uint8_t runmode; 
+uint16_t index;
+void motor_modechange(uint8_t id, uint16_t master_id) 
+{ 
+    txCanIdEx.mode = 0x12; 
+    txCanIdEx.id = id; 
+    txCanIdEx.res = 0; 
+    txCanIdEx.data = master_id; 
+    txMsg.tx_dlen = 8; 
+    for(uint8_t i=0;i<8;i++) 
+    {
+            txMsg.tx_data[i]=0; 
+    }
+    memcpy(&txMsg.tx_data[0],&index,2); 
+    memcpy(&txMsg.tx_data[4],&runmode, 1); 
+    can_txd(); 
+} 
+Motor mode parameter write command (communication type 18, control parameter write) 
+代码块
+uint16_t index;
+float ref;
+void motor_write(uint8_t id, uint16_t master_id) 
+{ 
+    txCanIdEx.mode = 0x12; 
+    txCanIdEx.id = id; 
+    txCanIdEx.res = 0; 
+    txCanIdEx.data = master_id; 
+    txMsg.tx_dlen = 8; 
+    for(uint8_t i=0;i<8;i++) 
+    {
+            txMsg.tx_data[i]=0; 
+    }
+    memcpy(&txMsg.tx_data[0],&index,2); 
+    memcpy(&txMsg.tx_data[4],&ref,4); 
+123456789101112131415161718192021222324252627282930313233
+1234567891011121314151617181920212223242526272829
+
+===== PAGE 31 =====
+    can_txd(); 
+} 
+Operation control mode 
+The motor is in operation control mode by default after power-on. 
+Send motor Enable Run frame (communication type 3) --> Send operation mode motor control command (communication 
+type 1) --> Receive motor feedback frame (communication type 2) 
+Operation control mode description: The control logic of the operation and control mode is t_ref=Kd * (v_vset-v_actual)+Kp 
+* (p_set-p_actual)+t_ff. Tref is converted to the expected iq current through an internal formula and output through the 
+current loop Simple control demonstration: Set t_ff to 0, v_vset to 1, Kd to 1, p_set to 0, Kp to 0. If there is no external load 
+on the motor, it will run at a speed of 1rad/s. If there is an external load, kd needs to be increased to resist the external load 
+Set t_ff to 0, v_vset to 0, Kd to 1, p_set to 0, Kp to 0, the motor is in damping mode. When the motor is externally rotated, 
+a damping is applied, which increases with the increase of kd. It should be noted that the motor generates electricity under 
+this condition and requires power supply to prevent overvoltage Set t_ff to 0, v_vset to 0, Kd to 1, p_set to 5, Kp to 1. If 
+there is no external load on the motor, it will run to the target position of 5. Increasing kp will increase the force required to 
+maintain the target position, and kd is damping. Without kd, the motor will sway to the target position 
+Current mode 
+Send motor mode parameter write command (communication type 18) Set the runmode parameter to 3 --> Send motor 
+Enable run frame (communication type 3) --> Send motor mode parameter write command (communication type 18) set the 
+iq_ref parameter to the default current instruction 
+Velocity mode 
+30313233
+
+===== PAGE 32 =====
+Send motor mode parameter write command (communication type 18) Set the runmode parameter to 2 --> Send motor 
+Enable run frame (communication type 3) --> Send motor mode parameter write command (communication type 18) set 
+limit_cur parameter as default maximum current instruction --> Send motor mode parameter write command 
+(communication type 18) Set acc_rad parameter as default acceleration instruction --> Send motor mode parameter write 
+command (communication type 18) Set spd_ref parameter as default speed instruction 
+Location Mode (CSP) 
+Send motor mode parameter write command (communication type 18) Set the runmode parameter to 5 --> Send motor 
+Enable run frame (communication type 3) --> Send motor mode parameter write command (communication type 18) set 
+limit_spd parameter as default maximum speed instruction --> Send motor mode parameter write command (communication 
+type 18) Sets loc_ref parameter as default position instruction 
+Location Mode (PP) 
+Send motor mode parameter write command (communication type 18) Set the runmode parameter to 1 --> Send motor 
+Enable run frame (communication type 3) --> Send motor mode parameter write command (communication type 18) set The 
+vel_max parameter is the default maximum speed instruction --> Send motor mode parameter write command 
+(communication type 18) Set the acc_set parameter to the default acceleration instruction --> Send motor mode parameter 
+write command (communication type 18) Set the loc_ref parameter to the default position instruction 
+Note: This mode does not support changing the speed and acceleration during operation. If you want to make 
+an emergency stop, you can change vel_max to 0 during the process, and it will stop at the current speed and 
+acceleration plan 
+Stop running 
+Sending motor stop frame (communication type 4) 
+Explanation of Canopen Communication Protocol Types 
+State Machine Description 
+
+
+===== PAGE 33 =====
+Motor Enable: 
+When initially powered on, the motor defaults to the SWITCH_ON_DISABLED state. To transition to 
+OPERATION_ENABLE, modify the Controlword (6040H) to 6, 7, or 15 (step-by-step transition), or directly set it to 15 
+for immediate enablement. 
+Stopping the Motor: 
+If the motor is in OPERATION_ENABLE state and needs to stop normally, modify the Controlword (6040H) to 1. The 
+motor will return to the disabled state (SWITCH_ON_DISABLED). 
+Emergency Stop (Use with Caution—Risk of Voltage Surge): 
+During operation, an emergency stop can be triggered by setting the Controlword (6040H) to 11. 
+Fault Clearance: 
+If the motor enters a FAULT state due to protection mechanisms, modifying the Controlword (6040H) can clear standard 
+errors. 
+Important Note: 
+Mode changes for this motor must be performed in the disabled state (SWITCH_ON_DISABLED). Ensure the desired 
+mode is configured before enabling OPERATION_ENABLE to avoid unexpected behavior. 
+Status Feedback Parameters 
+
+===== PAGE 34 =====
+Homing Mode (Zero Position Setting) 
+Homing method: 
+•
+Set Modes of operation to 6 while the motor is in the disabled state (SWITCH_ON_DISABLED). The motor will 
+then define the current position as the zero point. 
+•
+To hold the zero position, modify the Controlword to 15, and the motor will maintain its position at the home 
+location. 
+Position Mode (PP - Profile Position) 
+Steps to Configure Position Mode (PP): 
+1.While the motor is in the disabled state (SWITCH_ON_DISABLED), set Modes of operation to 1.  
+◦
+Mandatory parameters:  
+▪
+Target_torque (absolute max torque in position mode) 
+▪
+Profile_velocity (absolute speed in position mode) 
+▪
+Profile_acceleration (absolute acceleration in position mode) 
+◦
+Optional parameters:  
+▪
+Position_window (if not set, window check is disabled) 
+▪
+Position_window_time (if not set, window check is disabled) 
+2.Set Controlword (6040) to 15 to enable operation. 
+
+===== PAGE 35 =====
+3.Set Target_position (absolute position) to move the motor to the desired position. 
+Position Mode (CSP - Cyclic Synchronous Position) 
+Steps to Configure Position Mode (CSP): 
+1.While the motor is in the disabled state (SWITCH_ON_DISABLED), set Modes of operation to 5.  
+◦
+Mandatory parameters:  
+▪
+Target_torque (absolute max torque in position mode) 
+▪
+Profile_velocity (absolute speed in position mode) 
+◦
+Optional parameters:  
+▪
+Position_window (0 = disabled) 
+▪
+Position_window_time (0 = disabled) 
+2.Set Controlword (6040) to 15 to enable operation. 
+3.Set Target_position (absolute position) to move the motor to the desired position. 
+Velocity Mode 
+Steps to Configure Velocity Mode: 
+1.While the motor is in the disabled state (SWITCH_ON_DISABLED), set Modes of operation to 3.  
+◦
+Mandatory parameter:  
+▪
+Target_torque (absolute max torque in velocity mode) 
+2.Set Controlword (6040) to 15 to enable operation. 
+3.Set Target_velocity to reach the desired speed. 
+Torque Mode 
+
+
+===== PAGE 36 =====
+Steps to Configure Torque Mode: 
+1.While the motor is in the disabled state (SWITCH_ON_DISABLED), set Modes of operation to 4. 
+2.Set Controlword (6040) to 15 to enable operation. 
+3.Set Target_torque to output the desired torque. 
+Protocol Switching (Extended Frame): Switch Motor Protocol (Takes Effect After Power Cycle) 
+•
+F_CMD (Byte 6) defines the motor protocol:  
+◦
+0: Private protocol (default) 
+◦
+1: CANopen protocol 
+◦
+2: MIT protocol 
+Response Frame: 
+MIT Communication Protocol Description 
+The motor communication adopts the CAN 2.0 interface with a default baud rate of 1 Mbps. The baud rate can be modified 
+by switching to the private protocol. The standard frame format is as follows: 
+Supported Control Modes: 
+•
+MIT Mode: Provides five motion control parameters to the motor. 
+•
+Velocity Mode: Specifies the target speed for the motor. 
+•
+Position Mode: Specifies the target position and speed, allowing the motor to run to the designated position at the 
+configured speed. 
+Response Command 1: Data Feedback (Motor Status) 
+
+
+===== PAGE 37 =====
+Response Command 2: MCU Identification 
+Command 1: Enable Motor Operation 
+Response: Response Command 1 
+Command 2: Stop Motor Operation 
+Response: Response Command 1 
+Command 3: MIT Dynamic Parameters 
+Response: Response Command 1 
+Command 4: Set Zero Position (Non-Position Mode) 
+Response: Response Command 1 
+Command 5: Clear Errors & Read Fault Status 
+
+===== PAGE 38 =====
+Response (Fault Clear): Response Command 1 
+Fault Status Response: 
+Command 6: Set Operation Mode 
+Response: Response Command 1 
+Command 7: Modify Motor CAN ID 
+Response: Response Command 2 
+Command 8: Change Communication Protocol (Takes Effect After Power Cycle) 
+Response: Response Command 2 
+Command 9: Modify Host CAN ID 
+Response: Response Command 2 
+
+===== PAGE 39 =====
+Command 10: Position Mode Control Command 
+Response: Response Command 1 
+Command 11: Velocity Mode Control Command 
+Response: Response Command 1 
+Motion Control Mode 
+The motor defaults to Motion Control Mode upon power-up. 
+1.Send the Motor Enable Command (Command 1). 
+2.Send the Motion Control Command (Command 3) to activate dynamic parameter control. 
+3.Send the Motor Stop Command (Command 2) to halt operation when needed. 
+Velocity Mode 
+
+
+===== PAGE 40 =====
+1.Configure the motor's operation mode by sending Set Operation Mode Command (Command 6) with Mode = 2 
+(Velocity Mode). 
+2.Send the Motor Enable Command (Command 1) to activate the motor. 
+3.Send the Velocity Mode Control Command (Command 11) to set the maximum current (absolute value) and target 
+speed. 
+4.To stop, send the Motor Stop Command (Command 2). 
+Position Mode (CSP - Cyclic Synchronous Position) 
+1.Configure the motor's operation mode by sending Set Operation Mode Command (Command 6) with Mode = 1 
+(Position Mode). 
+2.Send the Motor Enable Command (Command 1) to activate the motor. 
+3.Send the Position Mode Control Command (Command 10) to set the maximum speed (absolute value) and target 
+position. 
+4.To stop, send the Motor Stop Command (Command 2). 

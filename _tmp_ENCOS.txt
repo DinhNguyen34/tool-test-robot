@@ -1,0 +1,1768 @@
+
+
+===== PAGE 1 =====
+
+
+===== PAGE 2 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+Catalogue
+1. Introduction to Motor Debugging ...................................................................................................1
+2. Matters Need Attention ...................................................................................................................2
+3. Product Technology Overview ....................................................................................................... 3
+3.1 Connection Method Description ...........................................................................................3
+3.2 Temperature Protection Notes .............................................................................................. 3
+3.3 Encoder Function Description ..............................................................................................4
+3.4 Usage Voltage and Power Supply Instructions .....................................................................4
+3.5 Communication Instructions ................................................................................................ 5
+3.6 Instructions for Lights .......................................................................................................... 6
+4. Motor Mode Profile ........................................................................................................................ 7
+4.1 Power Position Mixed Control Mode ...................................................................................7
+4.2 Servo Position Control Mode ............................................................................................... 8
+4.3 Servo Speed Control Mode ...................................................................................................9
+4.4 Current/Torque Control Mode .............................................................................................. 9
+4.5 Motor Brake Control ............................................................................................................ 9
+5. Debugging with USB-CAN Module ............................................................................................ 10
+5.1 Control Module Connection ............................................................................................... 10
+5.2 APP Motor Control Interface ..............................................................................................11
+5.3 Force-Position Control Mode ............................................................................................. 11
+5.4 Servo Position Mode .......................................................................................................... 12
+5.5 Servo Speed Mode ............................................................................................................12
+5.6 Current Mode ......................................................................................................................12
+5.7 Torque Mode .......................................................................................................................13
+5.8 Control Parameter Setting Interface ................................................................................... 13
+5.9 Motor Query Interface ........................................................................................................ 14
+5.10 Motor Setting Interface .....................................................................................................14
+5.11 PVT Setting Interface ....................................................................................................... 15
+
+===== PAGE 3 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+5.12 PID Setting Interface ........................................................................................................ 15
+6. Debugging With VESC Tool ........................................................................................................ 16
+6.1 App Setting ......................................................................................................................... 17
+6.2 Motor Setting ...................................................................................................................... 19
+6.2.1Modify Current Loop KP and KI ............................................................................. 20
+6.2.2Test Current Loop Response Bandwidth ..................................................................21
+6.2.3Modify PID Parameters for Servo Speed Mode and Servo Position Mode ............ 21
+6.3 VESC Terminal ...................................................................................................................22
+7. CAN Communication Protocol .................................................................................................. 25
+Recommended Purchase Link for USB-to-CAN Analyzer: CAN Analyzer CANOpen J1939
+DeviceNet USBCAN-2 USB-to-CAN (Compatible with ZLG) ......................................................25
+7.1 Communication Parameters ................................................................................................25
+7.2 Motor Zero Point Setting Command .................................................................................. 25
+7.3 Motor CAN Communication ID Setting Command ........................................................ 26
+7.4 Motor CAN Communication ID Reset Command .............................................................26
+8. Motor Query Commands .............................................................................................................. 28
+8.1 Query CAN Communication ID .........................................................................................28
+9. Motor Control-Related Commands .............................................................................................. 29
+9.1 Response Communication Mode Control Command ........................................................ 29
+9.2 Motor Control Parameter Configuration Instruction ..........................................................3
+9.1.1Force-Position Hybrid Mode Command .................................................................. 29 
+9.1.2 Servo Position Control Mode Command ................................................................ 31  
+9.1.3 Servo Speed Control Mode Command ....................................................................31  
+9.1.4 Current, Torque Control Mode and Brake Control Command ............................... 32  
+9.1.5 Brake Control Command .........................................................................................33
+4
+9.2.1 Motor Acceleration Configuration Instruction ........................................................34
+9.2.2 Motor Torque Coefficient Configuration Instruction ..............................................35
+9.2.3 Motor Power Position Mixed Control Protocol KP Configuration Instruction ...... 35
+9.2.4 Motor Power Position Mixed Control Protocol KD Configuration Instruction ..... 36
+9.2.5 Motor Power Position Mixed Control Protocol Location Configuration Instruction37
+
+===== PAGE 4 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+9.2.6 Motor Power Position Mixed Control Protocol Speed Configuration Instruction. 37
+9.2.7 Motor Power Position Mixed Control Protocol Torque Configuration Instruction 38
+9.2.8 Motor Power Position Mixed Control Protocol Current Configuration Instruction39
+9.2.9 Motor CAN Timeout Time Configuration Instruction ............................................39
+9.2.10 Motor Current Loop PI Configuration Instruction ................................................40
+9.2.11 Motor Speed Loop PI Configuration Instruction .................................................. 41
+9.2.12 Motor Position Loop PD Configuration Instruction ............................................. 41
+9.3 Motor Control Parameter Query Instruction ...................................................................... 42
+10.Question-Answer Mode Feedback Message ............................................................................... 44
+10.1 Question-Answer Communication Mode Feedback Message Type 1 ............................. 44
+10.2 Question-Answer Communication Mode Feedback Message Type 2 ............................. 45
+10.3 Question-AnswerCommunication Mode Feedback Message Type 3 .............................. 45
+10.4 Question-Answer Communication Mode Feedback Message Type 4 ............................. 45
+10.5 Question-Answer Communication Mode Feedback Message Type 5 ............................. 47
+10.6 Question-Answer Communication Mode Feedback Message Type 6 ............................. 49
+11. CAN Protocol Debugging Examples ..........................................................................................50  
+12. EtherCat-CAN Adapter Debugging ............................................................................................52
+12.1 Wiring Instructions & Pinout Sequence ......................................................................... 52
+Appendix A: USB-CAN Module Physical Connection Diagram .....................................................54
+Appendix B: EtherCAT-CAN Daisy-Chain Connection Example Diagram ....................................55
+
+===== PAGE 5 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+Amendment record
+ContenTime Edition t
+The servo position control unit is unified to degrees, and the  
+2024-10-8 V1.2 force position mixed control instruction range is increased
+Modify the feedback message 2 to change the arc to degree2024-12-5 V1.3 s
+9.1.Power position mixed control mode instruction,text part  
+2024-12-13 V1.4 Modified
+Update USB to CAN analyzer recommended purchase lin2024-12-17 V1.5 k
+Modify the scope of EC series force position mixed control  
+2025-1-17 V1.6 protocol
+Modify the scope of EC series force position mixed control  
+2025-4-28 V1.7 protocol
+Modifying USB-CAN module debuggin2025-6-20 V1.8 g
+Add temperature protection logic description and brake protoco2025-9-1 V1.9 l
+Update Q&A mode feedback message for motor error  
+2025-10-15 V1.10 information
+Update brake protoco2025-11-19 V1.11 l
+Force-Position hybrid control protocol specificatio2025-12-4 V1.12 n
+2026-1-9 V1.13 Add a table of example commands
+2026-1-12 V1.14 Add configuration instructions for CAN and CAN FD  
+parameters
+
+===== PAGE 6 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+(1) Use the USB-CAN module developed by our company (which needs to be purchased
+In order to meet customers' basic use of this product, the company uses four ways for
+customers to debug the motor
+1.Introduction to Motor Debugging
+：
+from our company)and debug with the debugging software of our own host
+computer(recommended).
+(2) Use CAN protocol for motor debugging(add 120 ohm resistor).
+(3) Debug with VESC Tool host computer (M2 screwdriver is required to open the rear
+cover for EC-4310\8112\10020-24\13715\13720series motors).
+(4) Debug with Ether CAT-Can converter board.
+1
+
+===== PAGE 7 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+2.Matters Need Attention
+This product should be used away from strong magnetic environment, otherwise it will affect
+the data of motor encoder and cause abnormal rotation of motor!
+The use of this product should ensure that it is stable within 85℃. If the temperature exceeds
+85℃.the motor will alarm. If the temperature of the motor driver board exceeds 95℃ and the
+temperature of the motor coil exceeds 105℃,the motor will forcibly shut down and enter the
+standby state, unable to control, and return to normal after the temperature is normal.
+This product will generate more heat in the working state of high torque. Please avoid being
+scalded.This product should be fixed to the shell during debugging or operation.Please do not
+disassemble the product by yourself, otherwise it will affect the normal use of the product. If you
+disassemble the product by yourself, you will no longer enjoy the corresponding warranty service.
+Pay attention to the firm wiring, avoid poor contact.
+In dry winter weather, pay attention to static interference and avoid loss of drive.
+2
+
+===== PAGE 8 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+3.Product Technology Overview
+3.1Connection Method Description
+Motor power interfaces are categorized into two types: 4-pin and 2-pin configurations, with
+the former featuring flexible input/output designs. The 4-pin interface typically combines one
+input port for power supply and three output ports (not recommended). For 2-pin configurations,
+either one end can serve as either input or output. Multiple motors can be connected in series.
+Power supply design should account for current demands under varying torque conditions to
+prevent insufficient power due to sudden torque increases and motor restarts. Specific torque,
+current,and other corresponding parameters for motors can be obtained from customer service.
+3.2Temperature Protection Notes
+The motor is equipped with an over-temperature protection mechanism featuring dual
+temperature monitoring points: one measuring coil temperature and the other monitoring the
+driver MOSFET's temperature. The coil protection threshold starts at 105℃, with a maximum
+protection temperature of 120℃ triggering an error and stopping rotation. Similarly, the driver
+protection threshold begins at 95 ℃, with a maximum protection temperature of 110℃ that also
+triggers an error and halts rotation. The motor's over-temperature protection mechanism operates
+as follows:
+When the temperature is lower than the initial protection temperature, the full power output is
+driven;
+When the temperature exceeds the initial protection threshold but remains below the
+maximum protection limit, the drive output power decreases to suppress phase current in the
+output circuit. This reduction in torque output consequently minimizes coil heating.The
+corresponding phase current at this stage is
+I now = I original × [1 − (T now − T start)/ (T high − T start)]
+I now is the phase current after triggering the over-temperature protection, I original is the
+original expected phase current, T now is the current temperature of the coil or driver MOS, T start is
+the initial protection temperature of the coil or driver MOS, T high is the maximum protection
+temperature of the coil or driver MOS,
+When the temperature is greater than the maximum protection temperature, the motor stops
+3
+
+===== PAGE 9 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+and reports the fault of excessive temperature.
+Both the coil temperature and the driver MOS temperature will trigger the generator over
+temperature protection mechanism when they reach their respective starting temperatures.
+If the blockage is turned to the limit or the load is suddenly very large, and the torque is close
+to the peak, the coil will heat up very quickly. The temperature detection of the thermistor has a
+lag, and the temperature protection may not keep up.
+3.3 Encoder Function Description
+Both motor-side and output-end encoders utilize 14-bit magnetic encoders. Through practical
+measurements, their angular accuracy is limited to a maximum of 0.1 degrees. Due to quality
+issues with the encoders, some even achieve an accuracy of only 0.2 degrees. This result has been
+compared with several commonly used 1-pair-pole magnet feedback magnetic reluctance encoders
+on the market, where most standard magnetic reluctance encoders maintain this level of precision.
+The motor can feedback the position of the output end in real time, which is actually
+0~360°, so as to facilitate a unified coordinate system.
+The motor is divided into-180°to 180° .However, the motor only has single-turn memory
+functionality. For example: When the motor is powered on at an angle of 170°, if it is rotated
+counterclockwise by 20°while power remains on, the motor's angle becomes 190°.If power is
+cut off at 170°and rotated counterclockwise by 20°, the measured angle after re-energization
+would be 170 ° .Conversely, if rotated clockwise by 20 ° , the, measured angle after
+re-energization would be 150°.
+3.4 Usage Voltage and Power Supply Instructions
+The voltage range of the motor is 17~ 57V . If the voltage is 57V~60V, the driver will alarm.
+If the voltage exceeds 60V, the driver may be damaged. If the voltage is less than 16V, the driver
+cannot be started.
+When operating with a load, prioritize battery power to ensure sufficient capacity and proper
+energy return channels. When using desktop lab power supplies, switching power supplies, or
+custom power management modules, install capacitors with adequate voltage ratings and high
+capacity to guarantee reliable energy return. Failure to do so may cause driver burnout, trigger
+4
+
+===== PAGE 10 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+driver alarms, or necessitate system reboot. The hardware protection mechanism ensures that
+without rebooting, driver hardware damage could render the system irreparable.
+When using devices such as desktop lab power supplies, switching power supplies, or custom
+power management modules for power supply,drivers may experience boot failures.This primarily
+occurs due to voltage protection mechanisms in the driver, which detect voltage spikes during the
+power supply ramp-up process. Drivers may determine the power supply unstable under these
+conditions. The recommended solutions include replacing the battery or contacting official
+technical support.
+Product Power Supply Interface and Current Specifications The power supply interface uses
+AMASS's XT30 connector, rated at 15 A with a peak current of 30A . For the drive system, the
+interface operates at bus current level, while the motor actually controls phase current due to its
+linear relationship with torque output. To monitor parameters like motor power or bus current,
+specific read commands can be sent for data retrieval.
+3.5 Communication Instructions
+The CAN bus operates at a baud rate of 1M, with standard frame transmission. The CAN
+control frequency reaches up to 2000Hz, enabling transmission of a single frame and receiving
+feedback data frames within as fast as 0.4ms. The system features heartbeat protection with
+a 500 ms interval - if no second control command is received within this 500ms period after
+sending a CAN control command, the motor will automatically stop moving.
+When using a motor for the first time, it's recommended to check or reset its ID before
+operation. Most factory parameters and settings are ready for direct use, though users should make
+adjustments when experienced. After configuring the motor and waiting for the driver to
+successfully start (minimum 5 seconds), you can send control commands. Configuration changes
+are also permitted during this period.
+When sending the following setting command to the driver, the second CAN command
+should be sent after a delay of more than 500ms.
+Set the communication mode.
+Set the current point as the zero point.
+Set the motor ID.
+5
+
+===== PAGE 11 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+If it is not delayed by more than 500ms, the setting may fail.
+CAN control and USB control can not be used at the same time. If they are used at the same
+time, CAN control takes priority, but USB cannot be completely blocked. CAN control can be
+used while USB is used to view motor feedback data.
+3.6 Instructions Light Explanation
+Green light is on: normal power on.
+Green light enhanced: CAN command is normally received and operation is normal.
+Red light is on: The motor has encountered an error. The specific error information can
+be viewed through CAN query or VESC tool.
+6
+
+===== PAGE 12 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+4.Motor Mode Profile
+4.1Power Position Mixed Control Mode
+The instruction is sent to call the force position hybrid control, and the output current to the
+motor is composed of the following three parts:
+TKTorquecurrentspddesiredspdKD
+currentposdesiredposKP
+currentmotor
+/)__(*
+)__(*
+_
+）
+（
+
+
+
+In this configuration, the KP and KD parameters in the control instructions are dynamically
+adjustable, while KT represents the motor's torque constant. This control mode is primarily used
+for foot-type robots. Under no-load conditions, the KP reference value is set at 15, with the KD
+reference value at 0.5. (Note: The current range and torque range vary depending on the specific
+model of motor used.)
+×
+Graph4-1
+Kp ×
+Pcur
+Tdes
+(iq-ref)
+× Kd
+Vcur
+Tref
+1.CAN 通
+1/KT
+0
+Vdes
+Pdes －
+－
+＋
+＋
+idref
+2.CA
+7
+
+===== PAGE 13 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+4.2 Servo Position Control Mode
+If the set target position exceeds ±180 degrees, multi-turn operation is allowed, but the turn
+count will be reset when the device is powered off and restarted.
+The servo control mode employs a three-loop control architecture, with the innermost loop
+being the current loop. The current loop is primarily controlled by a PI controller, and its
+parameters are not user-modifiable. Position control is essentially KP and KD control, where KP is
+referred to here as the feedback compensation gain, and KD as the damping coefficient. The
+internal speed loop uses the adaptive algorithm independently developed by our team for speed
+control in servo mode, eliminating the need for frequent parameter adjustments to adapt to
+different loads. The KP and KD values for position control range from 0 to 0.1 in the VESC tool,
+with reference values: KP = 0.006, KD = 0.
+The servo position control has three input parameters: target position P, target speed V, and
+current limit I. This means the motor moves from the current position P0 to the target position P at
+the target speed V. During the movement from P0 to P, the maximum speed is set to V. However, if
+the distance between P0 and P is very small while V is set too high, the actual operating speed
+may not reach V. Additionally, during the movement from P0 to P, the maximum current of the
+motor is I, and the maximum torque generated is Tmax = I × torque constant. If the applied load
+exceeds this torque, the motor will stall and maintain the torque Tmax.
+Graph4-2
+0 idref
+＋
+Kp FOC
+Current
+Loop
+×
+（iq-ref）
+Ki
+－
+S
+＋
+Speed Loop Kp
+×× Kp
+Position Loop Kp
+Pdes
+Pcur Vcur
+Speed Loop Ki
+－
+8
+
+===== PAGE 14 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+4.3 Servo Speed Control Mode
+The speed ring control employs magnetic flux monitoring control, which involves multiple
+parameters. The adjustable parameters provided to customers are the magnetic flux monitoring
+gain and disturbance compensation coefficient. The recommended range for magnetic flux
+monitoring gain is 0.0001 to 1, with a reference value of 0.12, while the disturbance compensation
+coefficient should be set between 0 and 1,with a suggested value of 0.08 . Factory-set values have
+been tested to adapt to most load conditions. Users are advised against arbitrary modifications to
+these parameters unless they possess relevant expertise or receive official technical guidance
+(Note: The specified ranges apply to settings on the VESC tool; for parameters in CAN
+communication, refer to the protocol specifications).
+×
+Graph 4-3
+4.4 Current/Torque Control Mode
+When the motor is controlled by current/torque, the motor will inevitably continue to
+accelerate to the highest speed as long as it rotates.Attention should be paid to safety during
+debugging!
+4.5 Motor Brake Control
+Motor braking systems operate in three modes: variable damping braking control,energy
+dissipation braking, and regenerative braking. Energy dissipation and regenerative braking modes
+are recommended for use under no-load or light-load conditions. The variable damping braking
+mode utilizes a motor duty cycle of 0% command, which functions similarly to three-phase
+short-circuiting and can be employed during no-load operation. The most recommended approach
+is to implement braking through speed loop control.
+0
+Vdes
+＋
+idref
+Kp
+FOC
+Current Loop
+×
+（iq-ref）
+Ki
+－
+＋
+S
+Speed Loop Kp
+Speed Loop Ki
+Vcur
+9
+
+===== PAGE 15 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+5.Debugging with USB-CAN Module
+In order to facilitate the debugging of the motor, we developed a PC software with our own
+USB-CAN module for visual debugging of the motor.
+5.1 Control Module Connection
+front
+back
+1.Connect the module to a computer using a TYPE-C data cable. When the module is
+powered on, the LED indicator will turn red and start data transmission, after which the LED will
+begin to blink.
+2.In the example diagram above, both the 2-PIN and 4-PIN output ports on the left side of the
+module are CAN signal output ports
+3.If the module powers on normally but the host computer fails to detect the serial port,
+please install the serial port driver included in the package.
+10
+
+===== PAGE 16 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+5.2 APP Motor Control Interface：
+1：Select the serial port connected by USB to CAN module, and then open the serial port
+to connect the module.
+2：Select the correct motor ID.The motor model can be modified in 5 "Control parameter
+Settings" .
+3：First open the motor enable to power on the motor, select the control mode in 4, set
+the control parameters, and then open the mode enable.The motor will rotate according to the
+setting;when you need to modify the control parameters, first close the mode enable, and then
+modify the control parameters.
+4：Select different motor control modes and set control parameters. The maximum and
+minimum values of control parameters can be modified in "Control parameter Settings" in 5.
+5： Select different interfaces of the APP.
+6： CAN data sent by the APP.
+5.3 Force-Position Control Mode
+1 2
+345
+6
+11
+
+===== PAGE 17 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+5.4 Servo Position Mode
+The target position is the Angle of the motor after operation; the expected speed is the speed
+of the motor running; the threshold current is the maximum current limit of the motor running.
+5.5 Servo Speed Mode
+The expected speed is the operating speed of the motorthe threshold current is the maximum
+current limit of the motor.
+5.6 Current Mode
+The expected current is the operating current of the motor. If the motor is not loaded or the
+load is small, the actual current during operation cannot reach the expected current.
+12
+
+===== PAGE 18 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+5.7 Torque Mode
+The expected torque is the operating torque of the motor.If the motor is unloaded or under
+small load, the actual torque during operation cannot reach the expected torque.
+5.8 Control Parameter Setting Interface
+1 ： Motor communication parameter setting: you can select different models or different
+message types. After selecting the model, the corresponding parameters will be automatically
+modified.
+2 ： Motor basic communication parameter setting:can modify the maximum and minimum
+values of position, speed and current in motor control.
+1
+2
+13
+
+===== PAGE 19 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+5.9 Motor Query Interface
+1：Query the motor ID of the currently connected motor.
+2 ： After selecting motor ID "1", click One-Click Query to retrieve the parameters of the
+motor with ID 1. The query result is shown in the figure below.
+5.10 Motor Setting Interface
+In the basic configuration, you can set the motor ID. The steps are to first query the current
+motor ID, then fill the queried ID into the old motor ID, select a new motor ID, and finally click
+the ID to set it. Clicking reset motor ID can reset the ID to 1 .
+1
+2
+14
+
+===== PAGE 20 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+5.11 PVT Setting Interface
+5.12 PID Setting Interface
+15
+
+===== PAGE 21 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+6.Debugging With VESC Tool
+This driver utilizes our proprietary FOC algorithm, leveraging the VESC tool's APP interface.
+The underlying architecture differs entirely from the official firmware, meaning many parameters
+in the VESC tool do not correspond to their labeled values. Special caution is required when
+modifying these parameters! For those unfamiliar with VESC configurations, it's recommended to
+use the host computer as an observer to monitor driver data.
+The steps to debug with the VESC tool on Windows are as follows:
+① Install the VCP driver and download version 2.06 of the VESC tool. The VCP driver and
+VESC tool can be requested from our technical support team or downloaded from the official
+website.
+VCP download address:
+https://www.st.com/en/development-tools/stsw-stm32102.html#get-software
+Download address of VESC tool:
+https://vesc-project.com/vesc_tool
+② Power on the module (if you purchased a product with separated driver and module,
+first ensure proper connection between the driver and module). Connect the joint module (the
+micro USB port connected to the motor, which requires opening the motor's drive cover) to the
+computer's USB port using a micro USB cable. Launch the VESC tool and connect the button at
+the upper right corner of the motor. After successful connection, upload both the motor
+configuration parameters and APP settings to the VESC tool (as indicated by the arrow button)
+to prevent accidental parameter replacement. Refer to the following buttons for details:
+16
+
+===== PAGE 22 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+Note! If you download the configuration without uploading the parameters, the parameters in
+the driver will be overwritten, resulting in the motor can not run smoothly, or even damage the
+motor. Some parameters need to be tested to know, and some test methods can be referenced in the
+following content of the document.
+During the test, please read the document carefully before operation. Improper operation may
+cause motor damage. If the motor is damaged, our team will not be responsible for it.
+6.1 App Setting
+In the App Settings directory, only the General section currently supports functional
+modifications.
+Before modifying any parameters, please click ⬆ A to read the motor's App parameters.
+After making changes, remember to click ⬇A to download and save the new settings.
+Note: Reading the motor's parameters will update the values displayed in the left-side App
+Settings panel. After modifying these values, you must click the 'Download App Parameters'
+button to save them to the motor. The new parameters will take effect after the motor is restarted.
+17
+
+===== PAGE 23 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+VESC ID ：The CAN ID of the motor can be modified. The default ID of the motor is 1.
+Timeout：Adjusts the CAN timeout protection duration for motors. Setting it to 0 disables
+CAN timeout protection, causing the motor to continuously execute its last command if
+communication is interrupted. The default timeout period is 500ms, calculated from the time of
+the most recent received command.If no subsequent commands are received within this 500ms
+window, communication will be deemed disconnected and the motor controller disabled by
+default.
+Timeout Brake Current：This parameter regulates the braking current applied to the motor
+during communication disconnection.For example, when a motor rotates and communication
+suddenly disconnects, a counteracting force will prevent rotation. The maximum resistance value
+depends on the preset current setting and is not constant.After the motor stops, this resistance
+essentially becomes zero.
+Can Baud Rate：Can modify the motor's CAN baud rate.
+Please keep the other parameters as default and do not modify them arbitrarily, which
+may cause abnormal communication of the motor.
+18
+
+===== PAGE 24 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+6.2Motor Setting
+In the Motor Settings directory, click ↑ M to read the motor parameters before modifying
+the parameters. After modifying the parameters, remember to click ↓ M to complete the
+parameter download and save. Restart the motor after parameter modification.
+The Motor parameters of the motor will be saved in the left Motor Settings. After modifying
+the parametersclick Download Motor Parameters to save the modified parameters to the motor.
+Afterr estarting the motor, the parameters will take effect.
+When testing the motor, the motor may rotate, so do not fix any structure to the output end of
+the motor.
+19
+
+===== PAGE 25 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+6.2.1 Modify the Current Loop KP and KI
+Under the Motor Settings section in FOC, the General settings allow modification of current
+loop parameters.This interface automatically identifies motor phase resistance and inductance
+values, while automatically calculating key parameters including KP, KI, and observer gain. All
+these parameters can also be manually adjusted. The system automatically identifies a current loop
+bandwidth of approximately 10 0 Hz.
+The operation of automatic identification of current loop parameters is as follows:
+20
+
+===== PAGE 26 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+6.2.2 Test the Current Loop Response Bandwidth
+Under the Data Analysis section, the sampled data can be used to test the response wave
+forms of step current signals after modifying the over-current loops KP and KI. The test waveform
+can be zoomed in and out using the mouse scroll wheel. The bandwidth frequency of the current
+loop is approximately 0.35/tr, where tr represents the rise time defined as the time difference
+between 10% and 90% of the output stabilization value.
+The waveform of the first test may not be correct. It is recommended to repeat the step
+current response waveform by cycling 4, 5 and 6 several times.
+6.2.3 Modify the PID Parameters of the Servo Speed Mode and Servo Position
+Mode
+When the servo position and servo speed modes are used, the response effect can be changed
+by adjusting the PID parameters.
+Speed PID Kp and Speed PID Ki correspond to the PID parameters of the speed ring,and
+Speed PID Kd here represents the torque coefficient kt of the motor, that is, the ratio of torque to
+phase current;
+Position PID Kp and Position PID Ki correspond to the PID parameters of the position loop.
+21
+
+===== PAGE 27 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+6.3 VESC Terminal
+In the dialog box of this interface, the following instructions can be input
+in sequence to modify the parameter range of force position mixed control mode protocol and
+return all protocol ranges of the motor.
+Reference example:
+set_PT_ctrl_KP_range 0 500
+set_PT_ctrl_KD_range 0 5
+set_PT_ctrl_pos_range -12.5 12.5
+set_PT_ctrl_spd_range -18 18
+set_PT_ctrl_tor_range -400 400
+22
+
+===== PAGE 28 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+Motor test
+Enter a value in the input box at the bottom left corner and click the small button on the left
+side of the input box to test the control motor.
+D is the duty cycle control;
+? is constant speed control, note that the input parameter is actually ERPM; RPM = ERPM
+/Motor Poles / Gear Ratio;
+I for current control;
+P is the servo position loop control;
+IB is regenerative braking control;
+HB is energy consumption braking control;
+The ship anchor symbol is variable damping braking,and the actual duty cycle is controlled
+by the 0 control command;
+STOP is the disconnect command control.
+23
+
+===== PAGE 29 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+The Data Analysis interface displays real-time waveform data of the motor, including phase
+current, temperature, electrical speed, and encoder angle. During motor testing, users can monitor
+these parameters in real time. To access real-time data reading, simply click the RT function
+option on the far right side.
+The lower part of the interface can also display some status data of the motor in real time,
+such as bus current and phase current, voltage, error information, etc.
+24
+
+===== PAGE 30 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+7.CAN Communication Protocol
+Recommended USB to CAN Analyzer Link: CAN Analyzer CANOpen J1939 DeviceNet
+USBCAN-2 USB to CAN compatible zlg
+7.1 Communication Parameters
+Communication
+Mode
+Arbitration Field Baud
+Rate
+Data Field Baud
+Rate
+Sampling Point Remarks
+CAN 1Mbps —— 76.5% Classic CAN
+CAN FD 1Mbps 5Mbps 88.2% CAN FD+BRS
+Identifier: Standard identifier (0x01~0x7FF). The identifier 0x7FF is reserved exclusively for
+motor setting commands and motor query commands; the remaining identifiers are used as motor
+IDs.
+Data Length: 4~8 bytes
+Communication Mode: Question-answer mode
+7.2 Motor Zero Point Setting Command
+Identifier: 0x7FF (Both the identifier sent by the master and received by the slave is 0x7FF)
+Data Length Sent by Master: 4 bytes
+Data Length Returned by Motor: 4 bytes
+CAN Command Data Field — Set Current Position as Zero
+Byte 0 Byte 1 Byte 2 Byte 3
+Motor ID (High 8 bits) Motor ID (Low 8 bits) 0x00(Indicates a command sent by the
+controller) 0x03
+Successful Setting Response (Identifier: 0x7FF)
+Motor ID (High 8 bits) Motor ID (Low 8 bits) 0x01(Indicates a message from the motor) 0x03
+Failed Setting Response (Identifier: 0x7FF)
+Motor ID (High 8 bits) Motor ID (Low 8 bits) 0x01(Indicates a message from the motor) 0x00
+Both modes remain valid, and the validity is retained even after switching communication
+modes. Caution! The motor's turn count will also be reset to 0.
+2.The motor has not finished executing the previous command
+The setting will fail under the following circumstances:
+1.The motor is running with a non-zero speed (in practice, the setting will fail if the motor
+speed exceeds a certain threshold).
+.
+25
+
+===== PAGE 31 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+3.The motor is in an alarm state, such as high temperature alarm or encoder error alarm.
+To successfully set the zero position: move the motor to the desired position first, hold it
+steady, and then send the zero position setting command.
+Motor Zero Position Setting Example Command Table
+Identifier Data
+Length Frame Data Command Description
+0x7FF 4 00 01 00 03 Set zero position for the motor with Motor ID 1
+7.3 Motor CAN Communication ID Setting Command
+Identifier: 0x7FF (the identifier received by master and slave is 0x7FF)
+Master sends data length: 6 bytes
+Motor feedback data length: 4 bytes
+CAN Instruction Data Field — Set Motor ID
+Byte 0 Byte 1 Byte 2 Byte 3 Byte 4 Byte5
+Old Motor ID (High
+8 bits)
+Old Motor ID (Low
+8 bits) 0x00 0x04 New Motor ID
+(High 8 bits)
+New Motor ID (Low
+8 bits)
+Successful Setting Response (Identifier: 0x7FF)
+New Motor ID
+(High 8 bits)
+New Motor ID (Low
+8 bits) 0x01 0x04
+Failed Setting Response (Identifier: 0x7FF)
+Old Motor ID (High
+8 bits)
+Old Motor ID (Low
+8 bits) 0x01 0x00
+Example Command Table for Motor CAN Communication ID Setting
+0x7F
+Identifier Data
+Length Frame Data Command Description
+F 6 00 01 00 04 00 02 Change the Motor ID from 1 to 2
+7.4 Motor CAN Communication ID Reset Command
+Identifier: 0x7FF (the identifier received by master and slave is 0x7FF)
+Master sends data length: 6 bytes
+Motor feedback data length: 6 bytes
+26
+
+===== PAGE 32 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+Reset Motor ID to 0x01 in Both Mode s
+Byte 0 Byte 1 Byte 2 Byte 3 Byte 4 Byte5
+0x7F 0x7F 0x00 0x05 0x7F 0x7F
+Successful Setting Response (Identifier: 0x7FF) Data Length: 6 bytes
+0x7F 0x7F 0x01 0x05 0x7F 0x7F
+No response will be returned if the setting fails.
+Recommendation for first use: Reset the ID to 1, then send the ID modification command to
+change it to your desired ID number.
+Example Command Table for Motor CAN Communication ID Reset
+0x7F
+Identifier Data
+Length Frame Data Command Description
+F 6 7F 7F 00 05 7F 7F Reset the Motor ID to 1
+27
+
+===== PAGE 33 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+8.Motor Query Commands
+8.1 Query CAN Communication ID
+Identifier: 0x7FF (the identifier received by master and slave is 0x7FF)
+Master sends data length: 4 bytes
+Motor feedback data length: 5 bytes for success, 4 bytes for failure
+CAN Command Data Field — Query Motor Communication
+Byte 0 Byte 1 Byte 2 Byte 3 Byte 4
+0xFF 0xFF 0x00(Indicates a command sent by the
+controller) 0x82
+Successful Query Response (Identifier: 0x7FF), Data Length: 5 bytes
+0xFF 0xFF 0x01(Indicates a message from the motor) Motor ID (High 8
+bits)
+Motor ID (Low 8
+bits)
+Failed Query Response (Identifier: 0x7FF), Data Length: 4 bytes
+0x80 0x80 0x01(Indicates a message from the motor) 0x80
+Note! Motors connected to a CAN bus must process data frames starting with 0X7FF. The
+system identifies commands by checking the ID in the frame's data segment. Motors receiving
+setup commands will respond, while others remain silent (though those in auto-report mode will
+continue normal transmission after response). When multiple motors operate in auto-report mode,
+CAN may become congested. To ensure successful configuration, repeat sending setup commands
+and receiving responses until all motors confirm completion.
+Example Command Table for Querying CAN Communication ID
+Identifier Data Length Frame Data Command Description
+0x7FF 4 FF FF 00 82 Query the current Motor ID
+28
+
+===== PAGE 34 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+9.Motor Control-Related Commands
+The storage rules of data in the CAN data domain follow the storage mode of high bits first
+and low bits last. The details of data split storage and parsing are shown in Appendix 2 or ask the
+team for routines.
+The data received by the driver is not subjected to amplitude limiting processing. Relevant
+control parameters are automatically adjusted through system settings. For example, in current
+control mode: The CAN system sets a current value of 5000A, representing the actual control
+current of 50A. However, since the system has been configured with a maximum current limit of 3
+0 A , the actual current supplied to the motor control is 3 0 A . Other relevant control parameter
+ranges can be found in the parameter specifications provided in the product manual.
+For more details about control functions, refer to the product description and function
+description in the product specification of related products.
+9.1 Response Communication Mode Control Command
+9.1.1Force-Position Hybrid Mode Command.
+Identifier: Motor ID Data Length: 8 Bytes (Total 64 bits)
+Motor mode uint3 Parameter KPuint12 Parameter KDuint9 Expected position uint16 c uint12 Forward feed torque uint12
+0x00 0~4095 0~511 0~65535 0~4095 0~4095
+The instruction is sent to call the force position hybrid control, and the output current to the
+motor is composed of the following three parts:
+TKTorquecurrentspddesiredspdKD
+currentposdesiredposKP
+currentmotor
+/)__(*
+)__(*
+_
+）
+（
+
+
+
+Example: Taking the EC-A4310-P2-36 as an example
+KP Parameter Value Range: 0~4095, corresponding to 0.0~500.0
+KD Parameter Value Range: 0~511, corresponding to 0.0~5.0
+Output Shaft Target Position Value Range: 0~65535, corresponding to -12.5 rad ~ 12.5 rad
+Output Shaft Target Speed Value Range: 0~4095, corresponding to -18.0 rad/s ~ 18.0 rad/s
+Motor Feedforward Torque Value Range: 0~4095, corresponding to -30 Nm ~ 30 Nm
+When the drive receives this command, it will only return Type 1 messages; no other
+message types can be selected.
+29
+
+===== PAGE 35 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+The protocol parsing range of different motor models is different, please refer to the
+following table or confirm with technicians.
+Note: The reference values of the test experiment under no-load are as follows: KP= 15.0f, KD=0. 5f,
+expected speed: 0, feed forward torque: 0
+Position-Torque Hybrid Mode Example Command Tabl
+Table 9-1
+e
+Identifier Data Length Frame Data Command Description
+Motor ID 8 01 47 FF 7F FF 7F
+F7 FF
+KP=20.0, KD=5.0, Target Position=0.0 rad, Target
+Speed=0.0 rad/s, Feedforward Torque=0.0 Nm
+30
+
+===== PAGE 36 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+9.1.2 Servo Position Control Mode Command
+Identifier: Motor ID Data Length: 8 Bytes (Total 64 bits)
+Motor mode uint3 Expected position float 32 Expected position uint15 Current Limit uint12
+0x0
+Message Return Statusuint2
+1 0~Unit: degrees 0~32767 0~4095 3
+Output end expected speed value interpretation: 0~32767 corresponds 0~3276.7rpm, the
+proportion is 10. Motor current threshold value range: 0~4095 corresponds to 0~409.5A, the
+proportion is 10. The return status of the message is
+Motor mode: 0x01,indicating that this control command is a servo position control command.
+Explanation of expected position value at the output end: The value is the actual Angle, and
+the unit is degree. For example, 120.5 represents 120.5°.
+:
+0: Not returned
+1: Return message type 1
+2: Return message type 2
+3: Return message type 3
+Servo Position Control Mode Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 8 20 00 00 00 00 7D
+01 91
+Target Position: 0°, Target Speed: 50 rpm, Current
+Limit: 10 A, Return Message Type 1
+9.1.3 Servo Speed Control Mode Command
+Identifier: Motor ID Data Length: 7 Bytes (Total 56 bits)
+Motor mode uint3 Reserve control
+status uint3
+Message return
+Status uint2
+Output port expects speed
+float32
+0x0
+Current threshold
+uint16
+2 0~65530 0~3 5
+Motor mode: 0x02, indicating that this control command is a servo speed control command.
+Reserve control status: must be 0! If not 0, the control can be normal, but no message will be
+returned regardless of how many state settings are returned.
+The return status of the message is:
+0: Not returned
+1: Return message type 1
+2: Return message type 2
+3: Return message type 3
+Explanation of the expected speed value at the output end: CAN value
+corresponds to the actual RPM.
+31
+
+===== PAGE 37 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+Explanation of motor current threshold value: 0~65535 corresponds to
+0~6553.5A, the proportion is 10.
+Servo Speed Control Mode Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 7 41 42 48 00 00 00 64
+Target Speed: 50 rpm, Current Limit: 10 A, Return
+Message Type 1
+9.1.4 Current, Torque Control Mode and Brake Control Command
+Identifier: Motor ID Data Length: 3 Bytes (Total 24 bits)
+Motor modeuint3 Reserve control status uint3 Message return status uint2
+0x0
+Desired Current / Desired
+Torque / Brake State uint16
+3 -32768~32760~7 0~3 7
+ignore
+Reserve control status:
+0: Normal current control
+1: Torque control mode
+2: Variable damping braking control mode, in this case the current data is automatically
+d
+3: Energy consumption braking control mode, in this period the expected current data is
+automatically ignored
+4: Regenerative braking control mode, the expected current is the set brake current threshold
+5: In electromagnetic brake control mode, the feedback status is automatically ignored, and a
+specific brake status message is returned
+6: Reserved (currently invalid)
+7: Reserved (currently invalid)
+The return status of the message is:
+0: Not returned
+1: Return message type 1
+2: Return message type 2
+3: Return message type 3
+Expected current: -32768~32767 corresponds to-327.68~327.67A.
+Expected torque: -32768~32767 corresponds to-327.68~327.67Nm.
+(Torque = current * torque constant, torque constant reference product manual) Desired brake
+32
+
+===== PAGE 38 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+status: 0 (Brake engaged) / 1 (Brake released).
+Note: Unless under special circumstances, always release the brake before controlling the
+motor to prevent potential damage.
+The brake requires 24V to release. If the motor supply voltage is below 24V, the brake may
+fail to open.
+Note: Under normal circumstances, open the brake before controlling the motor; otherwise,
+the motor may be damaged.
+The brake release voltage is 24V. If the motor supply voltage is lower than 24V, the brake
+may fail to open.
+Current, Torque Control Mode and Brake Control Mode Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 3
+61 01 F4 Current control mode, Desired Current: 5 A, Return Message
+Type 1
+65 01 F4 Torque control mode, Desired Torque: 5 Nm, Return Message
+Type 1
+69 00 00 Variable resistance braking mode, Return Message Type 1
+6D 01 F4 Dynamic braking mode, Brake Current Threshold: 5 A, Return
+Message Type 1
+75 00 0
+71 01 F4 Regenerative braking mode, Brake Current Threshold: 5 A,
+Return Message Type 1
+1 Electromagnetic brake mode, Brake State: 1
+9.1.5 Brake Control Command
+Identifier: Motor ID Data Length: 2 Bytes (Total 16 bits)
+Motor mode uint3 Reserve control status uint5 Expected brake status uint8
+0x04 1 (brake on) /0 (brake off0~7 )
+Query returns successfully (identifier: Motor ID), data length 2 bytes
+uint8 Brake status uint8
+0xB2 1 (brake on) / 0 (brake off)
+Motor mode: 0x04, indicating that this control command is the brake and brake control command.
+Reserve control status: reserved (currently invalid)
+Brake Control Mode Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 2 80 01 Brake State: 1 (Open)
+33
+
+===== PAGE 39 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+9.2 Motor Control Parameter Configuration Instruction
+When errors such as motor over-heating or over-voltage occur,the configuration will fail.
+Provided operational safety is ensured, parameters can be adjusted as frequently as other control
+commands, but control effectiveness must be monitored. Our team will not be held responsible for
+losses caused by inexperienced operators frequently modifying these parameters. Therefore, we
+recommend avoiding parameter adjustments during motor operation, modifying parameters while
+the motor is unloaded, or making frequent changes.
+9.2.1 Motor Acceleration Configuration Instruction
+Identifier: Motor ID Data Length: 4 Bytes (32 bits in total)
+Motor mode uint3 Reserve control
+status uint3
+Message return status
+uint2
+Configuration
+code uint8
+0x0
+Acceleration value
+uint16
+6 0 0~3 0x01 Acceleration values
+Motor mode: 0x06 , indicating that the instruction is a motor parameter configuration
+instruction
+Reservation control status: must be set to 0, otherwise the driver will not respond and the
+configuration will fail.
+Return status of the message: 0: no return
+1: Return message type 4
+2: Not returned, and the driver does not respond, setting failed
+3: Not returned, and the driver does not respond, setting failed Configuration code:
+0x00: Reserved, currently invalid
+0x01: indicates that the instruction is to configure the system acceleration
+Acceleration value:0~2000 corresponds to 0~20rad/s, internal limit. Acceleration reduction,
+operation will be more soft, but too small is easy to overshoot, the default value of the system is
+2000.
+Motor Acceleration Configuration Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 4 C0 01 07 D0 Configure acceleration: 20 rad/s²
+34
+
+===== PAGE 40 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+9.2.2 Motor Torque Constant Configuration Instruction
+Identifier: Motor ID Data Length: 4 Bytes
+Motor mode uint3 Reserve control status uint5 Configuration codeuint8
+Query returns successfully (identifier: Motor ID), data length 5 byte
+Configuration value uint16
+0x06 0 0x04 Torque coefficient value *
+100
+s
+0xF
+uint8 uint8 Configuration code
+uint8 uint16
+F 0xFE 0x04 Torque coefficient value * 100
+Motor mode: 0x06, indicating that the instruction is a motor parameter configuration
+instruction
+Reservation control status: must be set to 0, otherwise the driver will not respond and the
+configuration will fail. Configuration code 0x04: indicates that the instruction is configured for the
+motor torque coefficient.
+Motor torque coefficient: 250 corresponds to 2.5, proportion 100.
+Motor Torque Constant Configuration Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 4 C0 04 00 FA Configure torque constant: 2.5
+9.2.3 Motor Power Position Mixed Control Protocol KP Configuration
+Instruction
+Identifier: Motor ID Data Length: 6 Bytes
+Motor
+mode
+uint3
+Reserve control status
+uint5
+Configuration code
+uint8
+Configuration value
+uint16
+0x0
+Configuration value
+uint16
+6 0 0x05 KP MIN numeric value KP MAX numeric value
+Query returns successfully (identifier: Motor ID), data length 7 bytes
+uint8 uint8 Configuration
+code uint8
+uint16 uint16
+0xFF 0xFE 0x05 KP MIN numeric value KP MAX numeric value
+Reservation control status: must be set to 0, otherwise the driver will not respond and the
+configuration will fail
+Motor mode: 0x06, indicating that the instruction is a motor parameter configuration
+instruction
+.
+Configuration code 0x05: indicates that the instruction is configured for the motor force
+position mixed control protocol KP.
+35
+
+===== PAGE 41 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+The force position mixing control protocol KP MIN: 0 corresponds to 0, and the proportion is
+1.
+The force position mixed control protocol KP MAX:500 corresponds to 500, and the
+proportion is 1.
+Motor Position-Torque Hybrid Protocol KP Configuration Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 6 C0 05 00 00 01 F4 KP MIN=0,KP MAX=500
+9.2.4 Motor Power Position Mixed Control Protocol KD Configuration
+Instruction.
+Identifier: Motor ID Data Length: 6 Bytes
+Motor 
+mode
+uint3
+Reserve control status
+uint5
+Configuration
+code uint8
+Configuration value
+uint16
+0x0
+Configuration value
+uint16
+6 0 0x06 KD MIN numeric value KD MAX numeric value
+Query returned successfully (identifier: Motor ID), data length 7 bytes
+0xF
+uint8 uint8 Configuration
+code uint8 uint16 uint16
+F 0xFE 0x06 KD MIN numeric value KD MAX numeric value
+Motor mode 0x06: indicating that the instruction is a motor parameter configuration
+instruction
+Reserve control status: must be set to 0, otherwise the driver will not respond, and the
+configuration fails.
+Configuration code: 0x06: indicates that the instruction is configured for the motor force
+position mixed control protocol KD.
+The power mixing control protocol KD MIN: 0 corresponds to 0 and the proportion is 1.
+The power mixing control protocol KD MAX:50 corresponds to 50, and the proportion is 1.
+Motor Force-Position Hybrid Control Protocol - KD Configuration Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 6 C0 06 00 00 00 32 KD MIN=0,KD MAX=50
+36
+
+===== PAGE 42 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+9.2.5 Motor Power Position Mixed Control Protocol Location Configuration
+Instruction
+Identifier: Motor ID Data Length: 6 Bytes
+Motor mode
+uint3
+Reserve control status
+uint5
+Configuration
+code uint8
+Configuration
+value int16 Configuration value int16
+Query returns successfully (identifier: Motor ID), data length 7 byte
+0x06 0 0x07 POS MIN numeric
+value *100
+POS MAX numeric value
+*100
+s
+uint8 uint8 Configuration
+Code uint8 int16 int16
+0xFF 0xFE 0x07 POS MIN numeric value *100 POS MAX numeric value
+*100
+Motor mode 0x06 indicates that this command is a motor parameter configuration command.
+Reserved control status: Must be set to 0, otherwise the driver will not respond and the
+configuration will fail.
+Configuration code 0x07: Indicates that this command configures the position range of the motor
+force-position hybrid control protocol.
+Force-Position Hybrid Control Protocol POS MIN: -1250 corresponds to -12.5 (rad), with a
+scaling factor of 100.
+Force-Position Hybrid Control Protocol POS MAX: 1250 corresponds to 12.5 (rad), with a scaling
+factor of 100.
+Motor Force-Position Hybrid Control Protocol - Position Configuration Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 6 C0 07 FA 1E 04 E2 POS MIN=-12.5 rad,POS MAX=12.5 rad
+9.2.6 Motor Power Position Mixed Contro1 Protocol Speed Configuration
+Instruction
+Identifier: Motor ID Data Length: 6 Bytes
+Motor mode
+uint3
+Reserve control status
+uint5
+Configuration
+code uint8
+Configuration
+value int16 Configuration value int16
+Query returns successfully (identifier: Motor ID), data length 7 byte
+0x06 0 0x08 SPD MIN numeric
+value *100
+SPD MAX numeric value
+*100
+s
+uint8 uint
+8
+Configuration
+Code uint8 int16 int16
+0xFF 0xF
+E 0x08 SPD MIN numeric value *100 SPD MAX numeric value
+*100
+37
+
+===== PAGE 43 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+Motor mode: 0x06, indicating this is a motor parameter configuration command.
+Reserved control status: Must be set to 0, otherwise the driver will not respond and the
+configuration will fail.
+Configuration code 0x08: Indicates that this command configures the speed range of the
+motor force-position hybrid control protocol.
+Force mixing control protocol SPD MIN: -1800 corresponds to-18 (rad/s), ratio 100.
+Force position mixed control protocol SPD MAX:1800 corresponds to 18 (rad/s), ratio 100.
+Motor Force-Position Hybrid Control Protocol - Speed Configuration Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 6 C0 08 F8 F8 07 08 SPD MIN=-18 rad/s,SPD MAX=18 rad/s
+9.2.7 Motor Power Position Mixed Control Protocol Torque Configuration
+Instruction
+Identifier: Motor ID Data Length: 6 Bytes
+Motor 
+mode 
+uint3
+Reserve control
+status uint5
+Configuration
+code uint8
+Configuration
+value int16 Configuration value int16
+0x06 0 0x09
+Query returns successfully (identifier: Motor ID), data length 7 byte
+TOR MIN numeric
+value *10 TOR MAX numeric value *10
+s
+0xF
+uint8 uint8
+Configurati
+on
+Code uint8
+int16 int16
+F 0xFE 0x09 TOR MIN numeric value *10 TOR MAX numeric value *10
+Motor mode: 0x06, indicating this is a motor parameter configuration command.
+Reserved control status: Must be set to 0, otherwise the driver will not respond and the
+configuration will fail.
+Configuration code 0x09: Indicates that this command configures the torque range of the
+motor force-position hybrid control protocol.
+Force-Position Hybrid Control Protocol TOR MIN: -900 corresponds to -90 (N·m), with a
+scaling factor of 10.
+Force-Position Hybrid Control Protocol TOR MAX: 900 corresponds to 90 (N·m), with a
+scaling factor of 10.
+38
+
+===== PAGE 44 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+Motor Force-Position Hybrid Control Protocol - Torque Configuration Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 6 C0 09 FC 7C 03 84 TOR MIN=-90 Nm,TOR MAX=90 Nm
+9.2.8 Motor Power Position Mixed Control Protocol Current Configuration
+Instruction
+Identifier: Motor ID Data Length: 6 Bytes
+Motor mode
+uint3
+Reserve control status
+uint5
+Configuration
+codeuint8
+Configuration value
+int16
+Configuration value
+int16
+Query returns successfully (identifier: Motor ID), data length 7 byte
+0x06 0 0x0a CUR MIN numeric  
+value *10
+CUR MAX numeric
+value *10
+s
+uint8 uint8 Configuration
+Code uint8 int16 int16
+0xFF 0xFE 0x0a CUR MIN numeric value *10 CUR MAX numeric
+value *10
+Motor mode: 0x06, indicating that the instruction is a motor parameter configuration
+instruction
+Reservation control status: must be set to 0, otherwise the driver will not respond and the
+configuration will fail.
+Configuration code 0x0a: indicates that the instruction is configured for the motor force
+position mixed control protocol current range.
+Force mixing control protocol CUR MIN: -900 corresponds to-90 (A), proportion 10.
+The power position mixed control protocol CUR MAX:900 corresponds to 90 (A) and the
+proportion is 10.
+Motor Force-Position Hybrid Control Protocol - Current Configuration Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 6 C0 0A FC 7C 03
+84 CUR MIN=-90 A,CUR MAX=90 A
+9.2.9 Motor CAN Timeout Time Configuration Instruction
+Identifier: Motor ID Data Length: 4 Bytes
+Motor mode
+uint3 Reserve control status uint5 Configuration code
+uint8
+0x0
+Configuration value
+uint16
+6 0 0x0b Overtime time values
+Query returns successfully (identifier: Motor ID), data length 5 bytes
+uint8 uint8 Configuration code uint8 uint16
+0xFF 0xFE 0x0b Overtime time values
+39
+
+===== PAGE 45 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+Motor mode: 0x06, indicating this is a motor parameter configuration command.
+Reserved control status: Must be set to 0, otherwise the driver will not respond and the
+configuration will fail.
+Configuration code 0x0B: Indicates that this command configures the motor CAN timeout.
+Motor CAN timeout: 500 corresponds to 500 (ms), with a scaling factor of 1.
+Setting the time to 0 disables CAN timeout protection.
+Motor CAN Timeout Configuration Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 4 C0 0B 01 F4 配置超时时间：500ms
+9.2.10 Motor Current Loop PI Configuration Instruction
+Identifier: Motor ID Data Length: 4 Bytes
+Motor mode
+uint3
+Reserve control status
+uint5
+Configuration code
+uint8
+Configuration
+value uint16
+Configuration value
+uint16
+0x06 0 0x0c KPCurrent
+values* 10000
+Query returns successfully (identifier: Motor ID), data length 7 byte
+Current KI values* 10
+s
+0xF
+uint8 uint8 Configuratio 
+n code uint8 uint16 uint16
+F 0xFE 0x0c Current KP values* 10000 Current KI values* 10
+Motor mode: 0x06, indicating that the instruction is a motor parameter configuration
+instruction
+Reservation control status: must be set to 0, otherwise the driver will not respond and the
+configuration
+will fail. Configuration code 0x0c: indicates that the instruction is configured for the motor
+current loop PI.
+Current loop Current KP: 100 corresponds to 0.01, proportion 10000.
+Current loop Current KI: 500 corresponds to 50, proportion 10.
+Motor Current Loop PI Configuration Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 6 C0 0C 00 64 01 F4 Current KP:0.01,Current KI:50
+40
+
+===== PAGE 46 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+9.2.11 Motor Speed Loop PI Configuration Instruction
+Identifier: Motor ID Data Length: 6 Bytes
+Motor mode
+uint3
+Reserve control
+status uint5
+Configuration
+Code uint8
+Configuration value
+uint16
+Configuration value
+uint16
+Query returns successfully (identifier: Motor ID), data length 7 byte
+0x06 0 0x0d Speed KP numeric  
+value *100000
+Speed KI numeric
+value *100000
+s
+uint8 uint8 Configuration
+Code uint8 uint16 uint16
+0xFF 0xFE 0x0d Speed KP numeric
+value*100000
+Speed KI numeric
+value *100000
+Motor mode: 0x06, indicating that the instruction is a motor parameter configuration
+instruction
+Reservation control status: must be set to 0, otherwise the driver will not respond and the
+configuration will fail.
+Configuration code 0x0d: indicates that the instruction is configured for the motor speed loop
+PI.
+Current loop speed KP: 600 corresponds to 0.006, proportion 100000.
+Current loop speed KI: 10000 corresponds to 0. 1, proportion 100000.
+Motor Speed Loop PI Configuration Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 6 C0 0D 02 58 27 10 Speed KP:0.006,Speed KI:0.1
+9.2.12 Motor Position Loop PD Configuration Instruction
+Identifier: Motor ID Data Length: 6 Bytes
+Motor mode
+uint3
+Reserve control
+status uint5
+Configuration
+Code uint8 Configuration value uint16 Configuration value uint16
+0x06 0 0x0e
+Position KP numeric
+Query returns successfully (identifier: Motor ID), data length 7 byte
+value*100000
+Position KD numeric
+value*100000
+s
+uint8 uint8 Configuration
+Code uint8 uint16 uint16
+0xFF 0xFE 0x0e Position KP numeric
+value*100000
+Position KD numeric
+value*100000
+Motor mode: 0x06, indicating that the instruction is a motor parameter configuration
+instruction
+Reservation control status: must be set to 0, otherwise the driver will not respond and the
+41
+
+===== PAGE 47 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+configuration will fail.
+Configuration code 0x0e: indicates that the instruction is configured for the motor position
+loop PD.
+Position ring Position KP: 600 corresponding to 0.006, ratio 100000.
+Position ring Position KD: 4 corresponds to 0.00004, ratio 100000.
+Motor Position Loop PD Configuration Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 6 C0 0E 02 58 00 04 Position KP:0.006,Speed KD:0.00004
+9.3 Motor Control Parameter Query Instruction
+Identifier: Motor ID Data Length: 2~8 Bytes
+Motor mode uint3 Retain the data domain
+uint5 Query code uint8
+0x07 0~31
+Currently invalid
+0: Reserved, currently invalid
+1: Query the current location
+2: Query the current speed
+3: Query the current
+4: Query the current power
+5: Query the current acceleration
+6: Query the current magnetic link observation gain
+7: Query the current disturbance compensation
+coefficient
+8: Query feedback compensation coefficient
+9: Query damping coefficient
+22: Query the torque coefficient
+23: Query the KP range of force position control
+protocol
+24: Query the KD range of force position mixing
+control protocol
+25: Query the power position mixed control protocol
+POS range
+26: Query the SPD range of force position control
+protocol
+27: Query the TOR range of the force position control
+protocol
+28: Query the CUR range of the force position mixing
+control protocol
+29： query MCU_UUID
+30: Query the software version number and hardware
+version number
+31: Query CAN timeout protection time
+42
+
+===== PAGE 48 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+32: Query the current loop KP and KI
+33: Query speed loop KP and KI0 ：
+34: Query the position ring KP and KD
+35：
+36：
+37: Query brake and brake status
+Motor Control Parameter Query Example Command Table
+Identifier Data Length Frame Data Command Description
+Motor ID 2 E1 01 Query Current Position
+Note: When querying control parameters, you need to first convert the query code to hexadecimal format, then
+modify the second frame data in the example command table with this hexadecimal value to complete the query of
+the corresponding parameter.
+43
+
+===== PAGE 49 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+10.Question-Answer Mode Feedback Message
+The return messages include control command return messages, configuration command
+return messages, and query command return messages. The data storage rules in the CAN data
+field follow the "high byte first, low byte last" format. For specific data splitting details and
+parsing, please refer to the appendix or request sample code from our technical team.
+Message Identifier: Motor ID
+Data Length: 2~8 Bytes
+Data Field Format is as follows:
+Byte0[5:7] Byte0[0:4] Byte1 Byte2~Byte7
+Type of message
+0: Retention
+1: Control command return
+message 1
+2: Control command return
+message 2
+3: Control command return
+message 3
+Motor error message
+0: No error
+1: Motor over-heating
+2: Motor over-current
+3: Motor voltage is too high  
+4: Motor voltage is too low
+5.Motor encoder error
+6: Motor brake voltage is too
+high
+7: The DRV driver is wrong
+Motor data
+4: Configuration command
+returns message
+Configuration
+code
+0: Indicates an error
+1: Indicates successful
+configuration
+5: Query command returns
+the message Query code
+6: Brake status feedback
+Query data
+message 0: Brake Engaged 1: Brake Released
+10.1 Question-Answer Communication Mode Feedback Message Type 1
+Identifier: Motor ID Data Length: 8 Bytes (64 bits in total)
+Text messages
+uint3
+Error messages
+uint5
+Motor position
+uint16
+Motor speed
+uint12
+Actual current
+uint12
+Motor temperature
+uint8
+MOS temperature
+uint8
+0x01 0~7 Output terminal
+position
+Output end
+speed
+Motor phase
+current 0~255 0~255
+Message type: 0x01, indicating that this frame is a type 1 message.
+Motor error message: Refer to the error message table.
+Output terminal position value range: 0~65535 corresponds to-12.5f~12.5f, unit rad.
+Output end speed value range: 0~4095 corresponding to-18.0f~18.0f, unit rad/s.
+Actual current: 0~4095 corresponds to the current range in Table 9-1 .
+Motor temperature: The feedback value is an unsigned 8-bit number equal to the actual
+44
+
+===== PAGE 50 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+temperature *2+50 .
+MOS temperature: The value of the feedback data type is an unsigned 8-bit number equal
+to the actual temperature *2+50.
+10.2 Question-Answer Communication Mode Feedback Message Type 2
+Identifier: Motor ID Data Length: 8 Bytes (total 64 bits)
+Packet type uint3 Error message uint5 Motor position float32 Actual current int16 Motor temperature
+uint8
+0x02 0~7 Output terminal
+position Motor phase current 0~255
+Message type: 0x02, indicating that this frame is a type 2 message.
+Motor error message: Refer to the error message table.
+Output terminal position value range: The value is the actual Angle, in degrees, for example:
+120.5 represents 120.5 °.
+The value range of the motor phase current is-32768~32767 corresponding to-327.68~
+327.67A.
+Motor temperature: The feedback value is an unsigned 8-bit number equal to the actual
+temperature *2+50 .
+10.3 Question-Answer Communication Mode Feedback Message Type 3
+Identifier: Motor ID Data Length: 8 Bytes (total 64 bits)
+Packet type uint3 Error message uint5 Motor speed float32 Actual current int16
+0x0
+Motor temperature
+uint8
+3 0~7 Output speed Motor phase current 0~255
+Message type: 0x03, indicating that this frame is a type 3 message.
+Motor error message: Refer to the error message table.
+Output speed value range: The value is the actual speed, unit is rpm, for example: 100.6
+means 100.6rpm. The value range of the motor phase current is-32768~32767 corresponding
+to-327.68~ 327.67A.
+Motor temperature: The feedback value is an unsigned 8-bit number equal to the actual
+temperature *2+50 .
+10.4 Question-Answer Communication Mode Feedback Message Type 4
+Identifier: Motor ID Data Length: 3 Bytes (total 24 bits)
+Packet type uint3 Error message uint5 Configuration code uint8 Configuration status uint8
+0x04 0~7 0~255 0/1
+45
+
+===== PAGE 51 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+Message type: 0x04, indicating that this frame is a type 4 message.
+Motor error message: Refer to the error message table.
+Configuration code: corresponds to the configuration code sent.
+Configuration status: 0 indicates failure and 1 indicates success.
+46
+
+===== PAGE 52 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+10.5 Question-Answer Communication Mode Feedback Message Type 5
+Type of
+message uint3
+Error
+message
+uint5
+Query code
+uint8
+Data retrieved by query
+0x05 0~31
+1 Current position (angle system), float type (this packet is a  
+total of 6 bytes)
+2 Current speed (RPM), float type (this message is a total of 6  
+bytes)
+3 Current phase current, float type (this message is a total of 6  
+bytes)
+4 Current power,float type (this packet is a total of 6 bytes)
+5 Current acceleration,uint16 type (this message is a total of4  
+bytes)
+6 Current magnetic flux observed gain,uint16 type (this  
+message is a total of4 bytes)
+Current disturbance compensation coefficient,uint17 6
+type (this message is a total of4 bytes)
+8 Current feedback compensation gain,uint16 type (this  
+message is a total of4 bytes)
+9 Current damping coefficient,uint16 type (this message is a  
+total of 4 bytes)
+22 100,uint16 type (this
+2
+Current torque coefficient, ratio  
+message is a total of4 bytes)
+3
+Current position and force control protocol  
+KP range KP_MIN, proportion 1,uint16 type;
+_
+KP MAX, ratio 1,uint16 type (this message is a total of 6
+bytes)
+24
+2
+Current position and force control protocol  
+KD range KDMIN, ratio 1, int16 type;
+_KD MAX, ratio 1,uint16 type (this message is a total of 6
+bytes)
+5
+Current position and force control protocol  
+POS range POS_MIN, ratio 100, int16 type;
+_POS MAX, proportion 100,int16 type (this message is a
+total of 6 bytes)
+26 Current position and force control protocol SPD
+47
+
+===== PAGE 53 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+range SPD_MIN, ratio 100, int16 type;
+2
+_SPD MAX, ratio 100, int16 type (this message
+is a total of 6 bytes)
+7
+Current Tor scope of position and power control  
+protocol TORMIN, ratio 10, int16 type;
+_TOR MAX, ratio 10, int16 type (this message is a total of 6
+bytes)
+28
+Current position and force control protocol  
+CUR range CURMIN, ratio 10, int16 type;
+_
+CUR MAX, ratio 10, int16 type (this message
+is a total of 6 bytes)
+29
+Current MCU UUID
+Message ID 1,uint8 type;
+Four bytes ofUUID, 8-bit type x4; (Packet 1 has a total of  
+7 bytes) Packet number 2, 8-bit type;
+The four bytes in the middle of the UUID are x4 of the type  
+uint8; (Packet No.2 has a total of 7 bytes) Packet No.3, of  
+the type uint8; The four-byte low-value of the UUID is an  
+8-bit type x4; (number 3 packet totals 7 bytes) three  
+consecutive feedback packets.
+30
+Current software and hardware version numbers  
+Software version number, 8-bit x3;
+Software version number,uint8 type x3;(this message is a  
+total of 8 bytes)
+31 Current CAN timeout time (ms), ratio 1, uint16 type (this  
+message is a total of4 bytes)
+32
+3
+The current loop KP and KI
+Current KP,uint16 type, ratio 10000
+Current KI,uint16 type, ratio 10 (this message is a total of  
+6 bytes)
+3
+Current speed rings KP and KI
+Speed KP,uint16 type, ratio 100000
+Speed KI,uint16 type, ratio 100000 (this message is a  
+total of 6 bytes)
+34 Current location KP and KD
+48
+
+===== PAGE 54 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+3
+Position KP,uint16 type, ratio 100000
+Position KD,uint16 type, ratio 100000  
+(this message is a total of 6bytes)
+5
+36
+37 Current brake brake enabled status
+0 (off), 1 (on) (this message is a total of3 bytes)
+10.6 Question-Answer Communication Mode Feedback Message Type 6
+Identifier Motor ID ; Data Length 2 Bytes (16 bits)
+Packet Class uint3 Error message uint5 Brake Status uint8
+0x06 0~7 0 (Brake Engaged) / 1 (Brake Released)
+Packet Type: 0x06 - Indicates a Type 6 frame.
+Motor Error Info: Refer to the Error Information Table.
+Brake Status:
+0: Brake Engaged - The electromagnetic brake is activated, and rotation is locked.
+1: Brake Released - The electromagnetic brake is disengaged, allowing normal operation.
+49
+
+===== PAGE 55 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+11. CAN Protocol Debugging Examples
+The specific debugging protocol refers to the CAN bus protocol in the appendix, and here is
+only an example of its use:
+Take force position control as an example:
+Identifier: Motor ID Data Length: 8 Bytes (total 64 bits)
+Motor mode
+uint3
+Parameter KP
+uint12
+Parameter KD
+uint9
+Expected
+position uint16
+Expected
+speed uint12
+Forward feed 
+torque uint12
+0x00 0~4095 0~511 0~65535 0~4095 0~4095
+The CAN protocol transmits data using up to 8 bytes. In force-position hybrid control, 8
+bytes (64 bits) are used for data transmission. In the current mode, 3 bits indicate motor mode, 12
+bits represent the KP coefficient, 9 bits denote the KD coefficient, 16 bits specify the desired
+position, and 12 bits indicate the desired speed.The torque parameter uses 12 bits (specific
+parameter ranges are detailed in the appendix under "Force-Position Hybrid Control Mode").
+When the use mode is 0, KP = 20, KD = 10, the expected position is 5rad, the speed is 30rad/
+s, and the moment is 10Nm, it is necessary to first convert the expected value into binary:
+00000000 00101000 00001010 00000000 00000101 00000001 11100000 00001010
+Convert the obtained binary to hexadecimal in 8-bit bytes:
+00000000 00101000 00001010 00000000 00000101 00000001 11110000 00001010
+0x00 0x28 0x0A 0X00 0X05 0X01 0XF0 0X0A
+Fill the converted data into the CAN send data structure
+When using the Float type, as with the above conversion method, you can use the provided
+website to convert the data:
+Number Base Conversion (Positive Integers) - Hammer Online Tool (toolhelper.cn)
+Example reference:
+Location mode Data length: 8 bytes
+ID: 1 Expected Angle: 0 ° Expected Speed: 20rpm Current Threshold: 5A Feedback Message:Message Type 2
+Data[0] Data[1] Data[2] Data[3] Data[4] Data[5] Data[6] Data[7]
+0x20 0x00 0x00 0x00 0x00 0x32 0x00 0xCA
+ID: 1 Expected Angle:90° Expected Speed: 20rpm Current Threshold: 5A Feedback Message:Message Type 2
+Data[0] Data[1] Data[2] Data[3] Data[4] Data[5] Data[6] Data[7]
+50
+
+===== PAGE 56 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+0x28 0x56 0x80 0x00 0x00 0x32 0x00 0xCA
+ID: 1 Expected Angle: -90 ° Expected Speed: 20rpm Current Threshold: 5A Feedback Message:Message Type 2
+Data[0] Data[1] Data[2] Data[3] Data[4] Data[5] Data[6] Data[7]
+0x38 0x56 0x80 0x00 0x00 0x32 0x00 0xCA
+Speed mode Data length: 7 bytes
+ID: 1 Expected speed: 20rpm Current threshold: 5A Feedback message: Message type 3
+Data[0] Data[1] Data[2] Data[3] Data[4] Data[5] Data[6]
+0x43 0x41 0xA0 0x00 0x00 0x00 0x32
+ID: 1 Expected speed: 60rpm Current threshold: 5A Feedback message: Message type 3
+Data[0] Data[1] Data[2] Data[3] Data[4] Data[5] Data[6]
+0x43 0x42 0x70 0x00 0x00 0x00 0x32
+ID: 1 Expected speed: -60rpm Current threshold: 5A Feedback message: Message type 3
+Data[0] Data[1] Data[2] Data[3] Data[4] Data[5] Data[6]
+0x43 0xC2 0x70 0x00 0x00 0x00 0x32
+Current mode Data length: 3 bytes
+ID: 1 Expected current: 3A Feedback message: Message type 2
+Data[0] Data[1] Data[2]
+0x62 0x01 0x2C
+ID: 1 Expected current: 5A Feedback message: Message type 2
+Data[0] Data[1] Data[2]
+0x62 0x01 0xF4
+ID: 1 Expected current: -5A Feedback message: Message type 2
+Data[0] Data[1] Data[2]
+0x62 0xFE 0x0C
+Moment mode Data length: 3 bytes
+ID: 1 Expected torque: 3Nm Feedback message: Message type 2
+Data[0] Data[1] Data[2]
+0x66 0x01 0x2C
+ID: 1 Expected torque: 5Nm Feedback message: Message type 2
+Data[0] Data[1] Data[2]
+0x66 0x01 0xF4
+ID: 1 Expected torque: -5Nm Feedback message: Message type 2
+Data[0] Data[1] Data[2]
+0x66 0xFE 0x0C
+51
+
+===== PAGE 57 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+12. EtherCat-CAN Adapter Debugging
+12.1 Wiring Instructions & Pinout Sequence
+As shown in the diagram above, the left side features a power supply port, while the right
+side contains a network cable connection port. Both upper and lower CAN signal transmission
+ports are connected using 1.25×4-pin interface cables. The bottom section is connected through a
+4-pin series circuit, with the other end linked to the host's network port via a complimentary
+Ethernet cable (note: When using a series circuit configuration, the Ethernet interface on the
+EtherCAT board requires careful attention to input and output connections).
+52
+
+===== PAGE 58 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+As shown in the figure above, the left port is the data download port (do not use it). The USB
+on the left side is the power supply port (you can use USB power supply or 4pin line to power it).
+You can connect and power the two boards through 4 pin line ( voltage is 5 V , current needs 500
+mA).
+After testing, 20 boards can be connected in series to ensure the use. The speed can reach 1
+Khz through the main station. The internal CAN data can be sent sequentially at intervals of 50us.
+One transfer board can control up to six motors at a time.
+The adapter board is equipped with 6 channels, each of which corresponds to a motor.
+Among them, 1, 2 and 3 channels correspond to CAN1 on the right side of the adapter board,
+and 4, 5 and 6 channels correspond to CAN2 on the left side of the adapter board (according to
+the placement direction of the adapter board in the above figure)
+Required code, host computer data link:
+https://pan.baidu.com/s/1l5z25D0bQwoyJS3KzZ1EAg?pwd=6smn
+53
+
+===== PAGE 59 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+Appendix A: USB-CAN Module Physical Connection
+Diagram.
+54
+
+===== PAGE 60 =====
+Nanjing Encos Intelligent Technology Co.,LTD
+Appendix B: EtherCAT-CAN Daisy-Chain Connection
+Example Diagram.
+55
+
+===== PAGE 61 =====

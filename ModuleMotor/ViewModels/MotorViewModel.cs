@@ -147,7 +147,7 @@ namespace ModuleMotor.ViewModels
         public ObservableCollection<MotorChannelModel> Motors { get; } = new();
 
         // ── Test cases ─────────────────────────────────────────────────────────
-        public List<TestCaseItem> TestCases { get; } = new();
+        public ObservableCollection<TestCaseItem> TestCases { get; } = new();
 
         // ── Config ─────────────────────────────────────────────────────────────
         private MotorConfig _config = new();
@@ -155,6 +155,27 @@ namespace ModuleMotor.ViewModels
         {
             get => _config;
             set => SetProperty(ref _config, value);
+        }
+
+        public IReadOnlyList<MotorProtocolKind> SupportedProtocols { get; } = Enum.GetValues<MotorProtocolKind>();
+
+        private MotorProtocolKind _selectedProtocol = MotorProtocolKind.Robstride;
+        public MotorProtocolKind SelectedProtocol
+        {
+            get => _selectedProtocol;
+            set
+            {
+                if (!SetProperty(ref _selectedProtocol, value))
+                    return;
+
+                Config.Protocol = value;
+                ResetRawFrameDefaults();
+                RebuildBuiltInTestCases();
+                BuiltSteps.Clear();
+                SelectedAvailableTestCase = null;
+                SelectedQuickLibraryTestCase = null;
+                RaisePropertyChanged(nameof(CurrentProtocolUsesExtendedId));
+            }
         }
 
         // ── CAN state ──────────────────────────────────────────────────────────
@@ -197,6 +218,8 @@ namespace ModuleMotor.ViewModels
 
         public static IReadOnlyList<int> CanBitratesKbps { get; } = new[]
             {50, 100, 120, 200, 250, 400, 500, 800, 1000, 1200, 1500, 2000};
+
+        public bool CurrentProtocolUsesExtendedId => SelectedProtocol == MotorProtocolKind.Robstride;
 
         private string _selectedPort = string.Empty;
         public string SelectedPort
@@ -345,69 +368,6 @@ namespace ModuleMotor.ViewModels
                 Motors.Add(motor);
             }
             
-
-            var tcDefs = new (string Label, RsCommandType Cmd)[]
-            {
-                ("Get Device ID",        RsCommandType.GetId),
-                ("Motor Enabled",        RsCommandType.Enable),
-                ("Motor Stop",           RsCommandType.Disable),
-                ("Set Zero Mechanical",  RsCommandType.SetZero),
-                ("Max Position",         RsCommandType.Control),
-                ("Min Position",         RsCommandType.Control),
-                ("Get State Motor",      RsCommandType.Enable),
-                ("Max Speed",            RsCommandType.Control),
-            };
-            for (int i = 0; i < tcDefs.Length; i++)
-            {
-                var tc = new TestCaseDefinition
-                {
-                    Number = i + 1,
-                    Code = $"TC{i + 1:000}",
-                    Label = tcDefs[i].Label,
-                    Description = $"Built-in testcase: {tcDefs[i].Label}",
-                    IntervalMs = 2,
-                    TimeoutMs = 1000,
-                    DefaultSendMode = CanSendMode.SendOnce,
-                    IsbuiltIn = true,
-                    RsCommand = tcDefs[i].Cmd,
-                    TargetTorque = 0f,
-                    TargetPosition = 0f,
-                    TargetSpeed = 0f,
-                    TargetKp = (float)Config.DefaultKp,
-                    TargetKd = (float)Config.DefaultKd,
-                };
-
-                switch (tc.Label)
-                {
-                    case "Max Position":
-                        tc.TargetPosition = 12.57f;
-                        break;
-                    case "Min Position":
-                        tc.TargetPosition = -12.57f;
-                        break;
-                    case "Max Speed":
-                        tc.UseResolvedProfileMaxSpeed = true;
-                        tc.TargetKp = 0;
-                        break;
-                }
-
-                AvailableTestCases.Add(tc);
-                if (i < 4)
-                    QuickLibraryTestCases.Add(tc);
-            }
-
-            for (int i = 0; i < N_MOTORS; i++)
-            {
-                var num = i + 1;
-                var label = tcDefs[i].Label;
-                TestCases.Add(new TestCaseItem
-                {
-                    Number = num,
-                    Label = label,
-                    Command = new DelegateCommand(() => OnRunTestCase(num, label))
-                });
-            }
-
             OpenAddTestCaseCommand = new DelegateCommand(() =>
             {
                 IsAddConfigPopupOpen = false;
@@ -453,6 +413,231 @@ namespace ModuleMotor.ViewModels
 
             //RefreshPorts();
             SelectedCanBitrate = Config.CanBitrateKbps > 0 ? Config.CanBitrateKbps : 1000;
+            SelectedProtocol = Config.Protocol;
+            RebuildBuiltInTestCases();
+            ResetRawFrameDefaults();
+        }
+
+        private void ResetRawFrameDefaults()
+        {
+            if (SelectedProtocol == MotorProtocolKind.Encos)
+            {
+                RawCanId = "0x7FF";
+                RawCanData = "00 01 00 03";
+                RawSendStatus = "Ready to send ENCOS standard CAN frame.";
+                return;
+            }
+
+            RawCanId = "0x141";
+            RawCanData = "01 02 03 04 05 06 07 08";
+            RawSendStatus = "Ready to send Robstride extended CAN frame.";
+        }
+
+        private void RebuildBuiltInTestCases()
+        {
+            AvailableTestCases.Clear();
+            QuickLibraryTestCases.Clear();
+            TestCases.Clear();
+
+            var definitions = SelectedProtocol == MotorProtocolKind.Encos
+                ? CreateEncosBuiltInDefinitions()
+                : CreateRobstrideBuiltInDefinitions();
+
+            foreach (var definition in definitions)
+            {
+                AvailableTestCases.Add(definition);
+                if (QuickLibraryTestCases.Count < 4)
+                    QuickLibraryTestCases.Add(definition);
+
+                int number = definition.Number;
+                TestCases.Add(new TestCaseItem
+                {
+                    Number = number,
+                    Label = definition.Label,
+                    Command = new DelegateCommand(() => OnRunTestCase(number, definition.Label))
+                });
+            }
+
+            while (TestCases.Count < N_MOTORS)
+            {
+                int number = TestCases.Count + 1;
+                TestCases.Add(new TestCaseItem
+                {
+                    Number = number,
+                    Label = $"Unused {number}",
+                    Command = new DelegateCommand(() => AppendLog($"[TC{number}] No built-in testcase mapped for {SelectedProtocol}."))
+                });
+            }
+
+            RaisePropertyChanged(nameof(TestCases));
+        }
+
+        private List<TestCaseDefinition> CreateRobstrideBuiltInDefinitions()
+        {
+            var tcDefs = new (string Label, RsCommandType Cmd)[]
+            {
+                ("Get Device ID",        RsCommandType.GetId),
+                ("Motor Enabled",        RsCommandType.Enable),
+                ("Motor Stop",           RsCommandType.Disable),
+                ("Set Zero Mechanical",  RsCommandType.SetZero),
+                ("Max Position",         RsCommandType.Control),
+                ("Min Position",         RsCommandType.Control),
+                ("Get State Motor",      RsCommandType.Enable),
+                ("Max Speed",            RsCommandType.Control),
+            };
+
+            var result = new List<TestCaseDefinition>(tcDefs.Length);
+            for (int i = 0; i < tcDefs.Length; i++)
+            {
+                var tc = new TestCaseDefinition
+                {
+                    Number = i + 1,
+                    Code = $"TC{i + 1:000}",
+                    Label = tcDefs[i].Label,
+                    Description = $"Built-in testcase: {tcDefs[i].Label}",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = tcDefs[i].Cmd,
+                    TargetTorque = 0f,
+                    TargetPosition = 0f,
+                    TargetSpeed = 0f,
+                    TargetKp = (float)Config.DefaultKp,
+                    TargetKd = (float)Config.DefaultKd,
+                };
+
+                switch (tc.Label)
+                {
+                    case "Max Position":
+                        tc.TargetPosition = 12.57f;
+                        break;
+                    case "Min Position":
+                        tc.TargetPosition = -12.57f;
+                        break;
+                    case "Max Speed":
+                        tc.UseResolvedProfileMaxSpeed = true;
+                        tc.TargetKp = 0;
+                        break;
+                }
+
+                result.Add(tc);
+            }
+
+            return result;
+        }
+
+        private List<TestCaseDefinition> CreateEncosBuiltInDefinitions()
+        {
+            return new List<TestCaseDefinition>
+            {
+                new()
+                {
+                    Number = 1,
+                    Code = "TC001",
+                    Label = "Query CAN ID",
+                    Description = "ENCOS built-in testcase: query current CAN ID.",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.QueryCanId
+                },
+                new()
+                {
+                    Number = 2,
+                    Code = "TC002",
+                    Label = "Set Zero Position",
+                    Description = "ENCOS built-in testcase: set current position as zero.",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.SetZero
+                },
+                new()
+                {
+                    Number = 3,
+                    Code = "TC003",
+                    Label = "Position 0 deg",
+                    Description = "ENCOS servo position control to 0 degrees.",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.PositionControl,
+                    TargetPosition = 0f,
+                    TargetSpeed = 50f,
+                    TargetTorque = 10f
+                },
+                new()
+                {
+                    Number = 4,
+                    Code = "TC004",
+                    Label = "Position 90 deg",
+                    Description = "ENCOS servo position control to 90 degrees.",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.PositionControl,
+                    TargetPosition = 90f,
+                    TargetSpeed = 50f,
+                    TargetTorque = 10f
+                },
+                new()
+                {
+                    Number = 5,
+                    Code = "TC005",
+                    Label = "Speed 50 rpm",
+                    Description = "ENCOS servo speed control at 50 rpm.",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.SpeedControl,
+                    TargetSpeed = 50f,
+                    TargetTorque = 10f
+                },
+                new()
+                {
+                    Number = 6,
+                    Code = "TC006",
+                    Label = "Current 5 A",
+                    Description = "ENCOS current control at 5 A.",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.CurrentControl,
+                    TargetTorque = 5f
+                },
+                new()
+                {
+                    Number = 7,
+                    Code = "TC007",
+                    Label = "Torque 5 Nm",
+                    Description = "ENCOS torque control at 5 Nm.",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.TorqueControl,
+                    TargetTorque = 5f
+                },
+                new()
+                {
+                    Number = 8,
+                    Code = "TC008",
+                    Label = "Brake Release",
+                    Description = "ENCOS electromagnetic brake release command.",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.BrakeRelease
+                }
+            };
         }
 
         // ── CAN connect ────────────────────────────────────────────────────────
@@ -466,7 +651,7 @@ namespace ModuleMotor.ViewModels
                 IsConnected = !IsConnected;
 
                 var msg = IsConnected
-                    ? $"CAN connected — Port: {SelectedPort}  Baud: {SelectedBaud}  MotorID: {Config.MotorId}"
+                    ? $"CAN connected — Protocol: {SelectedProtocol}  Port: {SelectedPort}  Baud: {SelectedBaud}  MotorID: {Config.MotorId}"
                     : "CAN disconnected";
                 AppendLog(msg);
                 LogHelper.Debug(msg);
@@ -678,7 +863,24 @@ namespace ModuleMotor.ViewModels
 
         private string BuildMotorFrame(MotorChannelModel m)
         {
-            return FormatCanFrame(Config.MotorId, BuildMotorPayload(m));
+            CanFrameSpec frame = SelectedProtocol == MotorProtocolKind.Encos
+                ? EncosMotorControl.BuildHybridControl(
+                    m.DeviceId,
+                    positionRad: (float)m.QCmd,
+                    speedRadPerSec: (float)m.DqCmd,
+                    torqueNm: (float)m.TauCmd,
+                    kp: (float)m.Kp,
+                    kd: (float)m.Kd)
+                : AsExtendedFrame(RsMotorControl.ControlMotor(
+                    m.DeviceId,
+                    m.Profile,
+                    torque: (float)m.TauCmd,
+                    position: (float)m.QCmd,
+                    speed: (float)m.DqCmd,
+                    kp: (float)m.Kp,
+                    kd: (float)m.Kd));
+
+            return FormatCanFrame(frame);
         }
 
         private bool HandleCanConnect()
@@ -704,11 +906,11 @@ namespace ModuleMotor.ViewModels
             }
 
             var rawLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "can_raw.log");
-            var connected = Model.Connect(SelectedCanBitrate, rawLogPath, out var statusMessage);
+            var connected = Model.Connect(SelectedCanBitrate, rawLogPath, Config.UseCanFd, out var statusMessage);
             IsConnected = connected;
 
             var message = connected
-                ? $"CAN connected - Device: {Model.SelectedCan?.DisplayName ?? "unknown"}  CAN: {SelectedCanBitrate} kbps  MotorID: {Config.MotorId}. {statusMessage}"
+                ? $"CAN connected - Protocol: {SelectedProtocol}  Device: {Model.SelectedCan?.DisplayName ?? "unknown"}  CAN: {SelectedCanBitrate} kbps  MotorID: {Config.MotorId}. {statusMessage}"
                 : $"CAN connect failed - {statusMessage}";
 
             AppendLog(message);
@@ -721,23 +923,49 @@ namespace ModuleMotor.ViewModels
             var def = AvailableTestCases.FirstOrDefault(tc => tc.Number == number);
             if (def == null) return false;
 
+            if (SelectedProtocol == MotorProtocolKind.Robstride)
+                return await TryRunRobstrideTestCaseAsync(def, number, label);
+
+            return await TryRunEncosTestCaseAsync(def, number, label);
+        }
+
+        private async Task<bool> TryRunRobstrideTestCaseAsync(TestCaseDefinition def, int number, string label)
+        {
             if (def.RsCommand == RsCommandType.GetId)
                 return await ScanAllMotorIdsAsync(number, label);
 
-            var (canId, payload) = BuildRsFrame(def);
-            if (canId == null) return false;
+            var frame = BuildRsFrame(def);
+            if (frame is null)
+                return false;
 
-            var txFrame = FormatCanFrame(canId, payload!);
-
-            if (!Model.SendMessage(canId, payload!, out var sendMessage))
+            if (!Model.SendFrame(frame.Value, out var sendMessage))
             {
                 AppendLog($"[TC{number} {label}] SEND ERROR - {sendMessage}");
                 return true;
             }
 
+            var txFrame = FormatCanFrame(frame.Value);
             AppendLog($"[TC{number} {label}] SEND  {txFrame}");
             LogHelper.Debug($"TC{number} TX: {txFrame}");
             return true;
+        }
+
+        private Task<bool> TryRunEncosTestCaseAsync(TestCaseDefinition def, int number, string label)
+        {
+            var frame = BuildEncosFrame(def);
+            if (frame is null)
+                return Task.FromResult(false);
+
+            if (!Model.SendFrame(frame.Value, out var sendMessage))
+            {
+                AppendLog($"[TC{number} {label}] SEND ERROR - {sendMessage}");
+                return Task.FromResult(true);
+            }
+
+            var txFrame = FormatCanFrame(frame.Value);
+            AppendLog($"[TC{number} {label}] SEND  {txFrame}");
+            LogHelper.Debug($"TC{number} TX: {txFrame}");
+            return Task.FromResult(true);
         }
 
         private async Task<bool> ScanAllMotorIdsAsync(int number, string label)
@@ -750,8 +978,8 @@ namespace ModuleMotor.ViewModels
 
             for (byte id = 0x01; id <= 0x7F; id++)
             {
-                var (canId, payload) = RsMotorControl.GetIdMotor(id);
-                if (!Model.SendMessage(canId, payload, out var sendMessage))
+                var frame = AsExtendedFrame(RsMotorControl.GetIdMotor(id));
+                if (!Model.SendFrame(frame, out var sendMessage))
                 {
                     AppendLog($"[TC{number} {label}] SEND ERROR - ID 0x{id:X2}: {sendMessage}");
                     continue;
@@ -810,53 +1038,93 @@ namespace ModuleMotor.ViewModels
             return newFrames.Max(m => m.time);
         }
 
-        private (string? CanId, byte[]? Payload) BuildRsFrame(TestCaseDefinition def)
+        private CanFrameSpec? BuildRsFrame(TestCaseDefinition def)
         {
             return def.RsCommand switch
             {
-                RsCommandType.GetId   => RsMotorControl.GetIdMotor(DeviceId),
-                RsCommandType.Enable  => RsMotorControl.EnableMotor(DeviceId),
-                RsCommandType.Disable => RsMotorControl.DisableMotor(DeviceId),
-                RsCommandType.SetZero => RsMotorControl.SetZeroPosition(DeviceId),
+                RsCommandType.GetId   => AsExtendedFrame(RsMotorControl.GetIdMotor(DeviceId)),
+                RsCommandType.Enable  => AsExtendedFrame(RsMotorControl.EnableMotor(DeviceId)),
+                RsCommandType.Disable => AsExtendedFrame(RsMotorControl.DisableMotor(DeviceId)),
+                RsCommandType.SetZero => AsExtendedFrame(RsMotorControl.SetZeroPosition(DeviceId)),
                 RsCommandType.Control => BuildControlFrame(def),
-                _ => (null, null)
+                _ => null
             };
         }
 
-        private (string CanId, byte[] Payload) BuildControlFrame(TestCaseDefinition def)
+        private CanFrameSpec? BuildEncosFrame(TestCaseDefinition def)
+        {
+            return def.RsCommand switch
+            {
+                RsCommandType.QueryCanId => EncosMotorControl.QueryCanId(),
+                RsCommandType.SetZero => EncosMotorControl.SetZeroPosition(DeviceId16),
+                RsCommandType.Control => BuildEncosHybridFrame(def),
+                RsCommandType.PositionControl => EncosMotorControl.BuildServoPositionControl(DeviceId16, def.TargetPosition, def.TargetSpeed, def.TargetTorque),
+                RsCommandType.SpeedControl => EncosMotorControl.BuildServoSpeedControl(DeviceId16, def.TargetSpeed, def.TargetTorque),
+                RsCommandType.CurrentControl => EncosMotorControl.BuildCurrentControl(DeviceId16, def.TargetTorque),
+                RsCommandType.TorqueControl => EncosMotorControl.BuildTorqueControl(DeviceId16, def.TargetTorque),
+                RsCommandType.BrakeRelease => EncosMotorControl.BuildElectromagneticBrake(DeviceId16, release: true),
+                _ => null
+            };
+        }
+
+        private CanFrameSpec BuildControlFrame(TestCaseDefinition def)
         {
             var profile = RsMotorProfileMap.Resolve(DeviceId);
             var speed = def.UseResolvedProfileMaxSpeed ? profile.VMax : def.TargetSpeed;
 
-            return RsMotorControl.ControlMotor(
+            return AsExtendedFrame(RsMotorControl.ControlMotor(
                 DeviceId,
                 profile,
                 torque: def.TargetTorque,
                 position: def.TargetPosition,
                 speed: speed,
                 kp: def.TargetKp,
+                kd: def.TargetKd));
+        }
+
+        private CanFrameSpec BuildEncosHybridFrame(TestCaseDefinition def)
+        {
+            var speed = def.UseResolvedProfileMaxSpeed
+                ? EncosMotorControl.HybridSpeedMaxRadPerSec
+                : def.TargetSpeed;
+
+            return EncosMotorControl.BuildHybridControl(
+                DeviceId16,
+                positionRad: def.TargetPosition,
+                speedRadPerSec: speed,
+                torqueNm: def.TargetTorque,
+                kp: def.TargetKp,
                 kd: def.TargetKd);
         }
 
         private bool TrySendMotorFrame(MotorChannelModel m)
         {
-            var (canId, payload) = RsMotorControl.ControlMotor(
-                m.DeviceId, m.Profile,
-                torque:   (float)m.TauCmd,
-                position: (float)m.QCmd,
-                speed:    (float)m.DqCmd,
-                kp:       (float)m.Kp,
-                kd:       (float)m.Kd);
-            var frame = FormatCanFrame(canId, payload);
+            CanFrameSpec frame = SelectedProtocol == MotorProtocolKind.Encos
+                ? EncosMotorControl.BuildHybridControl(
+                    m.DeviceId,
+                    positionRad: (float)m.QCmd,
+                    speedRadPerSec: (float)m.DqCmd,
+                    torqueNm: (float)m.TauCmd,
+                    kp: (float)m.Kp,
+                    kd: (float)m.Kd)
+                : AsExtendedFrame(RsMotorControl.ControlMotor(
+                    m.DeviceId,
+                    m.Profile,
+                    torque: (float)m.TauCmd,
+                    position: (float)m.QCmd,
+                    speed: (float)m.DqCmd,
+                    kp: (float)m.Kp,
+                    kd: (float)m.Kd));
 
-            if (!Model.SendMessage(canId, payload, out var sendMessage))
+            if (!Model.SendFrame(frame, out var sendMessage))
             {
                 AppendLog($"[{m.Label}] SEND ERROR - {sendMessage}");
                 return true;
             }
 
-            AppendLog($"[{m.Label}] SEND  {frame}");
-            LogHelper.Debug($"{m.Label} TX: {frame}");
+            var frameText = FormatCanFrame(frame);
+            AppendLog($"[{m.Label}] SEND  {frameText}");
+            LogHelper.Debug($"{m.Label} TX: {frameText}");
             return true;
         }
 
@@ -868,23 +1136,32 @@ namespace ModuleMotor.ViewModels
             {
                 if (!motor.Enabled) continue;
 
-                var (canId, payload) = RsMotorControl.ControlMotor(
-                    motor.DeviceId, motor.Profile,
-                    torque:   (float)motor.TauCmd,
-                    position: (float)motor.QCmd,
-                    speed:    (float)motor.DqCmd,
-                    kp:       (float)motor.Kp,
-                    kd:       (float)motor.Kd);
-                var frame = FormatCanFrame(canId, payload);
+                CanFrameSpec frame = SelectedProtocol == MotorProtocolKind.Encos
+                    ? EncosMotorControl.BuildHybridControl(
+                        motor.DeviceId,
+                        positionRad: (float)motor.QCmd,
+                        speedRadPerSec: (float)motor.DqCmd,
+                        torqueNm: (float)motor.TauCmd,
+                        kp: (float)motor.Kp,
+                        kd: (float)motor.Kd)
+                    : AsExtendedFrame(RsMotorControl.ControlMotor(
+                        motor.DeviceId,
+                        motor.Profile,
+                        torque: (float)motor.TauCmd,
+                        position: (float)motor.QCmd,
+                        speed: (float)motor.DqCmd,
+                        kp: (float)motor.Kp,
+                        kd: (float)motor.Kd));
 
-                if (!Model.SendMessage(canId, payload, out var sendMessage))
+                if (!Model.SendFrame(frame, out var sendMessage))
                 {
                     AppendLog($"[{motor.Label}] SEND ERROR - {sendMessage}");
                     continue;
                 }
 
-                AppendLog($"[{motor.Label}] SEND  {frame}");
-                LogHelper.Debug($"{motor.Label} TX: {frame}");
+                var frameText = FormatCanFrame(frame);
+                AppendLog($"[{motor.Label}] SEND  {frameText}");
+                LogHelper.Debug($"{motor.Label} TX: {frameText}");
                 sent++;
             }
 
@@ -911,15 +1188,23 @@ namespace ModuleMotor.ViewModels
             };
         }
 
-        private byte DeviceId => RsMotorControl.ParseDeviceId(Config.MotorId);
+        private ushort DeviceId16 => SelectedProtocol == MotorProtocolKind.Encos
+            ? EncosMotorControl.ParseDeviceId(Config.MotorId)
+            : RsMotorControl.ParseDeviceId(Config.MotorId);
+
+        private byte DeviceId => (byte)DeviceId16;
 
         //private (string CanId, byte[] Payload) EnableMotor()   => RsMotorControl.EnableMotor(DeviceId);
         //private (string CanId, byte[] Payload) DisableMotor()  => RsMotorControl.DisableMotor(DeviceId);
         //private (string CanId, byte[] Payload) SetZeroPos()    => RsMotorControl.SetZeroPosition(DeviceId);
 
-        private static string FormatCanFrame(string canId, byte[] payload)
+        private static CanFrameSpec AsExtendedFrame((string CanId, byte[] Payload) frame)
+            => new(frame.CanId, frame.Payload, true);
+
+        private static string FormatCanFrame(CanFrameSpec frame)
         {
-            return $"ID={canId}  DLC={payload.Length}  Data=[{string.Join(" ", payload.Select(b => b.ToString("X2")))}]";
+            string idType = frame.IsExtendedId ? "EXT" : "STD";
+            return $"{idType} ID={frame.CanId}  DLC={frame.Payload.Length}  Data=[{string.Join(" ", frame.Payload.Select(b => b.ToString("X2")))}]";
         }
 
 
@@ -947,14 +1232,14 @@ namespace ModuleMotor.ViewModels
                 return;
             }
 
-            if (!Model.SendMessage(canId, payload, out var sendMessage))
+            if (!Model.SendMessage(canId, payload, CurrentProtocolUsesExtendedId, out var sendMessage))
             {
                 RawSendStatus = sendMessage;
                 AppendLog($"[RawFrame] SEND ERROR - {sendMessage}");
                 return;
             }
 
-            var frame = FormatCanFrame(canId, payload);
+            var frame = FormatCanFrame(new CanFrameSpec(canId, payload, CurrentProtocolUsesExtendedId));
             AppendLog($"[RawFrame] SEND  {frame}");
             LogHelper.Debug($"Raw TX: {frame}");
             RawSendStatus = "Frame sent.";
@@ -1129,6 +1414,7 @@ namespace ModuleMotor.ViewModels
                     {
                         Config = cfg;
                         RaisePropertyChanged(nameof(Config));
+                        SelectedProtocol = cfg.Protocol;
 
                         // Sync port/baud ViewModel properties from the loaded config
                         SelectedBaud = cfg.BaudRate;
@@ -1257,7 +1543,11 @@ namespace ModuleMotor.ViewModels
                                 if (RxFrames.Count > 1000)
                                     RxFrames.RemoveAt(RxFrames.Count - 1);
 
-                                if (entry.MotorId is byte motorId && payload.Length >= 8)
+                                if (SelectedProtocol == MotorProtocolKind.Encos)
+                                {
+                                    HandleEncosRxFrame(entry, payload);
+                                }
+                                else if (entry.MotorId is byte motorId && payload.Length >= 8)
                                 {
                                     // Motor ID is from context — match by channel (ch = DeviceId)
                                     var motor = Motors.FirstOrDefault(m => m.DeviceId == motorId);
@@ -1294,6 +1584,59 @@ namespace ModuleMotor.ViewModels
 
                 await Task.Delay(intervalMs, ct).ConfigureAwait(false);
             }
+        }
+
+        private void HandleRobstrideRxFrame(RxFrameEntry entry, byte[] payload, byte motorId)
+        {
+            var motor = Motors.FirstOrDefault(m => m.DeviceId == motorId);
+            var profile = motor?.Profile ?? RsMotorProfileMap.Resolve(motorId);
+            var fb = RsMotorControl.DecodeFeedback(motorId, payload, profile);
+
+            if (motor != null)
+            {
+                motor.Q           = Math.Round(fb.Angle, 4);
+                motor.Dq          = Math.Round(fb.Speed, 4);
+                motor.Tau         = Math.Round(fb.Torque, 4);
+                motor.Temperature = Math.Round(fb.Temperature, 2);
+            }
+
+            AppendLog($"[RX] {entry.CanIdText} | CH={entry.Channel} | Angle={fb.Angle:F4} rad  Speed={fb.Speed:F4} rad/s  Torque={fb.Torque:F4} Nm  Temp={fb.Temperature:F1}C");
+        }
+
+        private void HandleEncosRxFrame(RxFrameEntry entry, byte[] payload)
+        {
+            if (entry.DecodedRawId is not uint rawId)
+            {
+                AppendLog($"[RX] CH={entry.Channel}  {entry.CanIdText}  {entry.DataHex}");
+                return;
+            }
+
+            if (!EncosMotorControl.TryDecodeReply(rawId, payload, out var reply))
+            {
+                AppendLog($"[RX] CH={entry.Channel}  {entry.CanIdText}  {entry.DataHex}");
+                return;
+            }
+
+            if (reply.Feedback is { } feedback)
+            {
+                if (feedback.MotorId <= byte.MaxValue)
+                {
+                    var motor = Motors.FirstOrDefault(m => m.DeviceId == (byte)feedback.MotorId);
+                    if (motor != null)
+                    {
+                        motor.Q           = Math.Round(feedback.PositionRad, 4);
+                        motor.Dq          = Math.Round(feedback.SpeedRadPerSec, 4);
+                        motor.Tau         = Math.Round(feedback.EffortValue, 4);
+                        motor.Temperature = Math.Round(feedback.TemperatureC, 2);
+                        motor.ErrorCode   = feedback.ErrorCode;
+                    }
+                }
+
+                AppendLog($"[RX] {entry.CanIdText} | CH={entry.Channel} | {reply.Summary}");
+                return;
+            }
+
+            AppendLog($"[RX] {entry.CanIdText} | CH={entry.Channel} | {reply.Summary}");
         }
 
         private void OnGoBack()

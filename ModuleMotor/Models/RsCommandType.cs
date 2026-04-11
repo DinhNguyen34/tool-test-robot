@@ -4,9 +4,15 @@ namespace ModuleMotor.Models
     {
         None,
         GetId,
+        QueryCanId,
         Enable,
         Disable,
         SetZero,
         Control,
+        PositionControl,
+        SpeedControl,
+        CurrentControl,
+        TorqueControl,
+        BrakeRelease,
     }
 }
