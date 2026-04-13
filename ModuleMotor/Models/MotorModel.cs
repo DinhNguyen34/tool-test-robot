@@ -59,7 +59,12 @@ public class MotorModel : BindableBase
         if (!hasExactBaud)
             canBaud = CanBaudrate.BAUDRATE_1000;
 
-        var connected = _canCtrl.Connect(SelectedCan, rawLogPath, CanBaudrate.BAUDRATE_1000, CanBaudrate.BAUDRATE_1000, bitrateSwitch.SW_OFF,  CanType.CAN_STD);
+ //HEAD
+        var canType = useCanFd ? CanType.CAN_FD : CanType.CAN_STD;
+        //var connected = _canCtrl.Connect(SelectedCan, rawLogPath, canBaud, canType);
+
+        var connected = _canCtrl.Connect(SelectedCan, rawLogPath, CanBaudrate.BAUDRATE_1000, CanBaudrate.BAUDRATE_1000,bitrateSwitch.SW_ON,  CanType.CAN_STD);
+ //10cba31470493cd74b98414751afa764eba99236
         SelectedCan.IsConnected = connected;
 
         if (connected)

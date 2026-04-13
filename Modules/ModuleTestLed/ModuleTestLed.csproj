@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <Reference Include="VCanPLib">
-      <HintPath>..\..\VCanPLib.dll</HintPath>
+      <HintPath>C:\Users\LAB\Downloads\VCanPLib_260411\VCanPLib.dll</HintPath>
     </Reference>
   </ItemGroup>
 

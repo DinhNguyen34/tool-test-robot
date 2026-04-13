@@ -1,18 +1,29 @@
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Reflection.Metadata;
+using System.Windows;
 using Common.Core.Helpers;
 using ModuleTestLed.Models;
 using ModuleTestLed.Views;
 using Prism.Commands;
 using Prism.Mvvm;
-using System.Collections.ObjectModel;
-using System.Windows;
+using Prism.Navigation.Regions;
+
 
 namespace ModuleTestLed.ViewModels
 {
     public class TestLedViewModel : BindableBase
     {
         public TestLedModel Model { get; } = new TestLedModel();
+        private readonly IRegionManager _regionManager;
 
         private string _logText = string.Empty;
+        private bool _isLogging;
+        private StreamWriter? _logWriter;
+        public TestLedViewModel(IRegionManager regionManager)
+        {
+            _regionManager = regionManager;
+        }
         public string LogText
         {
             get => _logText;
@@ -30,10 +41,7 @@ namespace ModuleTestLed.ViewModels
         public DelegateCommand<LedTestCaseItem> FailCommand => new(OnFail);
         public DelegateCommand TestOneLedCommand => new(OnTestOneLed);
         public DelegateCommand SaveReportCommand => new(OnSaveReport);
-
-        public TestLedViewModel()
-        {
-        }
+        public DelegateCommand GoBackCommand => new(OnGoBack);
 
         private void OnRefreshCan()
         {
@@ -58,7 +66,7 @@ namespace ModuleTestLed.ViewModels
             }
             catch (Exception ex) { LogHelper.Exception(ex); }
         }
-
+        
         private void OnConfig()
         {
             try
@@ -86,7 +94,23 @@ namespace ModuleTestLed.ViewModels
             }
             catch (Exception ex) { LogHelper.Exception(ex); }
         }
+        public void OnGoBack()
+        {
+            if (Model.IsConnected)
+            {
+                Model.Disconnect();
+                AppendLog("GoBack disconnected CAN");
+            }
 
+            if (_isLogging)
+            {
+                _isLogging = false;
+                _logWriter?.Close();
+                _logWriter = null;
+            }
+
+            _regionManager.RequestNavigate("CoverRegion", "CoverRegion");
+        }
         private void OnStop()
         {
             Model.IsRunning = false;
