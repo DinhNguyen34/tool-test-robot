@@ -156,4 +156,10 @@ Thumbs.db
 /RobotTesting/RobotTesting.csproj.user
 /Modules/ModuleTestLed/bin/Debug/net10.0-windows10.0.26100.0
 /Modules/ModuleCover/bin/Debug/net10.0-windows10.0.26100.0
+*.png
+/.gitignore
+/.gitignore
+/Modules/ModuleTestBms/bin/Debug/net10.0-windows10.0.26100.0
+/Modules/ModuleTestBms/obj/Debug/net10.0-windows10.0.26100.0
+/Modules/ModuleTestBms/obj
 /Modules/ModuleTestLed/bin/x64

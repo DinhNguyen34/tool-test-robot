@@ -1,29 +1,28 @@
-using System.Collections.ObjectModel;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Windows;
 using Common.Core.Helpers;
-using ModuleTestLed.Models;
-using ModuleTestLed.Views;
+using ModuleTestBms.Models;
+using ModuleTestBms.Views;
 using Prism.Commands;
 using Prism.Mvvm;
 using Prism.Navigation.Regions;
 
-
-namespace ModuleTestLed.ViewModels
+namespace ModuleTestBms.ViewModels
 {
-    public class TestLedViewModel : BindableBase
+    public class TestBmsViewModel : BindableBase
     {
-        public TestLedModel Model { get; } = new TestLedModel();
+        public TestBmsModel Model { get; } = new TestBmsModel();
         private readonly IRegionManager _regionManager;
 
         private string _logText = string.Empty;
         private bool _isLogging;
         private StreamWriter? _logWriter;
-        public TestLedViewModel(IRegionManager regionManager)
+
+        public TestBmsViewModel(IRegionManager regionManager)
         {
             _regionManager = regionManager;
         }
+
         public string LogText
         {
             get => _logText;
@@ -33,15 +32,18 @@ namespace ModuleTestLed.ViewModels
         public DelegateCommand RefreshCanCommand => new(OnRefreshCan);
         public DelegateCommand ConnectCommand => new(OnConnect);
         public DelegateCommand ConfigCommand => new(OnConfig);
+        public DelegateCommand ImportDatabaseCommand => new(OnImportDatabase);
         public DelegateCommand RunCommand => new(OnRun);
         public DelegateCommand StopCommand => new(OnStop);
         public DelegateCommand SelectAllCommand => new(OnSelectAll);
         public DelegateCommand DeselectAllCommand => new(OnDeselectAll);
-        public DelegateCommand<LedTestCaseItem> PassCommand => new(OnPass);
-        public DelegateCommand<LedTestCaseItem> FailCommand => new(OnFail);
-        public DelegateCommand TestOneLedCommand => new(OnTestOneLed);
+        public DelegateCommand<BmsTestCaseItem> PassCommand => new(OnPass);
+        public DelegateCommand<BmsTestCaseItem> FailCommand => new(OnFail);
         public DelegateCommand SaveReportCommand => new(OnSaveReport);
         public DelegateCommand GoBackCommand => new(OnGoBack);
+        public DelegateCommand StartMonitorCommand => new(OnStartMonitor);
+        public DelegateCommand StopMonitorCommand => new(OnStopMonitor);
+        public DelegateCommand ClearMonitorCommand => new(OnClearMonitor);
 
         private void OnRefreshCan()
         {
@@ -66,18 +68,23 @@ namespace ModuleTestLed.ViewModels
             }
             catch (Exception ex) { LogHelper.Exception(ex); }
         }
-        
+
         private void OnConfig()
+        {
+            // Config window placeholder — to be completed later
+            AppendLog("Config: not yet implemented.");
+        }
+
+        private void OnImportDatabase()
         {
             try
             {
-                var window = new LedConfigWindow(Model.Config);
-                if (window.ShowDialog() == true)
-                {
-                    Model.Config.Save();
-                    Model.ReloadConfig();
-                    AppendLog("Config saved and test cases rebuilt.");
-                }
+                var window = new ImportDatabaseWindow(Model);
+                window.Owner = Application.Current.MainWindow;
+                window.ShowDialog();
+
+                if (Model.CanDb != null)
+                    AppendLog($"Database loaded: {Model.CanDb.Messages.Count} messages.");
             }
             catch (Exception ex) { LogHelper.Exception(ex); }
         }
@@ -94,7 +101,8 @@ namespace ModuleTestLed.ViewModels
             }
             catch (Exception ex) { LogHelper.Exception(ex); }
         }
-        public void OnGoBack()
+
+        private void OnGoBack()
         {
             if (Model.IsConnected)
             {
@@ -111,6 +119,7 @@ namespace ModuleTestLed.ViewModels
 
             _regionManager.RequestNavigate("CoverRegion", "CoverRegion");
         }
+
         private void OnStop()
         {
             Model.IsRunning = false;
@@ -129,17 +138,6 @@ namespace ModuleTestLed.ViewModels
                 tc.IsSelected = false;
         }
 
-        private void OnTestOneLed()
-        {
-            try
-            {
-                var window = new TestOneLedWindow(Model);
-                window.Owner = Application.Current.MainWindow;
-                window.ShowDialog();
-            }
-            catch (Exception ex) { LogHelper.Exception(ex); }
-        }
-
         private void OnSaveReport()
         {
             try
@@ -153,20 +151,43 @@ namespace ModuleTestLed.ViewModels
             catch (Exception ex) { LogHelper.Exception(ex); }
         }
 
-        private void OnPass(LedTestCaseItem? tc)
+        private void OnPass(BmsTestCaseItem? tc)
         {
             if (tc == null) return;
-            tc.Status = LedTestStatus.Pass;
+            tc.Status = BmsTestStatus.Pass;
             tc.Remark = "Manual: PASS";
             AppendLog($"{tc.Name} => PASS (manual)");
         }
 
-        private void OnFail(LedTestCaseItem? tc)
+        private void OnFail(BmsTestCaseItem? tc)
         {
             if (tc == null) return;
-            tc.Status = LedTestStatus.Fail;
+            tc.Status = BmsTestStatus.Fail;
             tc.Remark = "Manual: FAIL";
             AppendLog($"{tc.Name} => FAIL (manual)");
+        }
+
+        private void OnStartMonitor()
+        {
+            if (!Model.IsConnected)
+            {
+                AppendLog("Cannot start monitor: not connected.");
+                return;
+            }
+            Model.StartMonitor();
+            AppendLog("CAN Monitor started.");
+        }
+
+        private void OnStopMonitor()
+        {
+            Model.StopMonitor();
+            AppendLog("CAN Monitor stopped.");
+        }
+
+        private void OnClearMonitor()
+        {
+            Model.ClearMonitor();
+            AppendLog("Monitor cleared.");
         }
 
         private void AppendLog(string msg)

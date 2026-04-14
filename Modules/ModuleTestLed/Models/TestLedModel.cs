@@ -233,7 +233,7 @@ namespace ModuleTestLed.Models
         /// </summary>
         private void TurnOffAll()
         {
-            for (byte port = 0; port < Config.MaxPorts; port++)
+            for (byte port = 1; port <= Config.MaxPorts; port++)
             {
                 SendControlAll(port, 0, 0, 0, 0);
                 Thread.Sleep(10);
@@ -263,7 +263,7 @@ namespace ModuleTestLed.Models
                 Description = "Control all LEDs per port RGBW=255 every 2000ms, then off."
             });
 
-            for (int p = 0; p < Config.MaxPorts; p++)
+            for (int p = 1; p <= Config.MaxPorts; p++)
             {
                 TestCases.Add(new LedTestCaseItem
                 {
@@ -347,7 +347,7 @@ namespace ModuleTestLed.Models
             else if (tc.Name.StartsWith("TC3"))
             {
                 int port = ParsePortFromName(tc.Name);
-                RunTC3_RgbwCycle(port, maxVal, logAction);
+                RunTC3_RgbwCycle(port + 1, maxVal, logAction);
             }
             else if (tc.Name.StartsWith("TC4"))
             {
@@ -358,7 +358,7 @@ namespace ModuleTestLed.Models
         private void RunTC1_AllPortsOnOff(byte maxVal, Action<string> log)
         {
             log("TC1: Turning all LEDs ON (all ports)...");
-            for (byte port = 0; port < Config.MaxPorts; port++)
+            for (byte port = 1; port <= Config.MaxPorts; port++)
             {
                 SendControlAll(port, maxVal, maxVal, maxVal, maxVal);
                 Thread.Sleep(10);
@@ -373,7 +373,7 @@ namespace ModuleTestLed.Models
 
         private void RunTC2_PerPortSequential(byte maxVal, Action<string> log)
         {
-            for (byte port = 0; port < Config.MaxPorts; port++)
+            for (byte port = 1; port <= Config.MaxPorts; port++)
             {
                 log($"TC2: Port {port} ON...");
                 SendControlAll(port, maxVal, maxVal, maxVal, maxVal);

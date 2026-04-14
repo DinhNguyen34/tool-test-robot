@@ -1,13 +1,13 @@
-<UserControl x:Class="ModuleTestLed.Views.TestLedView"
+<UserControl x:Class="ModuleTestBms.Views.TestBmsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:prism="http://prismlibrary.com/"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-             xmlns:local="clr-namespace:ModuleTestLed.Views"
-             xmlns:models="clr-namespace:ModuleTestLed.Models"
-             xmlns:conv="clr-namespace:ModuleTestLed.Converters"
+             xmlns:local="clr-namespace:ModuleTestBms.Views"
+             xmlns:models="clr-namespace:ModuleTestBms.Models"
+             xmlns:conv="clr-namespace:ModuleTestBms.Converters"
              mc:Ignorable="d"
              prism:ViewModelLocator.AutoWireViewModel="True"
              Background="{DynamicResource MaterialDesignPaper}"
@@ -22,19 +22,19 @@
 
         <Style x:Key="StatusTextStyle" TargetType="TextBlock">
             <Style.Triggers>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:LedTestStatus.Pass}">
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BmsTestStatus.Pass}">
                     <Setter Property="Foreground" Value="Green"/>
                     <Setter Property="FontWeight" Value="Bold"/>
                 </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:LedTestStatus.Fail}">
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BmsTestStatus.Fail}">
                     <Setter Property="Foreground" Value="Red"/>
                     <Setter Property="FontWeight" Value="Bold"/>
                 </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:LedTestStatus.Running}">
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BmsTestStatus.Running}">
                     <Setter Property="Foreground" Value="DodgerBlue"/>
                     <Setter Property="FontWeight" Value="SemiBold"/>
                 </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:LedTestStatus.HasRun}">
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BmsTestStatus.HasRun}">
                     <Setter Property="Foreground" Value="DarkOrange"/>
                     <Setter Property="FontWeight" Value="SemiBold"/>
                 </DataTrigger>
@@ -48,8 +48,8 @@
             <DockPanel LastChildFill="True" Background="Transparent" MouseLeftButtonDown="TopBar_MouseLeftButtonDown">
                 <Button Content="← Back" Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
                         Command="{Binding GoBackCommand}"
-                        HorizontalAlignment="Left" Width="80"/> 
-                <TextBlock Text="TEST LED" FontSize="24" Margin="10,0,10,0" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        HorizontalAlignment="Left" Width="80"/>
+                <TextBlock Text="BMS TESTING" FontSize="24" Margin="10,0,10,0" FontWeight="SemiBold" VerticalAlignment="Center"/>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Center" VerticalAlignment="Center">
 
                     <TextBlock Text="Can Device:" FontSize="18" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="White"/>
@@ -78,8 +78,10 @@
 
                     <Button Content="Config" Width="130" Command="{Binding ConfigCommand}" Height="40" FontSize="16"
                             Style="{StaticResource MaterialDesignRaisedButton}" Padding="12,6"/>
+
+                    <Button Content="Import DB" Width="130" Command="{Binding ImportDatabaseCommand}" Height="40" FontSize="16" Margin="5,0,0,0"
+                            Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="12,6"/>
                 </StackPanel>
-               
             </DockPanel>
         </materialDesign:ColorZone>
 
@@ -87,9 +89,11 @@
         <Grid Margin="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="200"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="150"/>
+                <RowDefinition Height="80"/>
             </Grid.RowDefinitions>
 
             <!-- Toolbar -->
@@ -97,8 +101,6 @@
                 <Button Content="Run Selected" Command="{Binding RunCommand}" Margin="0,0,8,0"
                         Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="16,6"/>
                 <Button Content="Stop" Command="{Binding StopCommand}" Margin="0,0,8,0"
-                        Style="{StaticResource MaterialDesignRaisedButton}" Padding="16,6"/>
-                <Button Content="Test One Led" Command="{Binding TestOneLedCommand}" Margin="0,0,8,0"
                         Style="{StaticResource MaterialDesignRaisedButton}" Padding="16,6"/>
                 <Button Content="Select All" Command="{Binding SelectAllCommand}" Margin="0,0,8,0"
                         Style="{StaticResource MaterialDesignFlatButton}"/>
@@ -169,11 +171,60 @@
                 </DataGrid>
             </materialDesign:Card>
 
+            <!-- Monitor label + controls -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,4">
+                <TextBlock Text="CAN Monitor:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <Button Content="Start Monitor" Command="{Binding StartMonitorCommand}" Margin="0,0,8,0"
+                        Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="12,4" FontSize="12"/>
+                <Button Content="Stop Monitor" Command="{Binding StopMonitorCommand}" Margin="0,0,8,0"
+                        Style="{StaticResource MaterialDesignRaisedButton}" Padding="12,4" FontSize="12"/>
+                <Button Content="Clear" Command="{Binding ClearMonitorCommand}"
+                        Style="{StaticResource MaterialDesignFlatButton}" Padding="12,4" FontSize="12"/>
+            </StackPanel>
+
+            <!-- Monitor area: expandable CAN messages with signals -->
+            <materialDesign:Card Grid.Row="3" Padding="0" Margin="0,0,0,8">
+                <DataGrid ItemsSource="{Binding Model.MonitorItems}" AutoGenerateColumns="False"
+                          CanUserAddRows="False" CanUserDeleteRows="False"
+                          IsReadOnly="True" SelectionMode="Single"
+                          HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                          VerticalScrollBarVisibility="Auto"
+                          materialDesign:DataGridAssist.CellPadding="6 3"
+                          materialDesign:DataGridAssist.ColumnHeaderPadding="6 3">
+                    <DataGrid.RowDetailsTemplate>
+                        <DataTemplate>
+                            <ItemsControl ItemsSource="{Binding Signals}" Margin="40,4,4,4">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="0,1">
+                                            <TextBlock Text="  ↳ " Foreground="Gray" FontFamily="Consolas" FontSize="11"/>
+                                            <TextBlock Text="{Binding SignalName}" FontWeight="SemiBold" Width="180" FontFamily="Consolas" FontSize="11"/>
+                                            <TextBlock Text="{Binding PhysicalValue, StringFormat='{}{0:F2}'}" Width="80" FontFamily="Consolas" FontSize="11"/>
+                                            <TextBlock Text="{Binding Unit}" Width="60" Foreground="Gray" FontFamily="Consolas" FontSize="11"/>
+                                            <TextBlock Text="{Binding RawValue, StringFormat='(0x{0})'}" Width="80" Foreground="DimGray" FontFamily="Consolas" FontSize="11"/>
+                                            <TextBlock Text="{Binding Description}" Foreground="SlateGray" FontFamily="Consolas" FontSize="11"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DataTemplate>
+                    </DataGrid.RowDetailsTemplate>
+                    <DataGrid.RowDetailsVisibilityMode>VisibleWhenSelected</DataGrid.RowDetailsVisibilityMode>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Cyclic" Binding="{Binding Cyclic}" Width="90"/>
+                        <DataGridTextColumn Header="Msg ID" Binding="{Binding MessageIdHex}" Width="80"/>
+                        <DataGridTextColumn Header="Message Name" Binding="{Binding MessageName}" Width="200"/>
+                        <DataGridTextColumn Header="DLC" Binding="{Binding DataLen}" Width="50"/>
+                        <DataGridTextColumn Header="Data (Hex)" Binding="{Binding DataHex}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </materialDesign:Card>
+
             <!-- Log label -->
-            <TextBlock Grid.Row="2" Text="Log Output:" FontWeight="SemiBold" Margin="0,0,0,4"/>
+            <TextBlock Grid.Row="4" Text="Log Output:" FontWeight="SemiBold" Margin="0,0,0,4"/>
 
             <!-- Log area -->
-            <materialDesign:Card Grid.Row="3" Padding="4">
+            <materialDesign:Card Grid.Row="5" Padding="4">
                 <TextBox Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True"
                          VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"
                          FontFamily="Consolas" FontSize="12"

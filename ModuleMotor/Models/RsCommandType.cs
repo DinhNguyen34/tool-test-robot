@@ -14,5 +14,8 @@ namespace ModuleMotor.Models
         CurrentControl,
         TorqueControl,
         BrakeRelease,
+        BrakeEngage,
+        Query,
+        ResetMotorId,
     }
 }
