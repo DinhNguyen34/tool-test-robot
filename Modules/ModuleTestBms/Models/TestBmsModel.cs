@@ -114,7 +114,7 @@ namespace ModuleTestBms.Models
 
             var canBaud = MapBaudrate(baud);
             string rawLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", "BmsCanRaw.txt");
-            bool ok = _canCtrl.Connect(SelectedCan, rawLogPath, canBaud, canBaud, bitrateSwitch.SW_OFF, CanType.CAN_FD);
+            bool ok = _canCtrl.Connect(SelectedCan, rawLogPath, canBaud, canBaud, bitrateSwitch.SW_ON, CanType.CAN_FD);
             SelectedCan.IsConnected = ok;
             IsConnected = ok;
 
@@ -196,7 +196,7 @@ namespace ModuleTestBms.Models
                     }
                     else
                     {
-                        Thread.Sleep(10);
+                        Thread.Sleep(1);
                     }
                 }
                 catch (OperationCanceledException) { break; }
