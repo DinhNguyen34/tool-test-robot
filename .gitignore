@@ -159,3 +159,7 @@ Thumbs.db
 *.png
 /.gitignore
 /.gitignore
+/Modules/ModuleTestLed/bin/x64/Release/net10.0-windows10.0.26100.0
+/Modules/ModuleTestLed/bin/x64/Debug/net10.0-windows10.0.26100.0/ModuleTestLed.pdb
+/Modules/ModuleTestLed/bin/x64/Debug/net10.0-windows10.0.26100.0/Core.pdb
+/Modules/ModuleTestLed/bin/x64/Debug/net10.0-windows10.0.26100.0/Resource.pdb
