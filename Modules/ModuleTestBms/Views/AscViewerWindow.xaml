@@ -1,0 +1,90 @@
+<Window x:Class="ModuleTestBms.Views.AscViewerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="ASC Log Viewer" Height="700" Width="1100"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
+        Background="{DynamicResource MaterialDesignPaper}"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Toolbar -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="12,10,12,6">
+            <Button Content="Open ASC File" Click="BtnOpenFile_Click"
+                    Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="14,5" FontSize="13"/>
+
+            <TextBlock Text="Time Mode:" VerticalAlignment="Center" Margin="20,0,6,0" FontSize="13"/>
+            <ComboBox x:Name="CmbTimeMode" MinWidth="140" FontSize="13"
+                      VerticalContentAlignment="Center" HorizontalContentAlignment = "Center"
+                      SelectionChanged="CmbTimeMode_SelectionChanged"
+                      Style="{StaticResource MaterialDesignComboBox}">
+                <ComboBoxItem Content="Absolute" IsSelected="True"/>
+                <ComboBoxItem Content="Delta T (ms)"/>
+                <ComboBoxItem Content="Real Time"/>
+            </ComboBox>
+
+            <TextBlock Text="Filter MsgID:" VerticalAlignment="Center" Margin="20,0,10,0" FontSize="13"/>
+            <ComboBox x:Name="CmbMsgIdFilter" MinWidth="140" FontSize="13"
+                      VerticalContentAlignment="Center"
+                      SelectionChanged="CmbMsgIdFilter_SelectionChanged"
+                      Style="{StaticResource MaterialDesignComboBox}"/>
+
+            <Button Content="Collapse All" Click="BtnCollapseAll_Click" Margin="16,0,0,0"
+                    Style="{StaticResource MaterialDesignFlatButton}" Padding="12,4" FontSize="13"/>
+
+            <TextBlock x:Name="TxtCount" Text="0 messages" VerticalAlignment="Center" HorizontalAlignment="Right"  Margin="12,0,0,0"
+                       FontSize="12" Foreground="Gray"/>
+        </StackPanel>
+
+        <!-- Status bar -->
+        <StatusBar DockPanel.Dock="Bottom">
+            <TextBlock x:Name="TxtStatus" Text="Ready. Open an ASC file to begin." FontSize="11"/>
+        </StatusBar>
+
+        <!-- Main DataGrid -->
+        <materialDesign:Card Margin="12,0,12,8" Padding="0">
+            <DataGrid x:Name="DgMessages" AutoGenerateColumns="False"
+                      CanUserAddRows="False" CanUserDeleteRows="False"
+                      IsReadOnly="True" SelectionMode="Extended"
+                      HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                      VerticalScrollBarVisibility="Auto"
+                      VirtualizingPanel.ScrollUnit="Pixel"
+                      materialDesign:DataGridAssist.CellPadding="6 3"
+                      materialDesign:DataGridAssist.ColumnHeaderPadding="6 3"
+                      PreviewMouseLeftButtonUp="DgMessages_PreviewMouseLeftButtonUp">
+                <DataGrid.RowDetailsTemplate>
+                    <DataTemplate>
+                        <ItemsControl ItemsSource="{Binding Signals}" Margin="40,4,4,4"
+                                      Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="0,1">
+                                        <TextBlock Text="  ↳ " Foreground="Gray" FontFamily="Consolas" FontSize="11"/>
+                                        <TextBlock Text="{Binding SignalName}" FontWeight="SemiBold" Width="180" FontFamily="Consolas" FontSize="11"/>
+                                        <TextBlock Text="{Binding PhysicalValue, StringFormat='{}{0:F2}'}" Width="80" FontFamily="Consolas" FontSize="11"/>
+                                        <TextBlock Text="{Binding Unit}" Width="60" Foreground="Gray" FontFamily="Consolas" FontSize="11"/>
+                                        <TextBlock Text="{Binding RawValue, StringFormat='(0x{0})'}" Width="80" Foreground="DimGray" FontFamily="Consolas" FontSize="11"/>
+                                        <TextBlock Text="{Binding Description}" Foreground="SlateGray" FontFamily="Consolas" FontSize="11"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DataTemplate>
+                </DataGrid.RowDetailsTemplate>
+                <DataGrid.RowDetailsVisibilityMode>Visible</DataGrid.RowDetailsVisibilityMode>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Time" Binding="{Binding DisplayTime}" Width="170"/>
+                    <DataGridTextColumn Header="Msg ID" Binding="{Binding MessageIdHex}" Width="90"/>
+                    <DataGridTextColumn Header="Dir" Binding="{Binding Direction}" Width="50"/>
+                    <DataGridTextColumn Header="Message Name" Binding="{Binding MessageName}" Width="200"/>
+                    <DataGridTextColumn Header="DLC" Binding="{Binding Dlc}" Width="50"/>
+                    <DataGridTextColumn Header="Data (Hex)" Binding="{Binding DataHex}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </materialDesign:Card>
+    </DockPanel>
+</Window>
