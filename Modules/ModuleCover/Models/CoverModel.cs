@@ -34,6 +34,7 @@ namespace ModuleCover.Models
             Tiles.Add(new CoverData { Text = "Camera", Image = new BitmapImage(new Uri(@"/Resource;component/Images/AutoTest.png", UriKind.Relative)), TileType = TileType.Camera });
             Tiles.Add(new CoverData { Text = "Lidar", Image = new BitmapImage(new Uri(@"/Resource;component/Images/AutoTest.png", UriKind.Relative)), TileType = TileType.Lidar });
             Tiles.Add(new CoverData { Text = "LED", Image = new BitmapImage(new Uri(@"/Resource;component/Images/AutoTest.png", UriKind.Relative)), TileType = TileType.Led });
+            Tiles.Add(new CoverData { Text = "BMS", Image = new BitmapImage(new Uri(@"/Resource;component/Images/AutoTest.png", UriKind.Relative)), TileType = TileType.BMS });
         }
     }
 }

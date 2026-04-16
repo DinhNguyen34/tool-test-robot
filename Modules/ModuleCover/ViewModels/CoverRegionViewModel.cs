@@ -44,6 +44,9 @@ namespace ModuleCover.ViewModels
                     case TileType.Led:
                         _regionManager.RequestNavigate("CoverRegion", "TestLedView");
                         break;
+                    case TileType.BMS:
+                        _regionManager.RequestNavigate("CoverRegion", "TestBmsView");
+                        break;
                 }
             }
             catch (Exception ex)

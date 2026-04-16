@@ -12,6 +12,7 @@
             Network,
             Led,
             Camera,
-            Lidar
+            Lidar,
+            BMS
         }
 }

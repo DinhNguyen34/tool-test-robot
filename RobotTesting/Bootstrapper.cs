@@ -3,6 +3,7 @@ using ModuleCover;
 using ModuleMotor;
 using ModuleNetwork;
 using ModuleTestLed;
+using ModuleTestBms;
 using Prism.Ioc;
 using Prism.Modularity;
 using Prism.Unity;
@@ -36,6 +37,7 @@ namespace RobotTesting
             moduleCatalog.AddModule<ModuleMotorModule>();
             moduleCatalog.AddModule<ModuleNetworkModule>();
             moduleCatalog.AddModule<ModuleTestLedModule>();
+            moduleCatalog.AddModule<ModuleTestBmsModule>();
             // Log các module đã tìm thấy
             LogHelper.Debug("=== Modules Found ===");
             foreach (var module in moduleCatalog.Modules)
