@@ -113,6 +113,7 @@ namespace ModuleTestLed.ViewModels
         }
         private void OnStop()
         {
+
             Model.IsRunning = false;
             AppendLog("Stop requested.");
         }

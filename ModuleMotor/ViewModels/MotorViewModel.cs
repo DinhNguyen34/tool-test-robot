@@ -983,7 +983,7 @@ namespace ModuleMotor.ViewModels
         //-- disconnect CAN-------
         private void DisconnectCAN()
         {
-            if (!IsConnected && !Model.GetOpenStatus())
+            if (IsConnected || Model.GetOpenStatus())
             {
                 Model.Close();
                 IsConnected = false;

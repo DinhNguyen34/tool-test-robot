@@ -113,7 +113,9 @@ namespace ModuleTestBms.Models
                 baud = 500;
 
             var canBaud = MapBaudrate(baud);
-            string rawLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", "BmsCanRaw.txt");
+            string logFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+            Directory.CreateDirectory(logFolder);
+            string rawLogPath = Path.Combine(logFolder, "BmsCanRaw.txt");
             bool ok = _canCtrl.Connect(SelectedCan, rawLogPath, canBaud, canBaud, bitrateSwitch.SW_ON, CanType.CAN_FD);
             SelectedCan.IsConnected = ok;
             IsConnected = ok;

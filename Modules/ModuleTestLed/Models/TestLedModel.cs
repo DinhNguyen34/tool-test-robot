@@ -73,6 +73,7 @@ namespace ModuleTestLed.Models
 
         public void RefreshCanDevices()
         {
+            string? previousDisplayName = SelectedCan?.DisplayName;
             ListCanDevices.Clear();
             var list = _canCtrl.GetAllCanAvailable();
             if (list == null || list.Count == 0)
@@ -82,7 +83,13 @@ namespace ModuleTestLed.Models
             }
             foreach (var d in list)
                 ListCanDevices.Add(d);
-            if (SelectedCan == null || !ListCanDevices.Contains(SelectedCan))
+
+            if (!string.IsNullOrWhiteSpace(previousDisplayName))
+            {
+                SelectedCan = ListCanDevices.FirstOrDefault(d => d.DisplayName == previousDisplayName);
+            }
+
+            if (SelectedCan == null)
                 SelectedCan = ListCanDevices[0];
         }
 
@@ -98,7 +105,9 @@ namespace ModuleTestLed.Models
                 baud = 500;
 
             var canBaud = MapBaudrate(baud);
-            string rawLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", "LedCanRaw.txt");
+            string logFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+            Directory.CreateDirectory(logFolder);
+            string rawLogPath = Path.Combine(logFolder, "LedCanRaw.txt");
             bool ok = _canCtrl.Connect(SelectedCan, rawLogPath, canBaud, canBaud, bitrateSwitch.SW_OFF,  CanType.CAN_FD);
             SelectedCan.IsConnected = ok;
             IsConnected = ok;
@@ -347,7 +356,7 @@ namespace ModuleTestLed.Models
             else if (tc.Name.StartsWith("TC3"))
             {
                 int port = ParsePortFromName(tc.Name);
-                RunTC3_RgbwCycle(port + 1, maxVal, logAction);
+                RunTC3_RgbwCycle(port, maxVal, logAction);
             }
             else if (tc.Name.StartsWith("TC4"))
             {
@@ -364,7 +373,7 @@ namespace ModuleTestLed.Models
                 Thread.Sleep(10);
             }
 
-            Thread.Sleep(5000);
+            Thread.Sleep(300000);
 
             log("TC1: Turning all LEDs OFF...");
             TurnOffAll();
@@ -412,7 +421,7 @@ namespace ModuleTestLed.Models
 
             for (int i = 0; i < 50; i++)
             {
-                byte port = (byte)rng.Next(0, Config.MaxPorts);
+                byte port = (byte)rng.Next(1, Config.MaxPorts + 1);
                 int maxLeds = Config.GetLedsForPort(port);
                 var addresses = Enumerable.Range(0, maxLeds)
                     .OrderBy(_ => rng.Next())
@@ -445,7 +454,7 @@ namespace ModuleTestLed.Models
                 string num = name.Substring(idx + 2, spaceIdx - idx - 2);
                 if (int.TryParse(num, out int p)) return p;
             }
-            return 0;
+            return 1;
         }
 
         #endregion
