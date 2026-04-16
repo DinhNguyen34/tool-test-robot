@@ -1,4 +1,3 @@
-using System.IO;
 using System.Windows;
 using Common.Core.Helpers;
 using ModuleTestBms.Models;
@@ -15,8 +14,6 @@ namespace ModuleTestBms.ViewModels
         private readonly IRegionManager _regionManager;
 
         private string _logText = string.Empty;
-        private bool _isLogging;
-        private StreamWriter? _logWriter;
 
         public TestBmsViewModel(IRegionManager regionManager)
         {
@@ -41,9 +38,9 @@ namespace ModuleTestBms.ViewModels
         public DelegateCommand<BmsTestCaseItem> FailCommand => new(OnFail);
         public DelegateCommand SaveReportCommand => new(OnSaveReport);
         public DelegateCommand GoBackCommand => new(OnGoBack);
-        public DelegateCommand StartMonitorCommand => new(OnStartMonitor);
-        public DelegateCommand StopMonitorCommand => new(OnStopMonitor);
+        public DelegateCommand LoggingCommand => new(OnToggleLogging);
         public DelegateCommand ClearMonitorCommand => new(OnClearMonitor);
+        public DelegateCommand OpenAscViewerCommand => new(OnOpenAscViewer);
 
         private void OnRefreshCan()
         {
@@ -110,13 +107,6 @@ namespace ModuleTestBms.ViewModels
                 AppendLog("GoBack disconnected CAN");
             }
 
-            if (_isLogging)
-            {
-                _isLogging = false;
-                _logWriter?.Close();
-                _logWriter = null;
-            }
-
             _regionManager.RequestNavigate("CoverRegion", "CoverRegion");
         }
 
@@ -167,27 +157,59 @@ namespace ModuleTestBms.ViewModels
             AppendLog($"{tc.Name} => FAIL (manual)");
         }
 
-        private void OnStartMonitor()
+        private void OnToggleLogging()
         {
-            if (!Model.IsConnected)
+            try
             {
-                AppendLog("Cannot start monitor: not connected.");
-                return;
-            }
-            Model.StartMonitor();
-            AppendLog("CAN Monitor started.");
-        }
+                if (Model.IsLogging)
+                {
+                    string ascPath = Model.StopLogging();
+                    if (!string.IsNullOrEmpty(ascPath))
+                        AppendLog($"Logging stopped. ASC file saved: {ascPath}");
+                    else
+                        AppendLog("Logging stopped.");
+                }
+                else
+                {
+                    if (!Model.IsConnected)
+                    {
+                        AppendLog("Cannot start logging: not connected.");
+                        return;
+                    }
 
-        private void OnStopMonitor()
-        {
-            Model.StopMonitor();
-            AppendLog("CAN Monitor stopped.");
+                    var dlg = new Microsoft.Win32.SaveFileDialog
+                    {
+                        Title = "Save CAN Log File",
+                        Filter = "Text files (*.txt)|*.txt",
+                        DefaultExt = ".txt",
+                        FileName = $"BmsCanLog_{DateTime.Now:yyyyMMdd_HHmmss}.txt"
+                    };
+
+                    if (dlg.ShowDialog() == true)
+                    {
+                        Model.StartLogging(dlg.FileName);
+                        AppendLog($"Logging started: {dlg.FileName}");
+                    }
+                }
+            }
+            catch (Exception ex) { LogHelper.Exception(ex); }
         }
 
         private void OnClearMonitor()
         {
             Model.ClearMonitor();
             AppendLog("Monitor cleared.");
+        }
+
+        private void OnOpenAscViewer()
+        {
+            try
+            {
+                var window = new AscViewerWindow(Model);
+                window.Owner = Application.Current.MainWindow;
+                window.Show();
+            }
+            catch (Exception ex) { LogHelper.Exception(ex); }
         }
 
         private void AppendLog(string msg)

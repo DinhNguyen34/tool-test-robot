@@ -19,6 +19,7 @@
         <conv:InvertBoolConverter x:Key="InvertBoolConverter"/>
         <conv:ConnectIconConverter x:Key="ConnectIconConverter"/>
         <conv:ConnectTextConverter x:Key="ConnectTextConverter"/>
+        <conv:LoggingTextConverter x:Key="LoggingTextConverter"/>
 
         <Style x:Key="StatusTextStyle" TargetType="TextBlock">
             <Style.Triggers>
@@ -98,16 +99,17 @@
 
             <!-- Toolbar -->
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                <Button Content="Run Selected" Command="{Binding RunCommand}" Margin="0,0,8,0"
+                <Button Content="Run Selected" Command="{Binding RunCommand}" Margin="0,0,8,0" Width="120"
                         Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="16,6"/>
-                <Button Content="Stop" Command="{Binding StopCommand}" Margin="0,0,8,0"
+                <Button Content="Stop" Command="{Binding StopCommand}" Margin="0,0,8,0" Width="120"
                         Style="{StaticResource MaterialDesignRaisedButton}" Padding="16,6"/>
-                <Button Content="Select All" Command="{Binding SelectAllCommand}" Margin="0,0,8,0"
+                <Button Content="Save Report" Command="{Binding SaveReportCommand}" Width="120"
+                        Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="16,6"/>
+                <Button Content="Select All" Command="{Binding SelectAllCommand}" Margin="20,0,8,0"
                         Style="{StaticResource MaterialDesignFlatButton}"/>
                 <Button Content="Deselect All" Command="{Binding DeselectAllCommand}" Margin="0,0,8,0"
                         Style="{StaticResource MaterialDesignFlatButton}"/>
-                <Button Content="Save Report" Command="{Binding SaveReportCommand}"
-                        Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="16,6"/>
+                
             </StackPanel>
 
             <!-- Test cases list -->
@@ -173,13 +175,15 @@
 
             <!-- Monitor label + controls -->
             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,4">
-                <TextBlock Text="CAN Monitor:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                <Button Content="Start Monitor" Command="{Binding StartMonitorCommand}" Margin="0,0,8,0"
-                        Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="12,4" FontSize="12"/>
-                <Button Content="Stop Monitor" Command="{Binding StopMonitorCommand}" Margin="0,0,8,0"
+                <Button Command="{Binding LoggingCommand}" Width="120"
+                        Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="12,4" FontSize="12">
+                        <TextBlock Text="{Binding Model.IsLogging, Converter={StaticResource LoggingTextConverter}}"/>
+                </Button>
+                <Button Content="ASC Viewer" Command="{Binding OpenAscViewerCommand}" Margin="8,0,0,0" Width="120"
                         Style="{StaticResource MaterialDesignRaisedButton}" Padding="12,4" FontSize="12"/>
-                <Button Content="Clear" Command="{Binding ClearMonitorCommand}"
-                        Style="{StaticResource MaterialDesignFlatButton}" Padding="12,4" FontSize="12"/>
+                <Button Content="Clear View" Command="{Binding ClearMonitorCommand}"
+                        Style="{StaticResource MaterialDesignFlatButton}" Margin="20 0" FontSize="13"/>
+                
             </StackPanel>
 
             <!-- Monitor area: expandable CAN messages with signals -->
@@ -189,6 +193,7 @@
                           IsReadOnly="True" SelectionMode="Single"
                           HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                           VerticalScrollBarVisibility="Auto"
+                          VirtualizingPanel.ScrollUnit="Pixel"
                           materialDesign:DataGridAssist.CellPadding="6 3"
                           materialDesign:DataGridAssist.ColumnHeaderPadding="6 3">
                     <DataGrid.RowDetailsTemplate>

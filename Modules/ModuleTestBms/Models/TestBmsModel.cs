@@ -22,6 +22,12 @@ namespace ModuleTestBms.Models
         private CanDatabase? _canDatabase;
         private CancellationTokenSource? _monitorCts;
         private Thread? _monitorThread;
+        private bool _isLogging;
+        private StreamWriter? _logWriter;
+        private string _logFilePath = string.Empty;
+        private DateTime _loggingStartTime;
+        private double _firstMessageTime;
+        private readonly object _logLock = new();
 
         public ObservableCollection<CanDevice> ListCanDevices { get; } = [];
         public ObservableCollection<BmsTestCaseItem> TestCases { get; } = [];
@@ -68,6 +74,12 @@ namespace ModuleTestBms.Models
         {
             get => _canDatabase;
             set => SetProperty(ref _canDatabase, value);
+        }
+
+        public bool IsLogging
+        {
+            get => _isLogging;
+            set => SetProperty(ref _isLogging, value);
         }
 
         public TestBmsModel()
@@ -123,7 +135,8 @@ namespace ModuleTestBms.Models
             if (ok)
             {
                 _canCtrl.EnableReadLog(true);
-                message = $"Connected to {SelectedCan.DisplayName} at {baud}k.";
+                StartMonitor();
+                message = $"Connected to {SelectedCan.DisplayName} at {baud}k. Monitor started.";
             }
             else
             {
@@ -134,6 +147,7 @@ namespace ModuleTestBms.Models
 
         public void Disconnect()
         {
+            if (IsLogging) StopLogging();
             StopMonitor();
             if (_canCtrl.GetOpenStatus())
                 _canCtrl.Close();
@@ -187,6 +201,17 @@ namespace ModuleTestBms.Models
                     var messages = _canCtrl.GetCanMessegers();
                     if (messages != null && messages.Count > 0)
                     {
+                        // Write to log file from background thread
+                        if (_isLogging)
+                        {
+                            lock (_logLock)
+                            {
+                                foreach (var raw in messages)
+                                    WriteLogLine(raw);
+                            }
+                        }
+
+                        // Update monitor UI on dispatcher thread
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             foreach (var raw in messages)
@@ -303,7 +328,7 @@ namespace ModuleTestBms.Models
         /// <summary>
         /// Extract a signal value from a CAN payload given start bit, length, and byte order.
         /// </summary>
-        private static ulong ExtractSignalValue(byte[] data, int startBit, int bitLength, bool isLittleEndian)
+        internal static ulong ExtractSignalValue(byte[] data, int startBit, int bitLength, bool isLittleEndian)
         {
             ulong value = 0;
 
@@ -348,13 +373,155 @@ namespace ModuleTestBms.Models
             return value;
         }
 
-        private static long ToSigned(ulong raw, int bitLength)
+        internal static long ToSigned(ulong raw, int bitLength)
         {
             if (bitLength >= 64) return (long)raw;
             ulong mask = 1UL << (bitLength - 1);
             if ((raw & mask) != 0)
                 return (long)(raw | (~0UL << bitLength));
             return (long)raw;
+        }
+
+        #endregion
+
+        #region Logging
+
+        public void StartLogging(string filePath)
+        {
+            if (IsLogging) return;
+            _logFilePath = filePath;
+            _loggingStartTime = DateTime.Now;
+            _firstMessageTime = -1;
+            lock (_logLock)
+            {
+                _logWriter = new StreamWriter(filePath, false, Encoding.UTF8);
+            }
+            IsLogging = true;
+        }
+
+        public string StopLogging()
+        {
+            if (!IsLogging) return string.Empty;
+            IsLogging = false;
+
+            lock (_logLock)
+            {
+                _logWriter?.Flush();
+                _logWriter?.Close();
+                _logWriter = null;
+            }
+
+            // Convert TXT log to Vector ASC format
+            string ascPath = Path.ChangeExtension(_logFilePath, ".asc");
+            try
+            {
+                ConvertToAsc(_logFilePath, ascPath);
+            }
+            catch (Exception ex)
+            {
+                Common.Core.Helpers.LogHelper.Exception(ex);
+                return string.Empty;
+            }
+
+            return ascPath;
+        }
+
+        private void WriteLogLine(RawDataCan raw)
+        {
+            if (_logWriter == null || raw.data == null || raw.data.Length < 5) return;
+
+            uint msgId = BitConverter.ToUInt32(raw.data, 0);
+            byte dataLen = raw.data[4];
+            int available = raw.data.Length - 5;
+            if (dataLen > available) dataLen = (byte)available;
+            byte[] payload = new byte[dataLen];
+            Array.Copy(raw.data, 5, payload, 0, dataLen);
+
+            if (_firstMessageTime < 0)
+                _firstMessageTime = raw.time;
+
+            double relTime = raw.time - _firstMessageTime;
+            if (relTime < 0) relTime = 0;
+
+            string direction = raw.status == 0 ? "Rx" : "Tx";
+            string dataHex = string.Join(" ", payload.Select(b => b.ToString("X2")));
+
+            _logWriter.WriteLine($"{relTime:F6}\t1\t{msgId:X}\t{direction}\t{dataLen}\t{dataHex}");
+        }
+
+        private void ConvertToAsc(string txtPath, string ascPath)
+        {
+            var lines = File.ReadAllLines(txtPath);
+            using var writer = new StreamWriter(ascPath, false, Encoding.UTF8);
+
+            string dateStr = _loggingStartTime.ToString("ddd MMM dd hh:mm:ss.fff tt yyyy",
+                System.Globalization.CultureInfo.InvariantCulture);
+
+            writer.WriteLine($"date {dateStr}");
+            writer.WriteLine("base hex  timestamps absolute");
+            writer.WriteLine("internal events logged");
+            writer.WriteLine($"Begin Triggerblock {dateStr}");
+            writer.WriteLine("   0.000000 Start of measurement");
+
+            foreach (var line in lines)
+            {
+                var parts = line.Split('\t');
+                if (parts.Length < 6) continue;
+
+                string timestamp = parts[0];
+                string channel = parts[1];
+                string msgIdHex = parts[2];
+                string direction = parts[3];
+                string dlc = parts[4];
+                string dataHex = parts[5];
+
+                uint msgId = Convert.ToUInt32(msgIdHex, 16);
+                // Extended ID (29-bit) appends 'x'
+                string idStr = msgId > 0x7FF ? $"{msgIdHex}x" : msgIdHex;
+
+                var sb = new StringBuilder();
+                sb.Append($"   {timestamp} {channel}  {idStr,-16} {direction}   d {dlc} {dataHex}");
+
+                // Append message name and decoded signals from database
+                if (CanDb != null && CanDb.Lookup.TryGetValue(msgId, out var msgDef))
+                {
+                    sb.Append($"  {msgDef.MessageName}");
+
+                    if (msgDef.Signals.Count > 0 && !string.IsNullOrWhiteSpace(dataHex))
+                    {
+                        byte[] payload = dataHex.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(h => Convert.ToByte(h, 16)).ToArray();
+
+                        var sigParts = new List<string>();
+                        foreach (var sigDef in msgDef.Signals)
+                        {
+                            ulong rawVal = ExtractSignalValue(payload, sigDef.StartBit, sigDef.Length,
+                                sigDef.ByteOrder.Equals("Intel", StringComparison.OrdinalIgnoreCase));
+
+                            double physical;
+                            if (sigDef.DataType.Equals("Signed", StringComparison.OrdinalIgnoreCase))
+                            {
+                                long signedRaw = ToSigned(rawVal, sigDef.Length);
+                                physical = signedRaw * sigDef.Factor + sigDef.Offset;
+                            }
+                            else
+                            {
+                                physical = rawVal * sigDef.Factor + sigDef.Offset;
+                            }
+
+                            string unit = string.IsNullOrEmpty(sigDef.Unit) ? "" : $" [{sigDef.Unit}]";
+                            sigParts.Add($"{sigDef.SignalName} = {physical:G}{unit}");
+                        }
+
+                        sb.Append(" :: ");
+                        sb.Append(string.Join("; ", sigParts));
+                    }
+                }
+
+                writer.WriteLine(sb.ToString());
+            }
+
+            writer.WriteLine("End TriggerBlock");
         }
 
         #endregion
