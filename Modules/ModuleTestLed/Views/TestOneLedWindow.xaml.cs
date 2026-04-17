@@ -23,7 +23,7 @@ namespace ModuleTestLed.Views
         {
             PortGroups.Clear();
             var config = _model.Config;
-            for (int p = 0; p < config.MaxPorts; p++)
+            for (int p = 1; p <= config.MaxPorts; p++)
             {
                 var group = new PortLedGroup { PortIndex = p };
                 int ledCount = config.GetLedsForPort(p);

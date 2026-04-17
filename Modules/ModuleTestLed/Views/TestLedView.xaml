@@ -119,10 +119,23 @@
                           materialDesign:DataGridAssist.ColumnHeaderPadding="8 4">
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Header="" Width="40">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsThreeState="True"
+                                              IsChecked="{Binding DataContext.AreAllTestCasesSelected,
+                                                                  RelativeSource={RelativeSource AncestorType=DataGrid},
+                                                                  Mode=TwoWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              ToolTip="Select/Deselect all test cases"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
                                               HorizontalAlignment="Center"/>
+                                    
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -136,6 +149,7 @@
                                 <DataTemplate>
                                     <TextBlock Text="{Binding StatusText}" Style="{StaticResource StatusTextStyle}"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
