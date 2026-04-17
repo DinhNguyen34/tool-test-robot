@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Prism.Wpf" Version="9.0.537" />
     <PackageReference Include="MaterialDesignThemes" Version="5.3.1" />
   </ItemGroup>
@@ -20,7 +21,7 @@
 
   <ItemGroup>
     <Reference Include="VCanPLib">
-      <HintPath>C:\Users\LAB\Downloads\VCanPLib_260414\VCanPLib.dll</HintPath>
+      <HintPath>C:\Users\AutoLab\Downloads\VCanPLib_260414\VCanPLib.dll</HintPath>
     </Reference>
   </ItemGroup>
 

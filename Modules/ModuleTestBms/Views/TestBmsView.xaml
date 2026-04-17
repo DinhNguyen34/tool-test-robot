@@ -177,10 +177,15 @@
             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,4">
                 <Button Command="{Binding LoggingCommand}" Width="120"
                         Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="12,4" FontSize="12">
-                        <TextBlock Text="{Binding Model.IsLogging, Converter={StaticResource LoggingTextConverter}}"/>
+                        <TextBlock Text="{Binding Model.IsLogging}"/>
                 </Button>
                 <Button Content="ASC Viewer" Command="{Binding OpenAscViewerCommand}" Margin="8,0,0,0" Width="120"
                         Style="{StaticResource MaterialDesignRaisedButton}" Padding="12,4" FontSize="12"/>
+                <Button Content="Load Log File" Command="{Binding OpenAndScanLogCommand}" Margin="5"/>
+
+                <ComboBox ItemsSource="{Binding AvailableMessagesInLog}" SelectedItem="{Binding SelectedMessageForConvert}" DisplayMemberPath="MessageName" Width="180" Margin="5" />
+
+                <Button Content="Export CSV" Command="{Binding SaveToCsvCommand}" Margin="5" Background="Green" Foreground="White"/>
                 <Button Content="Clear View" Command="{Binding ClearMonitorCommand}"
                         Style="{StaticResource MaterialDesignFlatButton}" Margin="20 0" FontSize="13"/>
                 
