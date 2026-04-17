@@ -1,10 +1,13 @@
 using Common.Core.Helpers;
+using Microsoft.Win32;
 using Prism.Mvvm;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Windows;
+using System.Windows.Input;
+using CommunityToolkit.Mvvm.Input;
 using VCanPLib;
 
 namespace ModuleTestBms.Models
@@ -28,7 +31,7 @@ namespace ModuleTestBms.Models
         private DateTime _loggingStartTime;
         private double _firstMessageTime;
         private readonly object _logLock = new();
-
+        public List<MessageExcelDefinition> Messages { get; set; }
         public ObservableCollection<CanDevice> ListCanDevices { get; } = [];
         public ObservableCollection<BmsTestCaseItem> TestCases { get; } = [];
         public ObservableCollection<CanMonitorItem> MonitorItems { get; } = [];
@@ -87,6 +90,7 @@ namespace ModuleTestBms.Models
             EnsureVCanLoggerInitialized();
             CanDb = CanDatabase.LoadFromJson();
             BuildTestCases();
+            
         }
 
         private static void EnsureVCanLoggerInitialized()
@@ -522,6 +526,72 @@ namespace ModuleTestBms.Models
             }
 
             writer.WriteLine("End TriggerBlock");
+        }
+
+        public ICommand OpenConvertCSVCommand { get; }
+
+        public void ConvertDataToCsv(string txtPath, string csvPath, List<uint> selectedIds)
+        {
+            var lines = File.ReadLines(txtPath);
+            using var writer = new StreamWriter(csvPath, false, Encoding.UTF8);
+
+            writer.WriteLine("Timestamp,Message,Signal,PhysicalValue,Unit");
+
+            foreach (var line in lines)
+            {
+                var parts = line.Split('\t');
+                if (parts.Length < 6) continue;
+
+                if (!uint.TryParse(parts[2], System.Globalization.NumberStyles.HexNumber, null, out uint msgId))
+                    continue;
+
+                // Filter ID
+                if (selectedIds != null && selectedIds.Count > 0 && !selectedIds.Contains(msgId))
+                    continue;
+
+                if (CanDb != null && CanDb.Lookup.TryGetValue(msgId, out var msgDef))
+                {
+                    string timestamp = parts[0];
+                    string dataHex = parts[5];
+
+                    if (msgDef.Signals.Count > 0 && !string.IsNullOrWhiteSpace(dataHex))
+                    {
+                        byte[] payload = dataHex.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(h => Convert.ToByte(h, 16)).ToArray();
+
+                        foreach (var sigDef in msgDef.Signals)
+                        {
+                            ulong rawVal = ExtractSignalValue(payload, sigDef.StartBit, sigDef.Length,
+                                sigDef.ByteOrder.Equals("Intel", StringComparison.OrdinalIgnoreCase));
+
+                            double physical = (sigDef.DataType.Equals("Signed", StringComparison.OrdinalIgnoreCase))
+                                ? ToSigned(rawVal, sigDef.Length) * sigDef.Factor + sigDef.Offset
+                                : rawVal * sigDef.Factor + sigDef.Offset;
+
+                            writer.WriteLine($"{timestamp},{msgDef.MessageName},{sigDef.SignalName},{physical:G6},{sigDef.Unit}");
+                        }
+                    }
+                }
+            }
+        }
+
+        public List<uint> GetUniqueIdsFromLog(string filePath)
+        {
+            var uniqueIds = new HashSet<uint>();
+            try
+            {
+                var lines = File.ReadLines(filePath);
+                foreach (var line in lines)
+                {
+                    var parts = line.Split('\t');
+                    if (parts.Length >= 3 && uint.TryParse(parts[2], System.Globalization.NumberStyles.HexNumber, null, out uint id))
+                    {
+                        uniqueIds.Add(id);
+                    }
+                }
+            }
+            catch (Exception ex) { /* Log error */ }
+            return uniqueIds.ToList();
         }
 
         #endregion

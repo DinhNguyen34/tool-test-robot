@@ -5,6 +5,7 @@ using ModuleTestBms.Views;
 using Prism.Commands;
 using Prism.Mvvm;
 using Prism.Navigation.Regions;
+using System.IO;
 
 namespace ModuleTestBms.ViewModels
 {
@@ -25,7 +26,6 @@ namespace ModuleTestBms.ViewModels
             get => _logText;
             set => SetProperty(ref _logText, value);
         }
-
         public DelegateCommand RefreshCanCommand => new(OnRefreshCan);
         public DelegateCommand ConnectCommand => new(OnConnect);
         public DelegateCommand ConfigCommand => new(OnConfig);
@@ -41,6 +41,8 @@ namespace ModuleTestBms.ViewModels
         public DelegateCommand LoggingCommand => new(OnToggleLogging);
         public DelegateCommand ClearMonitorCommand => new(OnClearMonitor);
         public DelegateCommand OpenAscViewerCommand => new(OnOpenAscViewer);
+        public DelegateCommand OpenAndScanLogCommand => new DelegateCommand(ExecuteOpenAndScanLog);
+        public DelegateCommand SaveToCsvCommand => new DelegateCommand(ExecuteSaveToCsv);
 
         private void OnRefreshCan()
         {
@@ -215,6 +217,79 @@ namespace ModuleTestBms.ViewModels
         private void AppendLog(string msg)
         {
             LogText += $"[{DateTime.Now:HH:mm:ss.fff}] {msg}\n";
+        }
+
+
+        // Add data to CSV
+        private string _tempInputPath;
+
+        private List<CanMessageDef> _availableMessagesInLog;
+        public List<CanMessageDef> AvailableMessagesInLog
+        {
+            get => _availableMessagesInLog;
+            set => SetProperty(ref _availableMessagesInLog, value);
+        }
+
+        private CanMessageDef _selectedMessageForConvert;
+        public CanMessageDef SelectedMessageForConvert
+        {
+            get => _selectedMessageForConvert;
+            set => SetProperty(ref _selectedMessageForConvert, value);
+        }
+
+        private async void ExecuteOpenAndScanLog()
+        {
+            var openDlg = new Microsoft.Win32.OpenFileDialog { Filter = "Text files (*.txt)|*.txt" };
+
+            if (openDlg.ShowDialog() == true)
+            {
+                _tempInputPath = openDlg.FileName;
+
+                // Scan ID
+                var idsInLog = await Task.Run(() => Model.GetUniqueIdsFromLog(_tempInputPath));
+
+                if (Model.CanDb != null)
+                {
+                    AvailableMessagesInLog = Model.CanDb.Messages
+                        .Where(m => idsInLog.Contains(m.IdDec))
+                        .ToList();
+
+                    if (AvailableMessagesInLog.Count > 0)
+                        MessageBox.Show($"Find {AvailableMessagesInLog.Count} message. Please click choose 1 message and export.");
+                    else
+                        MessageBox.Show("Not found message in Database.");
+                }
+            }
+        }
+
+        private async void ExecuteSaveToCsv()
+        {
+            if (string.IsNullOrEmpty(_tempInputPath) || SelectedMessageForConvert == null)
+            {
+                MessageBox.Show("Please load file txt and choose 1 message!");
+                return;
+            }
+
+            var saveDlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "CSV files (*.csv)|*.csv",
+                FileName = Path.GetFileNameWithoutExtension(_tempInputPath) + $"_{SelectedMessageForConvert.MessageName}.csv"
+            };
+
+            if (saveDlg.ShowDialog() == true)
+            {
+                try
+                {
+                    var filterIds = new List<uint> { SelectedMessageForConvert.IdDec };
+                    await Task.Run(() => Model.ConvertDataToCsv(_tempInputPath, saveDlg.FileName, filterIds));
+
+                    MessageBox.Show("Convert success!");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error: " + ex.Message);
+                }
+            }
         }
     }
 }
