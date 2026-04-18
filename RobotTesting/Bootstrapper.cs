@@ -1,4 +1,5 @@
-﻿using Common.Core.Helpers;
+using Common.Core.Auth;
+using Common.Core.Helpers;
 using ModuleCover;
 using ModuleMotor;
 using ModuleNetwork;
@@ -6,9 +7,11 @@ using ModuleTestLed;
 using ModuleTestBms;
 using Prism.Ioc;
 using Prism.Modularity;
+using Prism.Navigation.Regions;
 using Prism.Unity;
+using RobotTesting.Auth;
+using RobotTesting.Views;
 using System.Windows;
-using Unity;
 //using ModuleGraph;
 
 namespace RobotTesting
@@ -17,12 +20,14 @@ namespace RobotTesting
     {
         protected override DependencyObject CreateShell()
         {
-
             return Container.Resolve<MainWindow>();
         }
-    
+
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
+            containerRegistry.RegisterSingleton<IUserSession, UserSession>();
+            containerRegistry.RegisterSingleton<IAuthService, FileAuthService>();
+            containerRegistry.RegisterForNavigation<LoginView>();
         }
 
         protected override IModuleCatalog CreateModuleCatalog()
@@ -32,18 +37,23 @@ namespace RobotTesting
 
         protected override void ConfigureModuleCatalog(IModuleCatalog moduleCatalog)
         {
-            //base.ConfigureModuleCatalog(moduleCatalog);
             moduleCatalog.AddModule<ModuleCoverModule>();
             moduleCatalog.AddModule<ModuleMotorModule>();
             moduleCatalog.AddModule<ModuleNetworkModule>();
             moduleCatalog.AddModule<ModuleTestLedModule>();
             moduleCatalog.AddModule<ModuleTestBmsModule>();
-            // Log các module đã tìm thấy
             LogHelper.Debug("=== Modules Found ===");
             foreach (var module in moduleCatalog.Modules)
             {
                 LogHelper.Debug($"Module: {module.ModuleName} - {module.State}");
             }
+        }
+
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+            var regionManager = Container.Resolve<IRegionManager>();
+            regionManager.RequestNavigate("CoverRegion", "LoginView");
         }
     }
 }
