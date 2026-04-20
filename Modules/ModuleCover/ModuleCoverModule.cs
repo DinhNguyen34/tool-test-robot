@@ -2,8 +2,6 @@
 using ModuleCover.Views;
 using Prism.Ioc;
 using Prism.Modularity;
-using Prism.Navigation.Regions;
-using System.Reflection;
 
 namespace ModuleCover
     
@@ -12,8 +10,8 @@ namespace ModuleCover
     {
         public void OnInitialized(IContainerProvider containerProvider)
         {
-            var regionManager = containerProvider.Resolve<IRegionManager>();
-            regionManager.RegisterViewWithRegion("CoverRegion", typeof(CoverRegion));
+            // Navigation is handled by Bootstrapper (LoginView first, then CoverRegion after login).
+            // Do NOT call RegisterViewWithRegion here — it would push CoverRegion before login.
         }
 
         public void RegisterTypes(IContainerRegistry containerRegistry)

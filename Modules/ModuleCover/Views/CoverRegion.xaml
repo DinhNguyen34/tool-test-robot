@@ -1,105 +1,140 @@
-﻿<UserControl x:Class="ModuleCover.Views.CoverRegion"
+<UserControl x:Class="ModuleCover.Views.CoverRegion"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:ModuleCover.Views"
-             mc:Ignorable="d" 
-              xmlns:prism="http://prismlibrary.com/"             
-             prism:ViewModelLocator.AutoWireViewModel="True" Cursor="Pen" >
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             xmlns:prism="http://prismlibrary.com/"
+             prism:ViewModelLocator.AutoWireViewModel="True" Cursor="Pen">
 
     <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Cursor="No">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+        <!-- App header -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Height="35" Margin="3 3 0 0">
             <Image Source="/Resource;component/Images/Robot-32.png" Height="32" Width="32" Margin="5 0" VerticalAlignment="Center"/>
             <TextBlock Text="Automation Robot" VerticalAlignment="Center" FontWeight="Bold" FontSize="22" Foreground="#339AF0"/>
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1"
+        <!-- User info + Logout bar -->
+        <Border Grid.Row="1" Background="#F5F5F5" Padding="8 4">
+            <DockPanel LastChildFill="False">
+                <TextBlock DockPanel.Dock="Left"
+                           Text="{Binding CurrentUserText}"
+                           VerticalAlignment="Center"
+                           FontSize="13"
+                           Foreground="#555"/>
+                <Button DockPanel.Dock="Right"
+                        Content="Logout"
+                        Command="{Binding LogoutCommand}"
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        Foreground="#E53935"
+                        Padding="8 2"/>
+            </DockPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="2"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
-        <ItemsControl ItemsSource="{Binding Model.Tiles}" Background="Transparent" Margin="25" VerticalAlignment="Center" HorizontalAlignment="Center">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <WrapPanel Orientation="Horizontal" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="local:TileModel">
-                    <Button x:Name="ItemGrid" Content="{Binding Text}" FontSize="18" Background="{Binding TileType, Converter={StaticResource TileTypeToColorConverter}}"
-                               Command="{Binding DataContext.OnCommandBtn, 
-                              RelativeSource={RelativeSource AncestorType=ItemsControl}}" Width="200" Height="160"  Margin="15" RenderTransformOrigin="0.5, 0.5" CommandParameter="{Binding TileType}">
-                        <Button.RenderTransform>
-                            <TransformGroup>
-                                <ScaleTransform />
-                                <SkewTransform/>
-                                <RotateTransform/>
-                                <TranslateTransform/>
-                            </TransformGroup>
-                        </Button.RenderTransform>
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Padding="0" Background="Transparent" BorderBrush="Blue">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="*" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-                                        <Border x:Name="tileBackground" Grid.RowSpan="2" Background="{TemplateBinding Background}" Opacity="0.9" />
-                                        <Image Source="{Binding Image}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="100"  />
-                                        <ContentPresenter TextElement.Foreground="White" Grid.Row="1" HorizontalAlignment="Center" Margin="3,10" />
-                                    </Grid>
-                                    <Border.Triggers>
-                                        <EventTrigger RoutedEvent="Border.MouseLeave">
-                                            <BeginStoryboard>
-                                                <Storyboard>
-                                                    <ThicknessAnimation  Storyboard.TargetProperty="Padding" From="0" To="5" Duration="00:00:0.3" />
-                                                </Storyboard>
-                                            </BeginStoryboard>
-                                        </EventTrigger>
-                                        <EventTrigger RoutedEvent="Border.MouseEnter">
-                                            <BeginStoryboard>
-                                                <Storyboard>
-                                                    <ThicknessAnimation  Storyboard.TargetProperty="Padding" From="5" To="0" Duration="00:00:0.1" />
-                                                </Storyboard>
-                                            </BeginStoryboard>
-                                        </EventTrigger>
-                                    </Border.Triggers>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                        <Button.Resources>
-                            <ElasticEase x:Key="easeOutBounce" EasingMode="EaseOut" Springiness="6" Oscillations="4" />
-                        </Button.Resources>
-                        <Button.Triggers>
-
-                            <EventTrigger RoutedEvent="Button.Click">
-                                <BeginStoryboard>
-                                    <Storyboard Duration="00:00:00.1" AutoReverse="True">
-                                        <DoubleAnimation To="0.1" Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)"/>
-                                        <DoubleAnimation To="0.1" Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                            <EventTrigger RoutedEvent="FrameworkElement.Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)" From="0.1" To="1.0" EasingFunction="{StaticResource easeOutBounce}" />
-                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)" From="0.1" To="1.0" EasingFunction="{StaticResource easeOutBounce}" />
-                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.1" To="1.0" EasingFunction="{StaticResource easeOutBounce}" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Button.Triggers>
-                    </Button>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+            <ItemsControl ItemsSource="{Binding Model.Tiles}" Background="Transparent" Margin="25"
+                          VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="local:TileModel">
+                        <Button x:Name="ItemGrid" Content="{Binding Text}" FontSize="18"
+                                Background="{Binding TileType, Converter={StaticResource TileTypeToColorConverter}}"
+                                Command="{Binding DataContext.OnCommandBtn, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                Width="200" Height="160" Margin="15"
+                                IsEnabled="{Binding IsEnabled}"
+                                RenderTransformOrigin="0.5, 0.5"
+                                CommandParameter="{Binding TileType}">
+                            <Button.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform />
+                                    <SkewTransform/>
+                                    <RotateTransform/>
+                                    <TranslateTransform/>
+                                </TransformGroup>
+                            </Button.RenderTransform>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Padding="0" Background="Transparent" BorderBrush="Blue">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+                                            <Border x:Name="tileBackground" Grid.RowSpan="2"
+                                                    Background="{TemplateBinding Background}" Opacity="0.9" />
+                                            <!-- Dim overlay for disabled tiles -->
+                                            <Border x:Name="dimOverlay" Grid.RowSpan="2"
+                                                    Background="White" Opacity="0" IsHitTestVisible="False"/>
+                                            <Image Source="{Binding Image}" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Bottom" Height="100"/>
+                                            <ContentPresenter TextElement.Foreground="White" Grid.Row="1"
+                                                              HorizontalAlignment="Center" Margin="3,10"/>
+                                        </Grid>
+                                        <Border.Triggers>
+                                            <EventTrigger RoutedEvent="Border.MouseLeave">
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <ThicknessAnimation Storyboard.TargetProperty="Padding" From="0" To="5" Duration="00:00:0.3"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </EventTrigger>
+                                            <EventTrigger RoutedEvent="Border.MouseEnter">
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <ThicknessAnimation Storyboard.TargetProperty="Padding" From="5" To="0" Duration="00:00:0.1"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </EventTrigger>
+                                        </Border.Triggers>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="dimOverlay" Property="Opacity" Value="0.55"/>
+                                            <Setter TargetName="tileBackground" Property="Opacity" Value="0.4"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Button.Resources>
+                                <ElasticEase x:Key="easeOutBounce" EasingMode="EaseOut" Springiness="6" Oscillations="4"/>
+                            </Button.Resources>
+                            <Button.Triggers>
+                                <EventTrigger RoutedEvent="Button.Click">
+                                    <BeginStoryboard>
+                                        <Storyboard Duration="00:00:00.1" AutoReverse="True">
+                                            <DoubleAnimation To="0.1" Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)"/>
+                                            <DoubleAnimation To="0.1" Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                                <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)" From="0.1" To="1.0" EasingFunction="{StaticResource easeOutBounce}"/>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)" From="0.1" To="1.0" EasingFunction="{StaticResource easeOutBounce}"/>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.1" To="1.0" EasingFunction="{StaticResource easeOutBounce}"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Button.Triggers>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </ScrollViewer>
-
     </Grid>
 </UserControl>

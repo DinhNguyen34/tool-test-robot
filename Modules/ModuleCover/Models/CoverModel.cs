@@ -10,13 +10,15 @@ namespace ModuleCover.Models
 {
     public class CoverData : BindableBase
     {
-        private string _text;
-        private BitmapSource _image;
+        private string _text = string.Empty;
+        private BitmapSource? _image;
         private TileType _tileType;
+        private bool _isEnabled = true;
 
         public string Text { get { return _text; } set { SetProperty(ref _text, value); } }
-        public BitmapSource Image { get { return _image; } set { SetProperty(ref _image, value); } }
+        public BitmapSource? Image { get { return _image; } set { SetProperty(ref _image, value); } }
         public TileType TileType { get { return _tileType; } set { SetProperty(ref _tileType, value); } }
+        public bool IsEnabled { get { return _isEnabled; } set { SetProperty(ref _isEnabled, value); } }
     }
     public  class CoverModel : BindableBase
     {

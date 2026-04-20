@@ -32,7 +32,7 @@
 
   <ItemGroup>
     <Reference Include="VCanPLib">
-      <HintPath>C:\Users\AutoLab\Downloads\VCanPLib_260414\VCanPLib.dll</HintPath>
+      <HintPath>C:\Users\LAB\Downloads\VCanPLib_260414\VCanPLib.dll</HintPath>
     </Reference>
   </ItemGroup>
 

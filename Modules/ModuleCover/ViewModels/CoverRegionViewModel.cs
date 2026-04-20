@@ -1,32 +1,92 @@
-﻿using Common.Core;
+using Common.Core;
+using Common.Core.Auth;
 using Common.Core.Helpers;
 using ModuleCover.Models;
 using Prism.Commands;
 using Prism.Mvvm;
+using Prism.Navigation.Regions;
 using System;
-using System.Collections.ObjectModel;
-using System.Windows.Media.Imaging;
 
 namespace ModuleCover.ViewModels
 {
-   
     public class CoverRegionViewModel : BindableBase
     {
         public CoverModel Model { get; } = new CoverModel();
-        private readonly IRegionManager _regionManager;
-        public DelegateCommand<object> OnCommandBtn => new DelegateCommand<object>(_onCommandBtn);
 
-        public CoverRegionViewModel(IRegionManager regionManager)
+        private readonly IRegionManager _regionManager;
+        private readonly IUserSession   _session;
+
+        private string _currentUserText = string.Empty;
+        public string CurrentUserText
         {
-            _regionManager = regionManager;
+            get => _currentUserText;
+            private set => SetProperty(ref _currentUserText, value);
         }
 
-        #region Command
+        public DelegateCommand<object> OnCommandBtn { get; }
+        public DelegateCommand LogoutCommand { get; }
+
+        public CoverRegionViewModel(IRegionManager regionManager, IUserSession session)
+        {
+            _regionManager = regionManager;
+            _session       = session;
+
+            OnCommandBtn  = new DelegateCommand<object>(_onCommandBtn);
+            LogoutCommand = new DelegateCommand(_onLogout);
+
+            _session.SessionChanged += OnSessionChanged;
+            UpdateTilePermissions();
+        }
+
+        // ── session handling ────────────────────────────────────────────────
+
+        private void OnSessionChanged(object? sender, EventArgs e)
+        {
+            UpdateTilePermissions();
+        }
+
+        private void UpdateTilePermissions()
+        {
+            CurrentUserText = _session.IsAuthenticated
+                ? $"{_session.CurrentUser!.DisplayName}  [{_session.Role}]"
+                : string.Empty;
+
+            foreach (var tile in Model.Tiles)
+            {
+                tile.IsEnabled = _session.HasPermission(TileTypeToPermission(tile.TileType));
+            }
+        }
+
+        private static Permission TileTypeToPermission(TileType tile) => tile switch
+        {
+            TileType.Mortor  => Permission.NavigateMotor,
+            TileType.Network => Permission.NavigateNetwork,
+            TileType.Led     => Permission.NavigateLed,
+            TileType.BMS     => Permission.NavigateBms,
+            TileType.Camera  => Permission.NavigateCamera,
+            TileType.Lidar   => Permission.NavigateLidar,
+            // Tiles without a mapped module (Head, Arm, Leg, Body, Hand, LLB) follow Motor permission
+            _                => Permission.NavigateMotor
+        };
+
+        private void _onLogout()
+        {
+            _session.Logout();
+            _regionManager.RequestNavigate("CoverRegion", "LoginView");
+        }
+
+        // ── navigation ──────────────────────────────────────────────────────
+
         private void _onCommandBtn(object obj)
         {
             try
             {
                 if (obj is not TileType tile) return;
+
+                // Block navigation if tile is disabled (no permission)
+                var data = Model.Tiles.FirstOrDefault(t => t.TileType == tile);
+                if (data is not null && !data.IsEnabled) return;
+
                 switch (tile)
                 {
                     case TileType.Mortor:
@@ -54,6 +114,5 @@ namespace ModuleCover.ViewModels
                 LogHelper.Exception(ex);
             }
         }
-        #endregion
     }
 }
