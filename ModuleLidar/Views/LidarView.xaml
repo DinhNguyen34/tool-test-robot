@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="ModuleLidar.Views.LidarView"
+<UserControl x:Class="ModuleLidar.Views.LidarView"
              xmlns:prism="http://prismlibrary.com/"
              prism:ViewModelLocator.AutoWireViewModel="True"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -19,7 +19,6 @@
         <Grid Grid.Row="0" Background="#1E2129" Margin="5 10 5 5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
@@ -27,153 +26,263 @@
                 <Button Content="← Back" Command="{Binding BackCommand}" Width="85" Height="32" Background="#3E3E42" Foreground="White"/>
                 <Image Source="/Resource;component/Images/Robot-32.png" Width="24" Height="24" Margin="15,0,10,0"/>
                 <TextBlock Text="Lidar Control" Foreground="#46A3FF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
-            </StackPanel> <!--Button Back-->
-
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="50,0">
-                <TextBlock Text="View: " Foreground="#46A3FF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
-                <Button Content="Reset" Command="{Binding ResetViewCommand}" Width="80" Height="28" Margin="5,0" Background="#3E3E42" Foreground="White"/>
-                <Button Content="Right" Command="{Binding RightViewCommand}" Width="80" Height="28" Margin="5,0" Background="#3E3E42" Foreground="White"/>
-                <Button Content="Front" Command="{Binding FrontViewCommand}" Width="80" Height="28" Margin="5,0" Background="#3E3E42" Foreground="White"/>
-                <Button Content="Top"   Command="{Binding TopViewCommand}"   Width="80" Height="28" Margin="5,0" Background="#3E3E42" Foreground="White"/>
-                <Button Content="Back"  Command="{Binding BackViewCommand}"  Width="80" Height="28" Margin="5,0" Background="#3E3E42" Foreground="White"/>
             </StackPanel>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0">
-                <TextBlock Text="Adapter : " Foreground="White" FontSize="16" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                <TextBlock Text="Lidar: " Foreground="White" FontSize="16" VerticalAlignment="Center" FontWeight="SemiBold"/>
 
                 <ComboBox Width="180" Height="28" 
                   Background="#333333" 
                   Foreground="#FCAE1F" 
                   VerticalContentAlignment="Center"
-                  ItemsSource="{Binding AdapterList}" 
-                  SelectedItem="{Binding SelectedAdapter}">
+                  ItemsSource="{Binding DiscoveredLidars}" 
+                  SelectedItem="{Binding SelectedLidar}"
+                  DisplayMemberPath="SN">
                     <ComboBox.Resources>
                         <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#333333" />
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#FCAE1F" />
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black" />
                     </ComboBox.Resources>
-
                 </ComboBox>
             </StackPanel>
         </Grid>
 
         <Grid Grid.Row="1" Margin="5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="220"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" Background="#1E2129" CornerRadius="5" Margin="5">
-                <DockPanel>
-                    <Border DockPanel.Dock="Top" Height="35" CornerRadius="5,5,0,0">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-                                <GradientStop Color="#FF8E2D" Offset="0"/>
-                                <GradientStop Color="#FF4BA4" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <TextBlock Text="SETTINGS" Foreground="White" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
-                    </Border> <!--Settings-->
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#474F5A">
-                        <StackPanel Margin="10">
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="#1E2129" CornerRadius="5" Margin="5" VerticalAlignment="Top">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Height="35" CornerRadius="5,5,0,0">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                    <GradientStop Color="#FF8E2D" Offset="0"/>
+                                    <GradientStop Color="#FF4BA4" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <TextBlock Text="SETTINGS" Foreground="White" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                        </Border>
+                        <StackPanel Margin="10" Background="#474F5A">
                             <Grid Margin="0,0,0,10">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Point Size:" Foreground="#B0BCC7" VerticalAlignment="Center" />
-                                <ComboBox Grid.Column="1" Width="80" Height="25" SelectedItem="{Binding CameraSettings.PointSize}"  Background="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" >
-                                    <ComboBoxItem Content="1 pixel" />
-                                    <ComboBoxItem Content="2 pixel" />
-                                    <ComboBoxItem Content="3 pixel" />
-                                    <ComboBoxItem Content="4 pixel" />
-                                    <ComboBoxItem Content="5 pixel" />
-                                </ComboBox>
-                            </Grid> <!--Point Size-->
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="Color:" Foreground="#B0BCC7" VerticalAlignment="Center" />
-                                <ComboBox Grid.Column="1" Width="80" Height="25" SelectedItem="{Binding CameraSettings.Color}"  Background="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" >
-                                    <ComboBoxItem Content="Reflectivity" />
-                                    <ComboBoxItem Content="Distance" />
-                                    <ComboBoxItem Content="Solid Color" />
-                                    <ComboBoxItem Content="Elevation" />
-                                    <ComboBoxItem Content="Lidar ID" />
+                                <ComboBox Grid.Column="1" Width="80" Height="25" SelectedValue="{Binding CameraSettings.PointSize}" SelectedValuePath="Tag" Background="White">
+                                    <ComboBoxItem Content="1 pixel" Tag="1.0" />
+                                    <ComboBoxItem Content="2 pixel" Tag="2.0" />
+                                    <ComboBoxItem Content="4 pixel" Tag="4.0" />
                                 </ComboBox>
                             </Grid>
+
                             <Grid Margin="0,0,0,10">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="FrameTime:" Foreground="#B0BCC7" VerticalAlignment="Center" />
-                                <ComboBox Grid.Column="1" Width="80" Height="25" SelectedItem="{Binding CameraSettings.FrameTime}"  Background="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" >
-                                    <ComboBoxItem Content="100 ms" />
-                                    <ComboBoxItem Content="200 ms" />
-                                    <ComboBoxItem Content="500 ms" />
-                                    <ComboBoxItem Content="1000 ms" />
-                                    <ComboBoxItem Content="3000 ms" />
+                                <ComboBox Grid.Column="1" Width="80" Height="25" SelectedValue="{Binding CameraSettings.FrameTime}" SelectedValuePath="Tag" Background="White">
+                                    <ComboBoxItem Content="100 ms" Tag="100" />
+                                    <ComboBoxItem Content="200 ms" Tag="200" />
+                                    <ComboBoxItem Content="500 ms" Tag="500" />
                                 </ComboBox>
                             </Grid>
+
+                            <Separator Background="#3E3E42" Margin="0,5,0,10"/>
+
+                            <TextBlock Text="Work Mode:" Foreground="#B0BCC7" Margin="0,0,0,5" />
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="Sampling" Command="{Binding NormalModeCommand}" Margin="0,0,2,0" Height="25" Background="#2D5AFF" Foreground="White"/>
+                                <Button Grid.Column="1" Content="Standby"  Command="{Binding StandbyModeCommand}" Margin="2,0,0,0" Height="25" Background="#3E3E42" Foreground="White"/>
+                            </Grid>
+
+                            <ToggleButton Content="RECORD POINT CLOUD" Command="{Binding ToggleRecordCommand}" 
+                                          IsChecked="{Binding LidarInfo.IsRecording, Mode=OneWay}"
+                                          Height="30" Margin="0,5,0,0">
+                                <ToggleButton.Style>
+                                    <Style TargetType="ToggleButton">
+                                        <Setter Property="Background" Value="#3E3E42"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter Property="Background" Value="#FF4B4B"/>
+                                                <Setter Property="Content" Value="STOP RECORDING"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
                         </StackPanel>
-                    </ScrollViewer>
-                </DockPanel>
-            </Border>
+                    </DockPanel>
+                </Border>
+
+                <Border Grid.Row="1" Background="#1E2129" CornerRadius="5" Margin="5">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Height="35" CornerRadius="5,5,0,0">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                    <GradientStop Color="#46A3FF" Offset="0"/>
+                                    <GradientStop Color="#2D5AFF" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <TextBlock Text="LIDAR INFO" Foreground="White" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                        </Border>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#1E2129">
+                            <StackPanel Margin="12">
+                                <TextBlock Text="Serial Number:" Foreground="#B0BCC7" FontSize="11"/>
+                                <TextBlock Text="{Binding LidarInfo.SN}" Foreground="#FCAE1F" FontSize="14" FontWeight="Bold" Margin="0,2,0,12"/>
+
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="IP Address:" Foreground="#B0BCC7" FontSize="10"/>
+                                        <TextBlock Text="{Binding LidarInfo.IP}" Foreground="White" FontSize="11"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Temp:" Foreground="#B0BCC7" FontSize="10" HorizontalAlignment="Right"/>
+                                        <TextBlock Text="{Binding LidarInfo.Temperature, StringFormat={}{0:F1}°C}" Foreground="#FF4B4B" FontSize="12" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Work Mode -->
+                                <TextBlock Text="Status:" Foreground="#B0BCC7" FontSize="11"/>
+                                <Border Background="#3E3E42" CornerRadius="3" Padding="5,2" Margin="0,4,0,12" HorizontalAlignment="Left">
+                                    <TextBlock Text="{Binding LidarInfo.WorkMode}" Foreground="#00FF00" FontSize="12" FontWeight="SemiBold"/>
+                                </Border>
+
+                                <Separator Background="#3E3E42" Margin="0,0,0,10"/>
+
+                                <!-- IMU DATA SECTION -->
+                                <TextBlock Text="IMU DATA (Euler Angles)" Foreground="#46A3FF" FontWeight="Bold" FontSize="11" Margin="0,0,0,8"/>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Roll" Foreground="#B0BCC7" FontSize="9" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding LidarInfo.Roll, StringFormat={}{0:F1}°}" Foreground="Gold" FontSize="11" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Pitch" Foreground="#B0BCC7" FontSize="9" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding LidarInfo.Pitch, StringFormat={}{0:F1}°}" Foreground="Gold" FontSize="11" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Yaw" Foreground="#B0BCC7" FontSize="9" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding LidarInfo.Yaw, StringFormat={}{0:F1}°}" Foreground="Gold" FontSize="11" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,12">
+                                    <TextBlock Text="Acc (X,Y,Z):" Foreground="#B0BCC7" FontSize="9"/>
+                                    <TextBlock HorizontalAlignment="Right" Foreground="White" FontSize="10">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0:F2}, {1:F2}, {2:F2}">
+                                                <Binding Path="LidarInfo.AccX"/>
+                                                <Binding Path="LidarInfo.AccY"/>
+                                                <Binding Path="LidarInfo.AccZ"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </Grid>
+
+                                <Separator Background="#3E3E42" Margin="0,0,0,12"/>
+
+                                <!-- Stats -->
+                                <!--<Grid Margin="0,0,0,8">
+                                    <TextBlock Text="PPS:" Foreground="#B0BCC7" FontSize="11"/>
+                                    <TextBlock Text="{Binding LidarInfo.PointPPS}" Foreground="White" FontSize="11" HorizontalAlignment="Right"/>
+                                </Grid>-->
+                                <Grid Margin="0,0,0,8">
+                                    <TextBlock Text="IMU:" Foreground="#B0BCC7" FontSize="11"/>
+                                    <TextBlock Text="{Binding LidarInfo.IMUFrequency}" Foreground="White" FontSize="11" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <TextBlock Text="Packet Loss:" Foreground="#B0BCC7" FontSize="11"/>
+                                    <TextBlock Text="{Binding LidarInfo.PacketLoss}" Foreground="#FF4B4B" FontSize="11" HorizontalAlignment="Right"/>
+                                </Grid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </Grid>
             <Border Grid.Column="1" Background="Black" CornerRadius="5" Margin="5" xmlns:helix="http://helix-toolkit.org/wpf">
-    <Grid>
-        <helix:HelixViewport3D x:Name="LidarView3D" ZoomExtentsWhenLoaded="True" ShowCoordinateSystem="True" 
+                <Grid>
+                    <helix:HelixViewport3D x:Name="LidarView3D" ZoomExtentsWhenLoaded="True" ShowCoordinateSystem="True" 
                                CoordinateSystemLabelForeground="White" Background="#050505">
-            <helix:DefaultLights/>
+                        <!--<helix:HelixViewport3D.Camera>
+                            <PerspectiveCamera Position="0,-30,30"
+                           LookDirection="0,30,-30"
+                           UpDirection="0,0,1"
+                           FieldOfView="45"
+                           NearPlaneDistance="0.1"
+                           FarPlaneDistance="25"/>
+                        </helix:HelixViewport3D.Camera>-->
+                        <helix:DefaultLights/>
 
-            <helix:GridLinesVisual3D Width="1000" Length="1000" MajorDistance="100" MinorDistance="10" Thickness="0.2" Fill="#15FFFFFF"/>
+                        <helix:GridLinesVisual3D Width="20" Length="20" MajorDistance="20" MinorDistance="10" Thickness="0.2" Fill="#15FFFFFF"/>
+                        
+                        <ModelVisual3D x:Name="RingsGroup">
+                            <ModelVisual3D.Transform>
+                                <TranslateTransform3D OffsetZ="0.1"/>
+                            </ModelVisual3D.Transform>
 
-            <ModelVisual3D x:Name="RingsGroup">
-                <ModelVisual3D.Transform>
-                    <TranslateTransform3D OffsetZ="0.1"/>
-                </ModelVisual3D.Transform>
-                
-                <helix:PieSliceVisual3D InnerRadius="4.8"   OuterRadius="5.2"   StartAngle="0" EndAngle="360" Fill="#88FFFFFF"/>
-                <helix:PieSliceVisual3D InnerRadius="9.8"   OuterRadius="10.2"  StartAngle="0" EndAngle="360" Fill="#AAFFFFFF"/>
-                <helix:PieSliceVisual3D InnerRadius="19.8"  OuterRadius="20.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
-                <helix:PieSliceVisual3D InnerRadius="29.8"  OuterRadius="30.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
-                <helix:PieSliceVisual3D InnerRadius="39.8"  OuterRadius="40.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
-                <helix:PieSliceVisual3D InnerRadius="49.5"  OuterRadius="50.5"  StartAngle="0" EndAngle="360" Fill="Gold"/> 
-                <helix:PieSliceVisual3D InnerRadius="59.8"  OuterRadius="60.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
-                <helix:PieSliceVisual3D InnerRadius="69.8"  OuterRadius="70.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
-                <helix:PieSliceVisual3D InnerRadius="79.8"  OuterRadius="80.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
-                <helix:PieSliceVisual3D InnerRadius="89.8"  OuterRadius="90.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
-                <helix:PieSliceVisual3D InnerRadius="99.5"  OuterRadius="100.5" StartAngle="0" EndAngle="360" Fill="Gold"/> 
+                            <helix:PieSliceVisual3D InnerRadius="4.8"   OuterRadius="5.2"   StartAngle="0" EndAngle="360" Fill="#88FFFFFF"/>
+                            <helix:PieSliceVisual3D InnerRadius="9.8"   OuterRadius="10.2"  StartAngle="0" EndAngle="360" Fill="#AAFFFFFF"/>
+                            <helix:PieSliceVisual3D InnerRadius="19.8"  OuterRadius="20.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                            <helix:PieSliceVisual3D InnerRadius="29.8"  OuterRadius="30.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                            <helix:PieSliceVisual3D InnerRadius="39.8"  OuterRadius="40.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                            <helix:PieSliceVisual3D InnerRadius="49.5"  OuterRadius="50.5"  StartAngle="0" EndAngle="360" Fill="Gold"/>
+                            <helix:PieSliceVisual3D InnerRadius="59.8"  OuterRadius="60.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                            <helix:PieSliceVisual3D InnerRadius="69.8"  OuterRadius="70.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                            <helix:PieSliceVisual3D InnerRadius="79.8"  OuterRadius="80.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                            <helix:PieSliceVisual3D InnerRadius="89.8"  OuterRadius="90.2"  StartAngle="0" EndAngle="360" Fill="#66FFFFFF"/>
+                            <helix:PieSliceVisual3D InnerRadius="99.5"  OuterRadius="100.5" StartAngle="0" EndAngle="360" Fill="Gold"/>
 
-                <helix:PieSliceVisual3D InnerRadius="149.5" OuterRadius="150.5" StartAngle="0" EndAngle="360" Fill="#AAFFFFFF"/>
-                <helix:PieSliceVisual3D InnerRadius="199.5" OuterRadius="200.5" StartAngle="0" EndAngle="360" Fill="#AAFFFFFF"/>
-                <helix:PieSliceVisual3D InnerRadius="249.5" OuterRadius="250.5" StartAngle="0" EndAngle="360" Fill="#CCFFFFFF"/>
-            </ModelVisual3D>
+                            <helix:PieSliceVisual3D InnerRadius="149.5" OuterRadius="150.5" StartAngle="0" EndAngle="360" Fill="#AAFFFFFF"/>
+                            <helix:PieSliceVisual3D InnerRadius="199.5" OuterRadius="200.5" StartAngle="0" EndAngle="360" Fill="#AAFFFFFF"/>
+                            <helix:PieSliceVisual3D InnerRadius="249.5" OuterRadius="250.5" StartAngle="0" EndAngle="360" Fill="#CCFFFFFF"/>
+                        </ModelVisual3D>
 
-            <helix:LinesVisual3D Points="-500,0,0 500,0,0" Color="#FF4444" Thickness="2"/>
-            <helix:LinesVisual3D Points="0,-500,0 0,500,0" Color="#44FF44" Thickness="2"/>
+                        <helix:LinesVisual3D Points="-20,0,0 20,0,0" Color="#FF4444" Thickness="2"/>
+                        <helix:LinesVisual3D Points="0,-20,0 0,20,0" Color="#44FF44" Thickness="2"/>
 
-            <helix:BillboardTextVisual3D Text="5m"  Position="10,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="10m" Position="15,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="20m" Position="25,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="30m" Position="35,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="40m" Position="45,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="50m"  Position="55,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="60m"  Position="65,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="70m"  Position="75,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="80m"  Position="85,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="90m"  Position="95,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="100m" Position="105,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="150m" Position="155,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="200m" Position="205,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
-            <helix:BillboardTextVisual3D Text="250m" Position="255,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="5m"  Position="10,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="10m" Position="15,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="20m" Position="25,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <!--<helix:BillboardTextVisual3D Text="30m" Position="35,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="40m" Position="45,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="50m"  Position="55,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="60m"  Position="65,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="70m"  Position="75,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="80m"  Position="85,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="90m"  Position="95,-5,1"   Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="100m" Position="105,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="150m" Position="155,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="200m" Position="205,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>
+                        <helix:BillboardTextVisual3D Text="250m" Position="255,-5,1"  Foreground="#FCAE1F" FontSize="12" FontWeight="Bold"/>-->
 
-            <helix:PointsVisual3D x:Name="LidarPoints" Color="#00FFFF" Size="4"/>
-        </helix:HelixViewport3D>
-    </Grid>
-</Border>
+                        <helix:PointsVisual3D Points="{Binding LidarPoints}" Color="#00FFFF" Size="{Binding CameraSettings.PointSize}"/>
+                    </helix:HelixViewport3D>
+                </Grid>
+            </Border>
         </Grid>
     </Grid>
 </UserControl>
