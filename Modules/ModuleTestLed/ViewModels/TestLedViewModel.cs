@@ -1,22 +1,55 @@
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.IO;
+using System.Reflection.Metadata;
+using System.Windows;
 using Common.Core.Helpers;
 using ModuleTestLed.Models;
 using ModuleTestLed.Views;
 using Prism.Commands;
 using Prism.Mvvm;
-using System.Collections.ObjectModel;
-using System.Windows;
+using Prism.Navigation.Regions;
+
 
 namespace ModuleTestLed.ViewModels
 {
     public class TestLedViewModel : BindableBase
     {
         public TestLedModel Model { get; } = new TestLedModel();
+        private readonly IRegionManager _regionManager;
+        private readonly List<LedTestCaseItem> _trackedTestCases = [];
 
         private string _logText = string.Empty;
+        private bool _isLogging;
+        private bool _isUpdatingSelectAllState;
+        private StreamWriter? _logWriter;
+        private bool? _areAllTestCasesSelected = true;
+        public TestLedViewModel(IRegionManager regionManager)
+        {
+            _regionManager = regionManager;
+            Model.TestCases.CollectionChanged += OnTestCasesCollectionChanged;
+            RebindTestCaseSelectionTracking();
+        }
         public string LogText
         {
             get => _logText;
             set => SetProperty(ref _logText, value);
+        }
+
+        public bool? AreAllTestCasesSelected
+        {
+            get => _areAllTestCasesSelected;
+            set
+            {
+                if (!SetProperty(ref _areAllTestCasesSelected, value))
+                    return;
+
+                if (_isUpdatingSelectAllState || !value.HasValue)
+                    return;
+
+                SetAllTestCasesSelected(value.Value);
+            }
         }
 
         public DelegateCommand RefreshCanCommand => new(OnRefreshCan);
@@ -30,10 +63,7 @@ namespace ModuleTestLed.ViewModels
         public DelegateCommand<LedTestCaseItem> FailCommand => new(OnFail);
         public DelegateCommand TestOneLedCommand => new(OnTestOneLed);
         public DelegateCommand SaveReportCommand => new(OnSaveReport);
-
-        public TestLedViewModel()
-        {
-        }
+        public DelegateCommand GoBackCommand => new(OnGoBack);
 
         private void OnRefreshCan()
         {
@@ -58,7 +88,7 @@ namespace ModuleTestLed.ViewModels
             }
             catch (Exception ex) { LogHelper.Exception(ex); }
         }
-
+        
         private void OnConfig()
         {
             try
@@ -86,23 +116,38 @@ namespace ModuleTestLed.ViewModels
             }
             catch (Exception ex) { LogHelper.Exception(ex); }
         }
+        public void OnGoBack()
+        {
+            if (Model.IsConnected)
+            {
+                Model.Disconnect();
+                AppendLog("GoBack disconnected CAN");
+            }
 
+            if (_isLogging)
+            {
+                _isLogging = false;
+                _logWriter?.Close();
+                _logWriter = null;
+            }
+
+            _regionManager.RequestNavigate("CoverRegion", "CoverRegion");
+        }
         private void OnStop()
         {
+
             Model.IsRunning = false;
             AppendLog("Stop requested.");
         }
 
         private void OnSelectAll()
         {
-            foreach (var tc in Model.TestCases)
-                tc.IsSelected = true;
+            SetAllTestCasesSelected(true);
         }
 
         private void OnDeselectAll()
         {
-            foreach (var tc in Model.TestCases)
-                tc.IsSelected = false;
+            SetAllTestCasesSelected(false);
         }
 
         private void OnTestOneLed()
@@ -148,6 +193,76 @@ namespace ModuleTestLed.ViewModels
         private void AppendLog(string msg)
         {
             LogText += $"[{DateTime.Now:HH:mm:ss.fff}] {msg}\n";
+        }
+
+        private void OnTestCasesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            RebindTestCaseSelectionTracking();
+        }
+
+        private void RebindTestCaseSelectionTracking()
+        {
+            foreach (var testCase in _trackedTestCases)
+            {
+                testCase.PropertyChanged -= OnTestCasePropertyChanged;
+            }
+
+            _trackedTestCases.Clear();
+
+            foreach (var testCase in Model.TestCases)
+            {
+                testCase.PropertyChanged += OnTestCasePropertyChanged;
+                _trackedTestCases.Add(testCase);
+            }
+
+            UpdateAreAllTestCasesSelected();
+        }
+
+        private void OnTestCasePropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(LedTestCaseItem.IsSelected))
+            {
+                UpdateAreAllTestCasesSelected();
+            }
+        }
+
+        private void SetAllTestCasesSelected(bool isSelected)
+        {
+            foreach (var testCase in Model.TestCases)
+            {
+                testCase.IsSelected = isSelected;
+            }
+
+            UpdateAreAllTestCasesSelected();
+        }
+
+        private void UpdateAreAllTestCasesSelected()
+        {
+            bool? nextState;
+            if (Model.TestCases.Count == 0)
+            {
+                nextState = false;
+            }
+            else
+            {
+                int selectedCount = Model.TestCases.Count(testCase => testCase.IsSelected);
+                nextState = selectedCount switch
+                {
+                    0 => false,
+                    var count when count == Model.TestCases.Count => true,
+                    _ => null
+                };
+            }
+
+            _isUpdatingSelectAllState = true;
+            try
+            {
+                AreAllTestCasesSelected = nextState;
+            }
+            finally
+            {
+                _isUpdatingSelectAllState = false;
+            }
         }
     }
 }

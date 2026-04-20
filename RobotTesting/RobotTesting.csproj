@@ -48,6 +48,7 @@
     <ProjectReference Include="..\Modules\ModuleNetwork\ModuleNetwork.csproj" />
     <ProjectReference Include="..\ModuleMotor\ModuleMotor.csproj" />
     <ProjectReference Include="..\Modules\ModuleTestLed\ModuleTestLed.csproj" />
+    <ProjectReference Include="..\Modules\ModuleTestBms\ModuleTestBms.csproj" />
   </ItemGroup>
 
   <ItemGroup>

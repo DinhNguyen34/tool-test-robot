@@ -636,6 +636,103 @@ namespace ModuleMotor.ViewModels
                     DefaultSendMode = CanSendMode.SendOnce,
                     IsbuiltIn = true,
                     RsCommand = RsCommandType.BrakeRelease
+                },
+                new()
+                {
+                    Number = 9,
+                    Code = "TC009",
+                    Label = "Brake Engage",
+                    Description = "ENCOS electromagnetic brake engage command.",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.BrakeEngage
+                },
+                new()
+                {
+                    Number = 10,
+                    Code = "TC010",
+                    Label = "Hybrid Zero",
+                    Description = "ENCOS hybrid control: hold zero position (KP=20, KD=5).",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.Continuous,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.Control,
+                    TargetPosition = 0f,
+                    TargetSpeed = 0f,
+                    TargetTorque = 0f,
+                    TargetKp = 20f,
+                    TargetKd = 5f
+                },
+                new()
+                {
+                    Number = 11,
+                    Code = "TC011",
+                    Label = "Hybrid 90 deg",
+                    Description = "ENCOS hybrid control: move to 90 deg (1.571 rad, KP=20, KD=5).",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.Continuous,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.Control,
+                    TargetPosition = 1.5708f,
+                    TargetSpeed = 0f,
+                    TargetTorque = 0f,
+                    TargetKp = 20f,
+                    TargetKd = 5f
+                },
+                new()
+                {
+                    Number = 12,
+                    Code = "TC012",
+                    Label = "Query Position",
+                    Description = "ENCOS query current output position (query code 0x01).",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.Query,
+                    TargetTorque = 0x01
+                },
+                new()
+                {
+                    Number = 13,
+                    Code = "TC013",
+                    Label = "Query Speed",
+                    Description = "ENCOS query current output speed (query code 0x02).",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.Query,
+                    TargetTorque = 0x02
+                },
+                new()
+                {
+                    Number = 14,
+                    Code = "TC014",
+                    Label = "Query Current",
+                    Description = "ENCOS query current phase current (query code 0x03).",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.Query,
+                    TargetTorque = 0x03
+                },
+                new()
+                {
+                    Number = 15,
+                    Code = "TC015",
+                    Label = "Reset Motor ID",
+                    Description = "ENCOS broadcast reset all motor IDs to factory default.",
+                    IntervalMs = 2,
+                    TimeoutMs = 1000,
+                    DefaultSendMode = CanSendMode.SendOnce,
+                    IsbuiltIn = true,
+                    RsCommand = RsCommandType.ResetMotorId
                 }
             };
         }
@@ -883,6 +980,20 @@ namespace ModuleMotor.ViewModels
             return FormatCanFrame(frame);
         }
 
+        //-- disconnect CAN-------
+        private void DisconnectCAN()
+        {
+            if (IsConnected || Model.GetOpenStatus())
+            {
+                Model.Close();
+                IsConnected = false;
+
+                const string dismessage = "CAN disconnected";
+                AppendLog(dismessage);
+                LogHelper.Debug(dismessage);
+            }
+        }
+
         private bool HandleCanConnect()
         {
             if (IsConnected || Model.GetOpenStatus())
@@ -1062,7 +1173,10 @@ namespace ModuleMotor.ViewModels
                 RsCommandType.SpeedControl => EncosMotorControl.BuildServoSpeedControl(DeviceId16, def.TargetSpeed, def.TargetTorque),
                 RsCommandType.CurrentControl => EncosMotorControl.BuildCurrentControl(DeviceId16, def.TargetTorque),
                 RsCommandType.TorqueControl => EncosMotorControl.BuildTorqueControl(DeviceId16, def.TargetTorque),
-                RsCommandType.BrakeRelease => EncosMotorControl.BuildElectromagneticBrake(DeviceId16, release: true),
+                RsCommandType.BrakeRelease  => EncosMotorControl.BuildElectromagneticBrake(DeviceId16, release: true),
+                RsCommandType.BrakeEngage   => EncosMotorControl.BuildElectromagneticBrake(DeviceId16, release: false),
+                RsCommandType.Query         => EncosMotorControl.BuildQuery(DeviceId16, (byte)def.TargetTorque),
+                RsCommandType.ResetMotorId  => EncosMotorControl.ResetMotorId(),
                 _ => null
             };
         }
@@ -1641,6 +1755,7 @@ namespace ModuleMotor.ViewModels
 
         private void OnGoBack()
         {
+            DisconnectCAN();
             StopRxLoop();
             if (_isLogging)
             {

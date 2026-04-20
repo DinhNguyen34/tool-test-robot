@@ -46,7 +46,10 @@
         <!-- Top bar -->
         <materialDesign:ColorZone Mode="PrimaryDark" DockPanel.Dock="Top" Padding="12">
             <DockPanel LastChildFill="True" Background="Transparent" MouseLeftButtonDown="TopBar_MouseLeftButtonDown">
-                <TextBlock Text="TEST LED" FontSize="24" Margin="10,0" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <Button Content="← Back" Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
+                        Command="{Binding GoBackCommand}"
+                        HorizontalAlignment="Left" Width="80"/> 
+                <TextBlock Text="TEST LED" FontSize="24" Margin="10,0,10,0" FontWeight="SemiBold" VerticalAlignment="Center" />
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Center" VerticalAlignment="Center">
 
                     <TextBlock Text="Can Device:" FontSize="18" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="White"/>
@@ -76,6 +79,7 @@
                     <Button Content="Config" Width="130" Command="{Binding ConfigCommand}" Height="40" FontSize="16"
                             Style="{StaticResource MaterialDesignRaisedButton}" Padding="12,6"/>
                 </StackPanel>
+               
             </DockPanel>
         </materialDesign:ColorZone>
 
@@ -115,10 +119,23 @@
                           materialDesign:DataGridAssist.ColumnHeaderPadding="8 4">
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Header="" Width="40">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsThreeState="True"
+                                              IsChecked="{Binding DataContext.AreAllTestCasesSelected,
+                                                                  RelativeSource={RelativeSource AncestorType=DataGrid},
+                                                                  Mode=TwoWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              ToolTip="Select/Deselect all test cases"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
                                               HorizontalAlignment="Center"/>
+                                    
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -132,6 +149,7 @@
                                 <DataTemplate>
                                     <TextBlock Text="{Binding StatusText}" Style="{StaticResource StatusTextStyle}"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

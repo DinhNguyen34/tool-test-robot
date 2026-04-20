@@ -28,9 +28,17 @@ namespace ModuleMotor.Models
             }
         }
 
-        public byte[] PayloadData => Data.Length > 4
-            ? Data.Skip(5).ToArray()
-            : Array.Empty<byte>();
+        public byte[] PayloadData
+        {
+            get
+            {
+                if (Data.Length < 5)
+                    return Array.Empty<byte>();
+                // Data[4] is the DLC byte; limit the copy to the actual frame length.
+                int dlc = Math.Min(Data[4], Math.Max(0, Data.Length - 5));
+                return dlc == 0 ? Array.Empty<byte>() : Data.Skip(5).Take(dlc).ToArray();
+            }
+        }
 
         public byte? MotorId
         {

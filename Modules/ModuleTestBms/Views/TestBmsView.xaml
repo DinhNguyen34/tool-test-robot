@@ -1,0 +1,247 @@
+<UserControl x:Class="ModuleTestBms.Views.TestBmsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:local="clr-namespace:ModuleTestBms.Views"
+             xmlns:models="clr-namespace:ModuleTestBms.Models"
+             xmlns:conv="clr-namespace:ModuleTestBms.Converters"
+             mc:Ignorable="d"
+             prism:ViewModelLocator.AutoWireViewModel="True"
+             Background="{DynamicResource MaterialDesignPaper}"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             d:DesignHeight="1000" d:DesignWidth="1300">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:InvertBoolConverter x:Key="InvertBoolConverter"/>
+        <conv:ConnectIconConverter x:Key="ConnectIconConverter"/>
+        <conv:ConnectTextConverter x:Key="ConnectTextConverter"/>
+        <conv:LoggingTextConverter x:Key="LoggingTextConverter"/>
+
+        <Style x:Key="StatusTextStyle" TargetType="TextBlock">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BmsTestStatus.Pass}">
+                    <Setter Property="Foreground" Value="Green"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BmsTestStatus.Fail}">
+                    <Setter Property="Foreground" Value="Red"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BmsTestStatus.Running}">
+                    <Setter Property="Foreground" Value="DodgerBlue"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BmsTestStatus.HasRun}">
+                    <Setter Property="Foreground" Value="DarkOrange"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <DockPanel>
+        <!-- Top bar -->
+        <materialDesign:ColorZone Mode="PrimaryDark" DockPanel.Dock="Top" Padding="12">
+            <DockPanel LastChildFill="True" Background="Transparent" MouseLeftButtonDown="TopBar_MouseLeftButtonDown">
+                <Button Content="← Back" Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
+                        Command="{Binding GoBackCommand}"
+                        HorizontalAlignment="Left" Width="80"/>
+                <TextBlock Text="BMS TESTING" FontSize="24" Margin="10,0,10,0" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Center" VerticalAlignment="Center">
+
+                    <TextBlock Text="Can Device:" FontSize="18" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="White"/>
+                    <ComboBox MinWidth="160" Margin="10,0,30,0" FontSize="15" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                              ItemsSource="{Binding Model.ListCanDevices}"
+                              DisplayMemberPath="DisplayName"
+                              SelectedItem="{Binding Model.SelectedCan, Mode=TwoWay}"
+                              IsEnabled="{Binding Model.IsConnected, Converter={StaticResource InvertBoolConverter}}"
+                              DropDownOpened="ComboBox_DropDownOpened"
+                              Style="{StaticResource MaterialDesignComboBox}" VerticalAlignment="Center"/>
+
+                    <TextBlock Text="Baudrate (kb):" FontSize="18" VerticalAlignment="Center" Margin="20,0,6,0" Foreground="White"/>
+                    <ComboBox MinWidth="60" Margin="10,0,30,0" FontSize="15" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                              ItemsSource="{Binding Model.BaudrateOptions}"
+                              SelectedItem="{Binding Model.SelectedBaudrate, Mode=TwoWay}"
+                              IsEnabled="{Binding Model.IsConnected, Converter={StaticResource InvertBoolConverter}}"
+                              Style="{StaticResource MaterialDesignComboBox}" VerticalAlignment="Center"/>
+
+                    <Button Command="{Binding ConnectCommand}" Margin="0,0,5,0" Width="130" Height="40" FontSize="16"
+                            Style="{StaticResource MaterialDesignRaisedButton}" Padding="12,6">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="{Binding Model.IsConnected, Converter={StaticResource ConnectIconConverter}}" Width="20" Height="20" Margin="-15,0,6,0"/>
+                            <TextBlock Text="{Binding Model.IsConnected, Converter={StaticResource ConnectTextConverter}}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Content="Config" Width="130" Command="{Binding ConfigCommand}" Height="40" FontSize="16"
+                            Style="{StaticResource MaterialDesignRaisedButton}" Padding="12,6"/>
+
+                    <Button Content="Import DB" Width="130" Command="{Binding ImportDatabaseCommand}" Height="40" FontSize="16" Margin="5,0,0,0"
+                            Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="12,6"/>
+                </StackPanel>
+            </DockPanel>
+        </materialDesign:ColorZone>
+
+        <!-- Main content -->
+        <Grid Margin="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="200"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="80"/>
+            </Grid.RowDefinitions>
+
+            <!-- Toolbar -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                <Button Content="Run Selected" Command="{Binding RunCommand}" Margin="0,0,8,0" Width="120"
+                        Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="16,6"/>
+                <Button Content="Stop" Command="{Binding StopCommand}" Margin="0,0,8,0" Width="120"
+                        Style="{StaticResource MaterialDesignRaisedButton}" Padding="16,6"/>
+                <Button Content="Save Report" Command="{Binding SaveReportCommand}" Width="120"
+                        Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="16,6"/>
+                <Button Content="Select All" Command="{Binding SelectAllCommand}" Margin="20,0,8,0"
+                        Style="{StaticResource MaterialDesignFlatButton}"/>
+                <Button Content="Deselect All" Command="{Binding DeselectAllCommand}" Margin="0,0,8,0"
+                        Style="{StaticResource MaterialDesignFlatButton}"/>
+                
+            </StackPanel>
+
+            <!-- Test cases list -->
+            <materialDesign:Card Grid.Row="1" Padding="0" Margin="0,0,0,8">
+                <DataGrid ItemsSource="{Binding Model.TestCases}" AutoGenerateColumns="False"
+                          CanUserAddRows="False" CanUserDeleteRows="False"
+                          IsReadOnly="False" SelectionMode="Single"
+                          HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                          VerticalScrollBarVisibility="Auto"
+                          materialDesign:DataGridAssist.CellPadding="8 4"
+                          materialDesign:DataGridAssist.ColumnHeaderPadding="8 4">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="" Width="40">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                              HorizontalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="No" Binding="{Binding No}" Width="40" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Test Case" Binding="{Binding Name}" Width="220" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*" IsReadOnly="True"/>
+
+                        <DataGridTemplateColumn Header="   Status" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding StatusText}" Style="{StaticResource StatusTextStyle}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="80" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Remark" Binding="{Binding Remark}" Width="120" IsReadOnly="True"/>
+
+                        <DataGridTemplateColumn Header="           Verdict" Width="140">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                        <Button Content="Pass" Padding="8,2" Margin="0,0,4,0"
+                                                Background="Green" Foreground="White" FontSize="11"
+                                                Command="{Binding DataContext.PassCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                                materialDesign:ButtonAssist.CornerRadius="4"
+                                                Height="26" Width="60"/>
+                                        <Button Content="Fail" Padding="8,2"
+                                                Background="Red" Foreground="White" FontSize="11"
+                                                Command="{Binding DataContext.FailCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                                materialDesign:ButtonAssist.CornerRadius="4"
+                                                Height="26" Width="60"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </materialDesign:Card>
+
+            <!-- Monitor label + controls -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,4">
+                <Button Command="{Binding LoggingCommand}" Width="120"
+                        Style="{StaticResource MaterialDesignRaisedSecondaryButton}" Padding="12,4" FontSize="12">
+                        <TextBlock Text="{Binding Model.IsLogging}"/>
+                </Button>
+                <Button Content="ASC Viewer" Command="{Binding OpenAscViewerCommand}" Margin="8,0,0,0" Width="120"
+                        Style="{StaticResource MaterialDesignRaisedButton}" Padding="12,4" FontSize="12"/>
+                <Button Content="Load Log File" Command="{Binding OpenAndScanLogCommand}" Margin="5"/>
+
+                <ComboBox ItemsSource="{Binding AvailableMessagesInLog}" SelectedItem="{Binding SelectedMessageForConvert}" DisplayMemberPath="MessageName" Width="180" Margin="5" />
+
+                <Button Content="Export CSV" Command="{Binding SaveToCsvCommand}" Margin="5" Background="Green" Foreground="White"/>
+                <Button Content="Clear View" Command="{Binding ClearMonitorCommand}"
+                        Style="{StaticResource MaterialDesignFlatButton}" Margin="20 0" FontSize="13"/>
+                
+            </StackPanel>
+
+            <!-- Monitor area: expandable CAN messages with signals -->
+            <materialDesign:Card Grid.Row="3" Padding="0" Margin="0,0,0,8">
+                <DataGrid ItemsSource="{Binding Model.MonitorItems}" AutoGenerateColumns="False"
+                          CanUserAddRows="False" CanUserDeleteRows="False"
+                          IsReadOnly="True" SelectionMode="Single"
+                          HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                          VerticalScrollBarVisibility="Auto"
+                          VirtualizingPanel.ScrollUnit="Pixel"
+                          materialDesign:DataGridAssist.CellPadding="6 3"
+                          materialDesign:DataGridAssist.ColumnHeaderPadding="6 3">
+                    <DataGrid.RowDetailsTemplate>
+                        <DataTemplate>
+                            <ItemsControl ItemsSource="{Binding Signals}" Margin="40,4,4,4">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="0,1">
+                                            <TextBlock Text="  ↳ " Foreground="Gray" FontFamily="Consolas" FontSize="11"/>
+                                            <TextBlock Text="{Binding SignalName}" FontWeight="SemiBold" Width="180" FontFamily="Consolas" FontSize="11"/>
+                                            <TextBlock Text="{Binding PhysicalValue, StringFormat='{}{0:F2}'}" Width="80" FontFamily="Consolas" FontSize="11"/>
+                                            <TextBlock Text="{Binding Unit}" Width="60" Foreground="Gray" FontFamily="Consolas" FontSize="11"/>
+                                            <TextBlock Text="{Binding RawValue, StringFormat='(0x{0})'}" Width="80" Foreground="DimGray" FontFamily="Consolas" FontSize="11"/>
+                                            <TextBlock Text="{Binding Description}" Foreground="SlateGray" FontFamily="Consolas" FontSize="11"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DataTemplate>
+                    </DataGrid.RowDetailsTemplate>
+                    <DataGrid.RowDetailsVisibilityMode>VisibleWhenSelected</DataGrid.RowDetailsVisibilityMode>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Cyclic" Binding="{Binding Cyclic}" Width="90"/>
+                        <DataGridTextColumn Header="Msg ID" Binding="{Binding MessageIdHex}" Width="80"/>
+                        <DataGridTextColumn Header="Message Name" Binding="{Binding MessageName}" Width="200"/>
+                        <DataGridTextColumn Header="DLC" Binding="{Binding DataLen}" Width="50"/>
+                        <DataGridTextColumn Header="Data (Hex)" Binding="{Binding DataHex}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </materialDesign:Card>
+
+            <!-- Log label -->
+            <TextBlock Grid.Row="4" Text="Log Output:" FontWeight="SemiBold" Margin="0,0,0,4"/>
+
+            <!-- Log area -->
+            <materialDesign:Card Grid.Row="5" Padding="4">
+                <TextBox Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True"
+                         VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"
+                         FontFamily="Consolas" FontSize="12"
+                         AcceptsReturn="True" BorderThickness="0"
+                         x:Name="LogTextBox"
+                         TextChanged="LogTextBox_TextChanged"/>
+            </materialDesign:Card>
+        </Grid>
+    </DockPanel>
+</UserControl>

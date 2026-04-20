@@ -449,8 +449,13 @@
 
                     <ComboBox Grid.Column="1"
                        ItemsSource="{Binding Model.ListcanDevices}"
-                       SelectedItem="{Binding Model.SelectedCan}"  DisplayMemberPath="DisplayName"
+                       SelectedItem="{Binding Model.SelectedCan, Mode=TwoWay}"  
                        Style="{StaticResource ConfigFieldComboBox}" Width="150">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayName}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="DropDownOpened">
                                 <i:InvokeCommandAction Command="{Binding OpenListCan}" CommandParameter="CAN"/>

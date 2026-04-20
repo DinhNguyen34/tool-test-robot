@@ -8,14 +8,14 @@ namespace ModuleTestLed.Models
         public uint MessageId { get; set; } = 0x01;
         public uint CmdControlAll { get; set; } = 0x00;
         public uint CmdControlLed { get; set; } = 0x01;
-        public int MaxPorts { get; set; } = 7;
-        public List<int> LedsPerPort { get; set; } = [80, 80, 80, 80, 80, 80, 80];
+        public int MaxPorts { get; set; } = 8;
+        public List<int> LedsPerPort { get; set; } = [80, 80, 80, 80, 80, 80, 80, 80];
         public byte MaxRgbwValue { get; set; } = 255;
 
         public int GetLedsForPort(int port)
         {
-            if (port >= 0 && port < LedsPerPort.Count)
-                return LedsPerPort[port];
+            if (port >= 1 && port <= LedsPerPort.Count)
+                return LedsPerPort[port - 1];
             return 80;
         }
 

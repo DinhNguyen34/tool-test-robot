@@ -73,6 +73,7 @@ namespace ModuleTestLed.Models
 
         public void RefreshCanDevices()
         {
+            string? previousDisplayName = SelectedCan?.DisplayName;
             ListCanDevices.Clear();
             var list = _canCtrl.GetAllCanAvailable();
             if (list == null || list.Count == 0)
@@ -82,7 +83,13 @@ namespace ModuleTestLed.Models
             }
             foreach (var d in list)
                 ListCanDevices.Add(d);
-            if (SelectedCan == null || !ListCanDevices.Contains(SelectedCan))
+
+            if (!string.IsNullOrWhiteSpace(previousDisplayName))
+            {
+                SelectedCan = ListCanDevices.FirstOrDefault(d => d.DisplayName == previousDisplayName);
+            }
+
+            if (SelectedCan == null)
                 SelectedCan = ListCanDevices[0];
         }
 
@@ -98,7 +105,9 @@ namespace ModuleTestLed.Models
                 baud = 500;
 
             var canBaud = MapBaudrate(baud);
-            string rawLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", "LedCanRaw.txt");
+            string logFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+            Directory.CreateDirectory(logFolder);
+            string rawLogPath = Path.Combine(logFolder, "LedCanRaw.txt");
             bool ok = _canCtrl.Connect(SelectedCan, rawLogPath, canBaud, canBaud, bitrateSwitch.SW_OFF,  CanType.CAN_FD);
             SelectedCan.IsConnected = ok;
             IsConnected = ok;
@@ -233,7 +242,7 @@ namespace ModuleTestLed.Models
         /// </summary>
         private void TurnOffAll()
         {
-            for (byte port = 0; port < Config.MaxPorts; port++)
+            for (byte port = 1; port <= Config.MaxPorts; port++)
             {
                 SendControlAll(port, 0, 0, 0, 0);
                 Thread.Sleep(10);
@@ -263,7 +272,7 @@ namespace ModuleTestLed.Models
                 Description = "Control all LEDs per port RGBW=255 every 2000ms, then off."
             });
 
-            for (int p = 0; p < Config.MaxPorts; p++)
+            for (int p = 1; p <= Config.MaxPorts; p++)
             {
                 TestCases.Add(new LedTestCaseItem
                 {
@@ -278,6 +287,34 @@ namespace ModuleTestLed.Models
                 No = no++,
                 Name = "TC4 - Random LED Stress",
                 Description = "Every 100ms control 10 random LEDs on random port with random color, 50 iterations."
+            });
+
+            TestCases.Add(new LedTestCaseItem
+            {
+                No = no++,
+                Name = "TC5 - Random Line Scan",
+                Description = "Scan LEDs one-by-one with one active LED at a time and a new random RGBW color on each step."
+            });
+
+            TestCases.Add(new LedTestCaseItem
+            {
+                No = no++,
+                Name = "TC6 - Boundary Address Test",
+                Description = "For each port, verify LED 0, last LED, and the pair [0,last] with different colors."
+            });
+
+            TestCases.Add(new LedTestCaseItem
+            {
+                No = no++,
+                Name = "TC7 - Chunk Split Test",
+                Description = "Send 57 LEDs, 58 LEDs, and full-port LED commands to verify CAN FD frame splitting."
+            });
+
+            TestCases.Add(new LedTestCaseItem
+            {
+                No = no++,
+                Name = "TC8 - Port Isolation Test",
+                Description = "Light different LEDs on two ports with different colors to verify one port does not affect another."
             });
         }
 
@@ -353,18 +390,34 @@ namespace ModuleTestLed.Models
             {
                 RunTC4_RandomStress(maxVal, logAction);
             }
+            else if (tc.Name.StartsWith("TC5"))
+            {
+                RunTC5_RandomLineScan(maxVal, logAction);
+            }
+            else if (tc.Name.StartsWith("TC6"))
+            {
+                RunTC6_BoundaryAddressTest(maxVal, logAction);
+            }
+            else if (tc.Name.StartsWith("TC7"))
+            {
+                RunTC7_ChunkSplitTest(maxVal, logAction);
+            }
+            else if (tc.Name.StartsWith("TC8"))
+            {
+                RunTC8_PortIsolationTest(maxVal, logAction);
+            }
         }
 
         private void RunTC1_AllPortsOnOff(byte maxVal, Action<string> log)
         {
             log("TC1: Turning all LEDs ON (all ports)...");
-            for (byte port = 0; port < Config.MaxPorts; port++)
+            for (byte port = 1; port <= Config.MaxPorts; port++)
             {
                 SendControlAll(port, maxVal, maxVal, maxVal, maxVal);
                 Thread.Sleep(10);
             }
 
-            Thread.Sleep(5000);
+            Thread.Sleep(300000);
 
             log("TC1: Turning all LEDs OFF...");
             TurnOffAll();
@@ -373,7 +426,7 @@ namespace ModuleTestLed.Models
 
         private void RunTC2_PerPortSequential(byte maxVal, Action<string> log)
         {
-            for (byte port = 0; port < Config.MaxPorts; port++)
+            for (byte port = 1; port <= Config.MaxPorts; port++)
             {
                 log($"TC2: Port {port} ON...");
                 SendControlAll(port, maxVal, maxVal, maxVal, maxVal);
@@ -410,9 +463,9 @@ namespace ModuleTestLed.Models
         {
             var rng = new Random();
 
-            for (int i = 0; i < 50; i++)
+            for (int i = 0; i < 100; i++)
             {
-                byte port = (byte)rng.Next(0, Config.MaxPorts);
+                byte port = (byte)rng.Next(1, Config.MaxPorts + 1);
                 int maxLeds = Config.GetLedsForPort(port);
                 var addresses = Enumerable.Range(0, maxLeds)
                     .OrderBy(_ => rng.Next())
@@ -434,6 +487,251 @@ namespace ModuleTestLed.Models
             TurnOffAll();
         }
 
+        private void RunTC5_RandomLineScan(byte maxVal, Action<string> log)
+        {
+            var rng = new Random();
+            byte? previousPort = null;
+            byte? previousAddress = null;
+
+            log("TC5: Starting random line scan ...");
+            TurnOffAll();
+            Thread.Sleep(100);
+
+            for (byte port = 1; port <= Config.MaxPorts; port++)
+            {
+                int maxLeds = Config.GetLedsForPort(port);
+                log($"TC5: Port: {port}, total LEDs = {maxLeds}");
+
+                for (byte address = 0; address < maxLeds; address++)
+                {
+                    if (!IsRunning)
+                    {
+                        log("TC5: Stop requested, Turning all LEDs OFF ...");
+                        TurnOffAll();
+                        return;
+                    }
+                    if (previousPort is byte oldPort && previousAddress is byte oldAddress)
+                    {
+                        SendControlLed(oldPort, [oldAddress], 0, 0, 0, 0);
+                        Thread.Sleep(50);
+                    }
+                    byte r = (byte)rng.Next(0, maxVal + 1);
+                    byte g = (byte)rng.Next(0, maxVal + 1);
+                    byte b = (byte)rng.Next(0, maxVal + 1);
+                    byte w = (byte)rng.Next(0, maxVal + 1);
+
+                    SendControlLed(port, [address], r, g, b, w);
+                    previousPort = port;
+                    previousAddress = address;
+                    Thread.Sleep(50);
+                }
+            }
+            
+            if (previousPort is byte finalPort && previousAddress is byte finalAddress)
+            {
+                SendControlLed(finalPort, [finalAddress], 0, 0, 0, 0);
+            }
+
+            log("TC5: Random line Scan completed. LEDs OFF.");
+            TurnOffAll();
+        }
+
+        private void RunTC6_BoundaryAddressTest(byte maxVal, Action<string> log)
+        {
+            log("TC6: Starting boundary address test...");
+            TurnOffAll();
+            Thread.Sleep(100);
+
+            for (byte port = 1; port <= Config.MaxPorts; port++)
+            {
+                if (!IsRunning)
+                {
+                    log("TC6: Stop requested, turning all LEDs OFF...");
+                    TurnOffAll();
+                    return;
+                }
+
+                int ledCount = Config.GetLedsForPort(port);
+                if (ledCount <= 0)
+                {
+                    log($"TC6: Port {port} has no LEDs configured. Skip.");
+                    continue;
+                }
+
+                byte first = 0;
+                byte last = (byte)(ledCount - 1);
+
+                log($"TC6: Port {port} -> first LED {first} RED");
+                SendControlLed(port, [first], maxVal, 0, 0, 0);
+                Thread.Sleep(800);
+                SendControlLed(port, [first], 0, 0, 0, 0);
+                Thread.Sleep(100);
+
+                log($"TC6: Port {port} -> last LED {last} GREEN");
+                SendControlLed(port, [last], 0, maxVal, 0, 0);
+                Thread.Sleep(800);
+                SendControlLed(port, [last], 0, 0, 0, 0);
+                Thread.Sleep(100);
+
+                if (last != first)
+                {
+                    log($"TC6: Port {port} -> pair [{first}, {last}] BLUE");
+                    SendControlLed(port, [first, last], 0, 0, maxVal, 0);
+                    Thread.Sleep(1000);
+                    SendControlLed(port, [first, last], 0, 0, 0, 0);
+                    Thread.Sleep(150);
+                }
+            }
+
+            log("TC6: Boundary address test completed. LEDs OFF.");
+            TurnOffAll();
+        }
+
+        private void RunTC7_ChunkSplitTest(byte maxVal, Action<string> log)
+        {
+            byte? port = null;
+            int ledCount = 0;
+
+            for (byte candidate = 1; candidate <= Config.MaxPorts; candidate++)
+            {
+                int count = Config.GetLedsForPort(candidate);
+                if (count > MaxLedsPerCanFdMessage)
+                {
+                    port = candidate;
+                    ledCount = count;
+                    break;
+                }
+            }
+
+            if (port is null)
+            {
+                log($"TC7: No port has more than {MaxLedsPerCanFdMessage} LEDs. Skip chunk split test.");
+                return;
+            }
+
+            byte selectedPort = port.Value;
+            log($"TC7: Using Port {selectedPort} with {ledCount} LEDs.");
+            TurnOffAll();
+            Thread.Sleep(100);
+
+            if (!IsRunning)
+            {
+                log("TC7: Stop requested before execution.");
+                TurnOffAll();
+                return;
+            }
+
+            byte[] first57 = BuildSequentialAddresses(MaxLedsPerCanFdMessage);
+            log($"TC7: Port {selectedPort} -> first {first57.Length} LEDs RED (single CAN FD frame boundary)");
+            SendControlLed(selectedPort, first57, maxVal, 0, 0, 0);
+            Thread.Sleep(1200);
+            SendControlLed(selectedPort, first57, 0, 0, 0, 0);
+            Thread.Sleep(150);
+
+            if (!IsRunning)
+            {
+                log("TC7: Stop requested after first chunk.");
+                TurnOffAll();
+                return;
+            }
+
+            byte[] first58 = BuildSequentialAddresses(MaxLedsPerCanFdMessage + 1);
+            log($"TC7: Port {selectedPort} -> first {first58.Length} LEDs GREEN (must split into multiple CAN FD frames)");
+            SendControlLed(selectedPort, first58, 0, maxVal, 0, 0);
+            Thread.Sleep(1200);
+            SendControlLed(selectedPort, first58, 0, 0, 0, 0);
+            Thread.Sleep(150);
+
+            if (!IsRunning)
+            {
+                log("TC7: Stop requested after split chunk.");
+                TurnOffAll();
+                return;
+            }
+
+            byte[] fullPort = BuildSequentialAddresses(ledCount);
+            log($"TC7: Port {selectedPort} -> all {fullPort.Length} LEDs BLUE (full-port split)");
+            SendControlLed(selectedPort, fullPort, 0, 0, maxVal, 0);
+            Thread.Sleep(1500);
+            SendControlLed(selectedPort, fullPort, 0, 0, 0, 0);
+
+            log("TC7: Chunk split test completed. LEDs OFF.");
+            TurnOffAll();
+        }
+
+        private void RunTC8_PortIsolationTest(byte maxVal, Action<string> log)
+        {
+            if (Config.MaxPorts < 2)
+            {
+                log("TC8: Need at least 2 ports for isolation test. Skip.");
+                return;
+            }
+
+            byte portA = 3;
+            byte portB = 4;
+            int ledsA = Config.GetLedsForPort(portA);
+            int ledsB = Config.GetLedsForPort(portB);
+
+            if (ledsA <= 0 || ledsB <= 0)
+            {
+                log($"TC8: Port {portA} or Port {portB} has no LEDs configured. Skip.");
+                return;
+            }
+
+            byte ledA0 = 0;
+            byte ledA1 = (byte)Math.Min(1, ledsA - 1);
+            byte ledB0 = 0;
+
+            log($"TC8: Port {portA} and Port {portB} isolation test starting...");
+            TurnOffAll();
+            Thread.Sleep(100);
+
+            if (!IsRunning)
+            {
+                log("TC8: Stop requested before execution.");
+                TurnOffAll();
+                return;
+            }
+
+            log($"TC8: Port {portA} LED {ledA0} RED");
+            SendControlLed(portA, [ledA0], maxVal, 0, 0, 0);
+            Thread.Sleep(800);
+
+            if (!IsRunning)
+            {
+                log("TC8: Stop requested after first port.");
+                TurnOffAll();
+                return;
+            }
+
+            log($"TC8: Port {portB} LED {ledB0} BLUE while Port {portA} LED {ledA0} stays RED");
+            SendControlLed(portB, [ledB0], 0, 0, maxVal, 0);
+            Thread.Sleep(1000);
+
+            if (!IsRunning)
+            {
+                log("TC8: Stop requested before port update.");
+                TurnOffAll();
+                return;
+            }
+
+            log($"TC8: Port {portA} switch to LED {ledA1} GREEN, Port {portB} should remain unchanged");
+            SendControlLed(portA, [ledA0], 0, 0, 0, 0);
+            Thread.Sleep(50);
+            SendControlLed(portA, [ledA1], 0, maxVal, 0, 0);
+            Thread.Sleep(1000);
+
+            log("TC8: Isolation test completed. LEDs OFF.");
+            TurnOffAll();
+        }
+
+        private static byte[] BuildSequentialAddresses(int count)
+        {
+            return Enumerable.Range(0, count)
+                .Select(index => (byte)index)
+                .ToArray();
+        }
+
         private static int ParsePortFromName(string name)
         {
             // e.g. "TC3-P2 - RGBW Cycle Port 2"
@@ -445,7 +743,7 @@ namespace ModuleTestLed.Models
                 string num = name.Substring(idx + 2, spaceIdx - idx - 2);
                 if (int.TryParse(num, out int p)) return p;
             }
-            return 0;
+            return 1;
         }
 
         #endregion
