@@ -71,8 +71,8 @@ public class MotorModel : BindableBase
         {
             _canCtrl.EnableReadLog(true);
             message = hasExactBaud
-                ? $"Connected to {SelectedCan.DisplayName} at {canBaud} ({canType})."
-                : $"Connected to {SelectedCan.DisplayName} using fallback bitrate {canBaud} ({canType}) for unsupported setting {requestedBaud}.";
+                ? $"Connected to {SelectedCan.DisplayName} at {canBaud}."
+                : $"Connected to {SelectedCan.DisplayName} using fallback bitrate {canBaud} for unsupported setting {requestedBaud}.";
         }
         else
         {

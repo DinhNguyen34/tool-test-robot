@@ -1,6 +1,8 @@
 using Common.Core.Auth;
 using Common.Core.Helpers;
+using ModuleCamera;
 using ModuleCover;
+using ModuleLidar;
 using ModuleMotor;
 using ModuleNetwork;
 using ModuleTestLed;
@@ -41,6 +43,8 @@ namespace RobotTesting
             moduleCatalog.AddModule<ModuleMotorModule>();
             moduleCatalog.AddModule<ModuleNetworkModule>();
             moduleCatalog.AddModule<ModuleTestLedModule>();
+            moduleCatalog.AddModule<ModuleLidarModule>();
+            moduleCatalog.AddModule<ModuleCameraModule>();
             moduleCatalog.AddModule<ModuleTestBmsModule>();
             LogHelper.Debug("=== Modules Found ===");
             foreach (var module in moduleCatalog.Modules)

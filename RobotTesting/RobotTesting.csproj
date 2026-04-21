@@ -19,6 +19,13 @@
     <EazfuscatorActiveConfiguration>Release</EazfuscatorActiveConfiguration>
     <EazfuscatorCompatibilityVersion>2025.3</EazfuscatorCompatibilityVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Modules\**" />
+    <EmbeddedResource Remove="Modules\**" />
+    <None Remove="Modules\**" />
+    <Page Remove="Modules\**" />
+  </ItemGroup>
  
   <ItemGroup>
     <Content Include="Robot-32.ico" />
@@ -45,7 +52,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Modules\ModuleCover\Views\" />
 	<ProjectReference Include="..\ModuleLidar\ModuleLidar.csproj" />
   </ItemGroup>
 
