@@ -25,6 +25,7 @@ namespace ModuleMotor.ViewModels
     public class MotorViewModel : BindableBase
     {
         private const int N_MOTORS = 8;
+        private const int EncosKeepAliveIntervalMs = 100;
         private readonly IRegionManager _regionManager;
 
         private string _newTestCaseCode = string.Empty;
@@ -169,12 +170,16 @@ namespace ModuleMotor.ViewModels
                     return;
 
                 Config.Protocol = value;
+                if (value != MotorProtocolKind.Encos)
+                    StopEncosKeepAlive(log: false);
                 ResetRawFrameDefaults();
                 RebuildBuiltInTestCases();
                 BuiltSteps.Clear();
                 SelectedAvailableTestCase = null;
                 SelectedQuickLibraryTestCase = null;
                 RaisePropertyChanged(nameof(CurrentProtocolUsesExtendedId));
+                RaisePropertyChanged(nameof(SendAllButtonText));
+                RaisePropertyChanged(nameof(ManualControlHint));
             }
         }
 
@@ -198,8 +203,11 @@ namespace ModuleMotor.ViewModels
         // ── Live RX ────────────────────────────────────────────────────────────
         public ObservableCollection<RxFrameEntry> RxFrames { get; } = new();
         private CancellationTokenSource? _rxCts;
+        private CancellationTokenSource? _encosKeepAliveCts;
         private int    _lastRxCount;
         private double _lastRxTime = -1.0;
+        private bool _isEncosKeepAliveActive;
+        private string _encosKeepAliveDescription = string.Empty;
 
         private string _rxStatusText = "Not receiving";
         public string RxStatusText
@@ -207,6 +215,29 @@ namespace ModuleMotor.ViewModels
             get => _rxStatusText;
             set => SetProperty(ref _rxStatusText, value);
         }
+
+        public bool IsEncosKeepAliveActive
+        {
+            get => _isEncosKeepAliveActive;
+            private set
+            {
+                if (!SetProperty(ref _isEncosKeepAliveActive, value))
+                    return;
+
+                RaisePropertyChanged(nameof(SendAllButtonText));
+                RaisePropertyChanged(nameof(ManualControlHint));
+            }
+        }
+
+        public string SendAllButtonText => SelectedProtocol == MotorProtocolKind.Encos && IsEncosKeepAliveActive
+            ? "Stop ENCOS"
+            : "Send All";
+
+        public string ManualControlHint => SelectedProtocol == MotorProtocolKind.Encos
+            ? IsEncosKeepAliveActive
+                ? $"ENCOS keepalive is active for {_encosKeepAliveDescription}. Commands refresh every {EncosKeepAliveIntervalMs} ms."
+                : "ENCOS control commands stop after 500 ms without a follow-up frame. Send buttons keep them alive automatically."
+            : "Use Send or Send All to transmit the current command set.";
 
         public DelegateCommand ClearRxCommand { get; private set; } = null!;
 
@@ -537,7 +568,7 @@ namespace ModuleMotor.ViewModels
                     Code = "TC001",
                     Label = "Query CAN ID",
                     Description = "ENCOS built-in testcase: query current CAN ID.",
-                    IntervalMs = 2,
+                    IntervalMs = 100,
                     TimeoutMs = 1000,
                     DefaultSendMode = CanSendMode.SendOnce,
                     IsbuiltIn = true,
@@ -549,7 +580,7 @@ namespace ModuleMotor.ViewModels
                     Code = "TC002",
                     Label = "Set Zero Position",
                     Description = "ENCOS built-in testcase: set current position as zero.",
-                    IntervalMs = 2,
+                    IntervalMs = 100,
                     TimeoutMs = 1000,
                     DefaultSendMode = CanSendMode.SendOnce,
                     IsbuiltIn = true,
@@ -561,9 +592,9 @@ namespace ModuleMotor.ViewModels
                     Code = "TC003",
                     Label = "Position 0 deg",
                     Description = "ENCOS servo position control to 0 degrees.",
-                    IntervalMs = 2,
-                    TimeoutMs = 1000,
-                    DefaultSendMode = CanSendMode.SendOnce,
+                    IntervalMs = 100,
+                    TimeoutMs = 5000,
+                    DefaultSendMode = CanSendMode.Continuous,
                     IsbuiltIn = true,
                     RsCommand = RsCommandType.PositionControl,
                     TargetPosition = 0f,
@@ -576,9 +607,9 @@ namespace ModuleMotor.ViewModels
                     Code = "TC004",
                     Label = "Position 90 deg",
                     Description = "ENCOS servo position control to 90 degrees.",
-                    IntervalMs = 2,
-                    TimeoutMs = 1000,
-                    DefaultSendMode = CanSendMode.SendOnce,
+                    IntervalMs = 100,
+                    TimeoutMs = 5000,
+                    DefaultSendMode = CanSendMode.Continuous,
                     IsbuiltIn = true,
                     RsCommand = RsCommandType.PositionControl,
                     TargetPosition = 90f,
@@ -591,9 +622,9 @@ namespace ModuleMotor.ViewModels
                     Code = "TC005",
                     Label = "Speed 50 rpm",
                     Description = "ENCOS servo speed control at 50 rpm.",
-                    IntervalMs = 2,
-                    TimeoutMs = 1000,
-                    DefaultSendMode = CanSendMode.SendOnce,
+                    IntervalMs = 100,
+                    TimeoutMs = 5000,
+                    DefaultSendMode = CanSendMode.Continuous,
                     IsbuiltIn = true,
                     RsCommand = RsCommandType.SpeedControl,
                     TargetSpeed = 50f,
@@ -605,9 +636,9 @@ namespace ModuleMotor.ViewModels
                     Code = "TC006",
                     Label = "Current 5 A",
                     Description = "ENCOS current control at 5 A.",
-                    IntervalMs = 2,
-                    TimeoutMs = 1000,
-                    DefaultSendMode = CanSendMode.SendOnce,
+                    IntervalMs = 100,
+                    TimeoutMs = 5000,
+                    DefaultSendMode = CanSendMode.Continuous,
                     IsbuiltIn = true,
                     RsCommand = RsCommandType.CurrentControl,
                     TargetTorque = 5f
@@ -618,9 +649,9 @@ namespace ModuleMotor.ViewModels
                     Code = "TC007",
                     Label = "Torque 5 Nm",
                     Description = "ENCOS torque control at 5 Nm.",
-                    IntervalMs = 2,
-                    TimeoutMs = 1000,
-                    DefaultSendMode = CanSendMode.SendOnce,
+                    IntervalMs = 100,
+                    TimeoutMs = 5000,
+                    DefaultSendMode = CanSendMode.Continuous,
                     IsbuiltIn = true,
                     RsCommand = RsCommandType.TorqueControl,
                     TargetTorque = 5f
@@ -631,7 +662,7 @@ namespace ModuleMotor.ViewModels
                     Code = "TC008",
                     Label = "Brake Release",
                     Description = "ENCOS electromagnetic brake release command.",
-                    IntervalMs = 2,
+                    IntervalMs = 100,
                     TimeoutMs = 1000,
                     DefaultSendMode = CanSendMode.SendOnce,
                     IsbuiltIn = true,
@@ -643,7 +674,7 @@ namespace ModuleMotor.ViewModels
                     Code = "TC009",
                     Label = "Brake Engage",
                     Description = "ENCOS electromagnetic brake engage command.",
-                    IntervalMs = 2,
+                    IntervalMs = 100,
                     TimeoutMs = 1000,
                     DefaultSendMode = CanSendMode.SendOnce,
                     IsbuiltIn = true,
@@ -655,8 +686,8 @@ namespace ModuleMotor.ViewModels
                     Code = "TC010",
                     Label = "Hybrid Zero",
                     Description = "ENCOS hybrid control: hold zero position (KP=20, KD=5).",
-                    IntervalMs = 2,
-                    TimeoutMs = 1000,
+                    IntervalMs = 100,
+                    TimeoutMs = 5000,
                     DefaultSendMode = CanSendMode.Continuous,
                     IsbuiltIn = true,
                     RsCommand = RsCommandType.Control,
@@ -672,8 +703,8 @@ namespace ModuleMotor.ViewModels
                     Code = "TC011",
                     Label = "Hybrid 90 deg",
                     Description = "ENCOS hybrid control: move to 90 deg (1.571 rad, KP=20, KD=5).",
-                    IntervalMs = 2,
-                    TimeoutMs = 1000,
+                    IntervalMs = 100,
+                    TimeoutMs = 5000,
                     DefaultSendMode = CanSendMode.Continuous,
                     IsbuiltIn = true,
                     RsCommand = RsCommandType.Control,
@@ -689,7 +720,7 @@ namespace ModuleMotor.ViewModels
                     Code = "TC012",
                     Label = "Query Position",
                     Description = "ENCOS query current output position (query code 0x01).",
-                    IntervalMs = 2,
+                    IntervalMs = 100,
                     TimeoutMs = 1000,
                     DefaultSendMode = CanSendMode.SendOnce,
                     IsbuiltIn = true,
@@ -702,7 +733,7 @@ namespace ModuleMotor.ViewModels
                     Code = "TC013",
                     Label = "Query Speed",
                     Description = "ENCOS query current output speed (query code 0x02).",
-                    IntervalMs = 2,
+                    IntervalMs = 100,
                     TimeoutMs = 1000,
                     DefaultSendMode = CanSendMode.SendOnce,
                     IsbuiltIn = true,
@@ -715,7 +746,7 @@ namespace ModuleMotor.ViewModels
                     Code = "TC014",
                     Label = "Query Current",
                     Description = "ENCOS query current phase current (query code 0x03).",
-                    IntervalMs = 2,
+                    IntervalMs = 100,
                     TimeoutMs = 1000,
                     DefaultSendMode = CanSendMode.SendOnce,
                     IsbuiltIn = true,
@@ -728,7 +759,7 @@ namespace ModuleMotor.ViewModels
                     Code = "TC015",
                     Label = "Reset Motor ID",
                     Description = "ENCOS broadcast reset all motor IDs to factory default.",
-                    IntervalMs = 2,
+                    IntervalMs = 100,
                     TimeoutMs = 1000,
                     DefaultSendMode = CanSendMode.SendOnce,
                     IsbuiltIn = true,
@@ -864,6 +895,21 @@ namespace ModuleMotor.ViewModels
 
             try
             {
+                var def = AvailableTestCases.FirstOrDefault(tc => tc.Number == number);
+                if (SelectedProtocol == MotorProtocolKind.Encos && def != null)
+                {
+                    if (def.DefaultSendMode == CanSendMode.Continuous)
+                    {
+                        if (await TryRunEncosTestCaseAsync(def, number, label))
+                            StartEncosKeepAlive(
+                                $"TC{number} {label}",
+                                () => BuildEncosKeepAliveFrames(def));
+                        return;
+                    }
+
+                    StopEncosKeepAlive("[ENCOS] Keepalive stopped for one-shot command.", log: IsEncosKeepAliveActive);
+                }
+
                 if (await TryRunRealTestCaseAsync(number, label))
                     return;
 
@@ -897,6 +943,8 @@ namespace ModuleMotor.ViewModels
                 m.DqCmd = 0;
                 m.TauCmd = 0;
             }
+            if (SelectedProtocol == MotorProtocolKind.Encos)
+                StopEncosKeepAlive("[ENCOS] Keepalive stopped and all commands were zeroed.", log: IsEncosKeepAliveActive);
             AppendLog("All commands zeroed");
         }
 
@@ -928,12 +976,13 @@ namespace ModuleMotor.ViewModels
                 AppendLog($"[{m.Label}] SEND ERROR — CAN not connected.");
                 return;
             }
-            if (TrySendMotorFrame(m))
+            if (!TrySendMotorFrame(m))
                 return;
 
-            var frame = BuildMotorFrame(m);
-            AppendLog($"[{m.Label}] SEND  {frame}");
-            LogHelper.Debug($"{m.Label} TX: {frame}");
+            if (SelectedProtocol == MotorProtocolKind.Encos)
+                StartEncosKeepAlive(
+                    $"manual control {m.Label}",
+                    () => BuildEncosFramesForMotor(m));
         }
 
         private void OnSendAllMotors()
@@ -943,19 +992,19 @@ namespace ModuleMotor.ViewModels
                 AppendLog("[SendAll] ERROR — CAN not connected.");
                 return;
             }
-            if (TrySendAllMotors())
+            if (SelectedProtocol == MotorProtocolKind.Encos && IsEncosKeepAliveActive)
+            {
+                StopEncosKeepAlive("[ENCOS] Keepalive stopped by operator.");
+                return;
+            }
+
+            if (!TrySendAllMotors())
                 return;
 
-            int sent = 0;
-            foreach (var m in Motors)
-            {
-                if (!m.Enabled) continue;
-                var frame = BuildMotorFrame(m);
-                AppendLog($"[{m.Label}] SEND  {frame}");
-                LogHelper.Debug($"{m.Label} TX: {frame}");
-                sent++;
-            }
-            AppendLog($"[SendAll] {sent} motor(s) sent.");
+            if (SelectedProtocol == MotorProtocolKind.Encos)
+                StartEncosKeepAlive(
+                    "manual control for enabled motors",
+                    BuildEncosFramesForEnabledMotors);
         }
 
         private string BuildMotorFrame(MotorChannelModel m)
@@ -983,6 +1032,8 @@ namespace ModuleMotor.ViewModels
         //-- disconnect CAN-------
         private void DisconnectCAN()
         {
+            StopEncosKeepAlive(log: false);
+
             if (IsConnected || Model.GetOpenStatus())
             {
                 Model.Close();
@@ -998,6 +1049,7 @@ namespace ModuleMotor.ViewModels
         {
             if (IsConnected || Model.GetOpenStatus())
             {
+                StopEncosKeepAlive(log: false);
                 Model.Close();
                 IsConnected = false;
                 const string disconnectMessage = "CAN disconnected";
@@ -1211,16 +1263,107 @@ namespace ModuleMotor.ViewModels
                 kd: def.TargetKd);
         }
 
+        private IReadOnlyList<CanFrameSpec> BuildEncosFramesForMotor(MotorChannelModel motor)
+            => new[] { BuildEncosHybridControlFrame(motor) };
+
+        private IReadOnlyList<CanFrameSpec> BuildEncosFramesForEnabledMotors()
+            => Motors
+                .Where(motor => motor.Enabled)
+                .Select(BuildEncosHybridControlFrame)
+                .ToArray();
+
+        private IReadOnlyList<CanFrameSpec> BuildEncosKeepAliveFrames(TestCaseDefinition def)
+        {
+            var frame = BuildEncosFrame(def);
+            return frame is CanFrameSpec value
+                ? new[] { value }
+                : Array.Empty<CanFrameSpec>();
+        }
+
+        private CanFrameSpec BuildEncosHybridControlFrame(MotorChannelModel motor)
+            => EncosMotorControl.BuildHybridControl(
+                motor.DeviceId,
+                positionRad: (float)motor.QCmd,
+                speedRadPerSec: (float)motor.DqCmd,
+                torqueNm: (float)motor.TauCmd,
+                kp: (float)motor.Kp,
+                kd: (float)motor.Kd);
+
+        private void StartEncosKeepAlive(string description, Func<IReadOnlyList<CanFrameSpec>> frameFactory)
+        {
+            StopEncosKeepAlive(log: false);
+
+            if (!IsConnected || SelectedProtocol != MotorProtocolKind.Encos)
+                return;
+
+            var cts = new CancellationTokenSource();
+            _encosKeepAliveCts = cts;
+            _encosKeepAliveDescription = description;
+            IsEncosKeepAliveActive = true;
+            AppendLog($"[ENCOS] Keepalive started - {description}. Refresh interval: {EncosKeepAliveIntervalMs} ms.");
+            _ = RunEncosKeepAliveAsync(cts, frameFactory);
+        }
+
+        private async Task RunEncosKeepAliveAsync(CancellationTokenSource cts, Func<IReadOnlyList<CanFrameSpec>> frameFactory)
+        {
+            try
+            {
+                while (!cts.Token.IsCancellationRequested)
+                {
+                    await Task.Delay(EncosKeepAliveIntervalMs, cts.Token).ConfigureAwait(false);
+
+                    IReadOnlyList<CanFrameSpec> frames = Array.Empty<CanFrameSpec>();
+                    await Application.Current.Dispatcher.InvokeAsync(() => frames = frameFactory());
+
+                    if (frames.Count == 0)
+                    {
+                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            if (_encosKeepAliveCts == cts)
+                                StopEncosKeepAlive("[ENCOS] Keepalive stopped - no ENCOS control frame is available.");
+                        });
+                        return;
+                    }
+
+                    foreach (var frame in frames)
+                    {
+                        if (!Model.SendFrame(frame, out var sendMessage))
+                        {
+                            await Application.Current.Dispatcher.InvokeAsync(() =>
+                            {
+                                if (_encosKeepAliveCts == cts)
+                                    StopEncosKeepAlive($"[ENCOS] Keepalive send error - {sendMessage}");
+                            });
+                            return;
+                        }
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        private void StopEncosKeepAlive(string? reason = null, bool log = true)
+        {
+            var cts = _encosKeepAliveCts;
+            if (cts == null)
+                return;
+
+            _encosKeepAliveCts = null;
+            _encosKeepAliveDescription = string.Empty;
+            IsEncosKeepAliveActive = false;
+            cts.Cancel();
+            cts.Dispose();
+
+            if (log)
+                AppendLog(reason ?? "[ENCOS] Keepalive stopped.");
+        }
+
         private bool TrySendMotorFrame(MotorChannelModel m)
         {
             CanFrameSpec frame = SelectedProtocol == MotorProtocolKind.Encos
-                ? EncosMotorControl.BuildHybridControl(
-                    m.DeviceId,
-                    positionRad: (float)m.QCmd,
-                    speedRadPerSec: (float)m.DqCmd,
-                    torqueNm: (float)m.TauCmd,
-                    kp: (float)m.Kp,
-                    kd: (float)m.Kd)
+                ? BuildEncosHybridControlFrame(m)
                 : AsExtendedFrame(RsMotorControl.ControlMotor(
                     m.DeviceId,
                     m.Profile,
@@ -1233,7 +1376,7 @@ namespace ModuleMotor.ViewModels
             if (!Model.SendFrame(frame, out var sendMessage))
             {
                 AppendLog($"[{m.Label}] SEND ERROR - {sendMessage}");
-                return true;
+                return false;
             }
 
             var frameText = FormatCanFrame(frame);
@@ -1251,13 +1394,7 @@ namespace ModuleMotor.ViewModels
                 if (!motor.Enabled) continue;
 
                 CanFrameSpec frame = SelectedProtocol == MotorProtocolKind.Encos
-                    ? EncosMotorControl.BuildHybridControl(
-                        motor.DeviceId,
-                        positionRad: (float)motor.QCmd,
-                        speedRadPerSec: (float)motor.DqCmd,
-                        torqueNm: (float)motor.TauCmd,
-                        kp: (float)motor.Kp,
-                        kd: (float)motor.Kd)
+                    ? BuildEncosHybridControlFrame(motor)
                     : AsExtendedFrame(RsMotorControl.ControlMotor(
                         motor.DeviceId,
                         motor.Profile,
@@ -1277,6 +1414,12 @@ namespace ModuleMotor.ViewModels
                 AppendLog($"[{motor.Label}] SEND  {frameText}");
                 LogHelper.Debug($"{motor.Label} TX: {frameText}");
                 sent++;
+            }
+
+            if (sent == 0)
+            {
+                AppendLog("[SendAll] No enabled motor was sent.");
+                return false;
             }
 
             AppendLog($"[SendAll] {sent} motor(s) sent.");
@@ -1800,6 +1943,10 @@ namespace ModuleMotor.ViewModels
         }
         private void AddBuiltStepFromDefinition(TestCaseDefinition testCase)
         {
+            int repeatCount = testCase.DefaultSendMode == CanSendMode.Continuous
+                ? Math.Max(1, (int)Math.Ceiling(testCase.TimeoutMs / (double)Math.Max(1, testCase.IntervalMs)))
+                : 1;
+
             BuiltSteps.Add(new BuiltTestStep
             {
                 StepNo = BuiltSteps.Count + 1,
@@ -1808,7 +1955,7 @@ namespace ModuleMotor.ViewModels
                 SendMode = testCase.DefaultSendMode,
                 IntervalMs = testCase.IntervalMs,
                 TimeoutMs = testCase.TimeoutMs,
-                RepeatCount = 1,
+                RepeatCount = repeatCount,
                 DelayBeforeMs = 0,
                 IsEnabled = true
             }
