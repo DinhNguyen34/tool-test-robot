@@ -1,3 +1,4 @@
+using ModuleTestLed.ViewModels;
 using ModuleTestLed.Views;
 using Prism.Modularity;
 
@@ -13,7 +14,7 @@ namespace ModuleTestLed
 
         public void RegisterTypes(IContainerRegistry containerRegistry)
         {
-            containerRegistry.RegisterForNavigation<TestLedView>();
+            containerRegistry.RegisterForNavigation<TestLedView, TestLedViewModel>();
         }
     }
 }

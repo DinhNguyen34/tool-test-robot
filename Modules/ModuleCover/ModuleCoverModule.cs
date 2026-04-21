@@ -1,10 +1,9 @@
-
+using ModuleCover.ViewModels;
 using ModuleCover.Views;
 using Prism.Ioc;
 using Prism.Modularity;
 
 namespace ModuleCover
-    
 {
     public class ModuleCoverModule : IModule
     {
@@ -16,8 +15,7 @@ namespace ModuleCover
 
         public void RegisterTypes(IContainerRegistry containerRegistry)
         {
-            containerRegistry.RegisterForNavigation<CoverRegion>();
+            containerRegistry.RegisterForNavigation<CoverRegion, CoverRegionViewModel>();
         }
     }
-
 }

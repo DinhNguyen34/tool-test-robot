@@ -12,6 +12,7 @@ using Prism.Modularity;
 using Prism.Navigation.Regions;
 using Prism.Unity;
 using RobotTesting.Auth;
+using RobotTesting.ViewModels;
 using RobotTesting.Views;
 using System.Windows;
 //using ModuleGraph;
@@ -29,7 +30,7 @@ namespace RobotTesting
         {
             containerRegistry.RegisterSingleton<IUserSession, UserSession>();
             containerRegistry.RegisterSingleton<IAuthService, FileAuthService>();
-            containerRegistry.RegisterForNavigation<LoginView>();
+            containerRegistry.RegisterForNavigation<LoginView, LoginViewModel>();
         }
 
         protected override IModuleCatalog CreateModuleCatalog()

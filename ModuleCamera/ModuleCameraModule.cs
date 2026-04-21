@@ -1,4 +1,5 @@
-﻿using ModuleCamera.Views;
+﻿using ModuleCamera.ViewModels;
+using ModuleCamera.Views;
 using Prism.Modularity;
 
 namespace ModuleCamera
@@ -13,6 +14,7 @@ namespace ModuleCamera
 
         public void RegisterTypes(IContainerRegistry containerRegistry)
         {
+            containerRegistry.RegisterForNavigation<CameraView, CameraViewModel>();
         }
     }
 }

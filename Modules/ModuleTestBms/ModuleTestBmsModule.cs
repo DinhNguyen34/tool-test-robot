@@ -1,3 +1,4 @@
+using ModuleTestBms.ViewModels;
 using ModuleTestBms.Views;
 using Prism.Modularity;
 
@@ -13,7 +14,7 @@ namespace ModuleTestBms
 
         public void RegisterTypes(IContainerRegistry containerRegistry)
         {
-            containerRegistry.RegisterForNavigation<TestBmsView>();
+            containerRegistry.RegisterForNavigation<TestBmsView, TestBmsViewModel>();
         }
     }
 }

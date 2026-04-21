@@ -9,7 +9,6 @@
              xmlns:models="clr-namespace:ModuleTestBms.Models"
              xmlns:conv="clr-namespace:ModuleTestBms.Converters"
              mc:Ignorable="d"
-             prism:ViewModelLocator.AutoWireViewModel="True"
              Background="{DynamicResource MaterialDesignPaper}"
              TextElement.Foreground="{DynamicResource MaterialDesignBody}"
              d:DesignHeight="1000" d:DesignWidth="1300">

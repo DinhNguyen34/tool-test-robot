@@ -1,5 +1,6 @@
 using ModuleMotor.Views;
 using Prism.Modularity;
+using ModuleMotor.ViewModels;
 
 namespace ModuleMotor
 {
@@ -13,6 +14,7 @@ namespace ModuleMotor
 
         public void RegisterTypes(IContainerRegistry containerRegistry)
         {
+            containerRegistry.RegisterForNavigation<MotorView, MotorViewModel>();
         }
     }
 }

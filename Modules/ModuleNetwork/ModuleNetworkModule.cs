@@ -1,3 +1,4 @@
+using ModuleNetwork.ViewModels;
 using ModuleNetwork.Views;
 using Prism.Modularity;
 
@@ -13,6 +14,7 @@ namespace ModuleNetwork
 
         public void RegisterTypes(IContainerRegistry containerRegistry)
         {
+            containerRegistry.RegisterForNavigation<NetworkView, NetworkViewModel>();
         }
     }
 }

@@ -1,10 +1,10 @@
-﻿using ModuleLidar.Views;
+﻿using ModuleLidar.ViewModels;
+using ModuleLidar.Views;
 using Prism.Modularity;
 
 namespace ModuleLidar
 {
     public class ModuleLidarModule : IModule
-
     {
         public void OnInitialized(IContainerProvider containerProvider)
         {
@@ -14,6 +14,7 @@ namespace ModuleLidar
 
         public void RegisterTypes(IContainerRegistry containerRegistry)
         {
+            containerRegistry.RegisterForNavigation<LidarView, LidarViewModel>();
         }
     }
 }
