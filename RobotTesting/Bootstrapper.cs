@@ -2,6 +2,7 @@ using Common.Core.Auth;
 using Common.Core.Helpers;
 using ModuleCamera;
 using ModuleCover;
+using ModuleImu;
 using ModuleLidar;
 using ModuleMotor;
 using ModuleNetwork;
@@ -30,7 +31,7 @@ namespace RobotTesting
         {
             containerRegistry.RegisterSingleton<IUserSession, UserSession>();
             containerRegistry.RegisterSingleton<IAuthService, FileAuthService>();
-            containerRegistry.RegisterForNavigation<LoginView, LoginViewModel>();
+            containerRegistry.RegisterForNavigation<LoginView, LoginViewModel>("LoginView");
         }
 
         protected override IModuleCatalog CreateModuleCatalog()
@@ -45,6 +46,7 @@ namespace RobotTesting
             moduleCatalog.AddModule<ModuleNetworkModule>();
             moduleCatalog.AddModule<ModuleTestLedModule>();
             moduleCatalog.AddModule<ModuleLidarModule>();
+            moduleCatalog.AddModule<ModuleImuModule>();
             moduleCatalog.AddModule<ModuleCameraModule>();
             moduleCatalog.AddModule<ModuleTestBmsModule>();
             LogHelper.Debug("=== Modules Found ===");
