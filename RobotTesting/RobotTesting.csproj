@@ -29,6 +29,9 @@
  
   <ItemGroup>
     <Content Include="Robot-32.ico" />
+    <None Include="native\soem.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
