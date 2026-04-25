@@ -29,10 +29,21 @@
  
   <ItemGroup>
     <Content Include="Robot-32.ico" />
-    <None Include="native\soem.dll">
+    <!-- soem_bridge.dll is the C# P/Invoke target; it loads soem_wrapper.dll
+         at runtime from the same directory via GetModuleFileNameW. -->
+    <None Include="native\soem_bridge.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="native\soem_wrapper.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+
+
+
+
+
 
   <ItemGroup>
     <PackageReference Include="LibUsbDotNet" Version="2.2.75" />

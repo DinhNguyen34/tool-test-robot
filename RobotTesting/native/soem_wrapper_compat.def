@@ -1,0 +1,20 @@
+LIBRARY soem_wrapper_compat
+EXPORTS
+    ec_init
+    ec_close
+    ec_config_init
+    ec_config_map
+    ec_configdc
+    ec_find_adapters
+    ec_free_adapters
+    ec_readstate
+    ec_writestate
+    ec_statecheck
+    ec_send_processdata
+    ec_receive_processdata
+    ec_SDOread
+    ec_SDOwrite
+    ec_slave DATA
+    ec_slavecount DATA
+    ec_group DATA
+    ec_DCtime DATA

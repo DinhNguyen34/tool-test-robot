@@ -1,0 +1,10 @@
+LIBRARY soem
+EXPORTS
+    ec_init
+    ec_close
+    ec_config_init
+    ec_send_processdata
+    ec_receive_processdata
+    ec_writestate
+    ec_statecheck
+    ec_readstate

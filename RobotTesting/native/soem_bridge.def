@@ -1,0 +1,15 @@
+LIBRARY soem_bridge
+EXPORTS
+    CreateContext
+    FreeContext
+    Free
+    ScanDevices
+    ConfigureIoMap
+    GetProcessIo
+    GetState
+    ReadState
+    RequestCommonState
+    RequestState
+    UpdateIo
+    NoCaSdoRead
+    ecx_SDOwrite
