@@ -13,6 +13,14 @@ namespace ModuleMotor.Models
         public string SerialPort { get; set; } = string.Empty;
         public int    BaudRate   { get; set; } = 115200;
         public int    CanBitrateKbps { get; set; } = 1000;
-        public bool   UseCanFd   { get; set; }
+        public bool   UseCanFd       { get; set; }
+        public byte   Cia402NodeId      { get; set; } = 1;
+        public bool   Cia402EnablePdo   { get; set; } = false;
+        public int    Cia402PdoCycleMs  { get; set; } = 1;
+        public int    Cia402CountsPerRevolution { get; set; } = 524288;
+
+        // EtherCAT (SOEM)
+        public string EthercatInterface  { get; set; } = string.Empty;
+        public ushort EthercatSlaveIndex { get; set; } = 1;
     }
 }

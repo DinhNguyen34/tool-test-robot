@@ -47,9 +47,18 @@ namespace ModuleMotor.Cia402
                     positionCommand.TargetPosition,
                     positionCommand.CommandMode,
                     positionCommand.ImmediateChange,
+                    positionCommand.AckTimeout,
+                    positionCommand.ProfileVelocity,
+                    positionCommand.ProfileAcceleration,
+                    positionCommand.ProfileDeceleration,
                     ct),
                 SetVelocityDriveCommand velocityCommand => _driveService.SetTargetVelocityAsync(velocityCommand.TargetVelocity, ct),
                 SetTorqueDriveCommand torqueCommand => _driveService.SetTargetTorqueAsync(torqueCommand.TargetTorque, ct),
+                WriteCyclicProcessDataDriveCommand cyclicCommand => _driveService.WriteCyclicProcessDataAsync(
+                    cyclicCommand.TargetPosition,
+                    cyclicCommand.TargetVelocity,
+                    cyclicCommand.TargetTorque,
+                    ct),
                 _ => throw new NotSupportedException($"Unsupported drive command type: {command.GetType().Name}.")
             };
         }

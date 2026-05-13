@@ -65,6 +65,7 @@ namespace ModuleCover.ViewModels
             TileType.BMS     => Permission.NavigateBms,
             TileType.Camera  => Permission.NavigateCamera,
             TileType.Lidar   => Permission.NavigateLidar,
+            TileType.Imu     => Permission.NavigateImu,
             // Tiles without a mapped module (Head, Arm, Leg, Body, Hand, LLB) follow Motor permission
             _                => Permission.NavigateMotor
         };
@@ -100,6 +101,9 @@ namespace ModuleCover.ViewModels
                         break;
                     case TileType.Lidar:
                         _regionManager.RequestNavigate("CoverRegion", "LidarView");
+                        break;
+                    case TileType.Imu:
+                        _regionManager.RequestNavigate("CoverRegion", "ImuView");
                         break;
                     case TileType.Led:
                         _regionManager.RequestNavigate("CoverRegion", "TestLedView");

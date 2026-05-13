@@ -22,13 +22,27 @@ namespace ModuleMotor.Cia402.Models
     /// Sends a position target using the selected CiA 402 position-command semantics.
     /// Profile Position requires the New Set Point handshake, while CSP writes only
     /// the cyclic target value.
+    /// For Profile Position, completion means the drive acknowledged the set-point
+    /// handshake; it does not guarantee the motor has already reached the target.
+    /// ProfileVelocity (0x6081), ProfileAcceleration (0x6083) and ProfileDeceleration (0x6084)
+    /// override the drive's stored profile parameters for this Profile Position move when set;
+    /// they are ignored in CSP mode.
     /// </summary>
     public sealed record MoveAbsolutePositionDriveCommand(
         int TargetPosition,
         Cia402PositionCommandMode CommandMode = Cia402PositionCommandMode.ProfilePosition,
-        bool ImmediateChange = false) : DriveCommand;
+        bool ImmediateChange = false,
+        TimeSpan AckTimeout = default,
+        int? ProfileVelocity = null,
+        int? ProfileAcceleration = null,
+        int? ProfileDeceleration = null) : DriveCommand;
 
     public sealed record SetVelocityDriveCommand(int TargetVelocity) : DriveCommand;
 
     public sealed record SetTorqueDriveCommand(short TargetTorque) : DriveCommand;
+
+    public sealed record WriteCyclicProcessDataDriveCommand(
+        int? TargetPosition = null,
+        int? TargetVelocity = null,
+        short? TargetTorque = null) : DriveCommand;
 }

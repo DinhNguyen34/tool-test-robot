@@ -1,4 +1,5 @@
 using Common.Core.Auth;
+using Common.Core.Telemetry;
 using Common.Core.Helpers;
 using ModuleCamera;
 using ModuleCover;
@@ -31,6 +32,7 @@ namespace RobotTesting
         {
             containerRegistry.RegisterSingleton<IUserSession, UserSession>();
             containerRegistry.RegisterSingleton<IAuthService, FileAuthService>();
+            containerRegistry.RegisterSingleton<ITelemetryPublisher, TelemetryPublisher>();
             containerRegistry.RegisterForNavigation<LoginView, LoginViewModel>("LoginView");
         }
 

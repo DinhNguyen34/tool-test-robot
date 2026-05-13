@@ -1,5 +1,13 @@
 using Common.Core.Helpers;
+using Common.Core.Telemetry;
 using Microsoft.Win32;
+using ModuleMotor.Cia402.Abstractions;
+using ModuleMotor.Cia402.Canopen;
+using ModuleMotor.Cia402.Core;
+using ModuleMotor.Cia402.Ethercat;
+using ModuleMotor.Cia402.Ethercat.Soem;
+using ModuleMotor.Cia402.Models;
+using ModuleMotor.Controllers;
 using ModuleMotor.Models;
 using Prism.Commands;
 using Prism.Mvvm;
@@ -22,11 +30,14 @@ using System.Windows.Media.Animation;
 
 namespace ModuleMotor.ViewModels
 {
-    public class MotorViewModel : BindableBase
+    public class MotorViewModel : BindableBase, ITelemetrySource
     {
         private const int N_MOTORS = 8;
         private const int EncosKeepAliveIntervalMs = 100;
+        private const int Cia402DefaultPollIntervalMs = 100;
+        private const int Cia402MinimumPdoCycleMs = 1;
         private readonly IRegionManager _regionManager;
+        private readonly ITelemetryPublisher _telemetryPublisher;
 
         private string _newTestCaseCode = string.Empty;
         public string NewTestCaseCode
@@ -155,7 +166,14 @@ namespace ModuleMotor.ViewModels
         public MotorConfig Config
         {
             get => _config;
-            set => SetProperty(ref _config, value);
+            set
+            {
+                if (!SetProperty(ref _config, value))
+                    return;
+
+                RaisePropertyChanged(nameof(EthercatInterface));
+                RaisePropertyChanged(nameof(Cia402CountsPerRevolution));
+            }
         }
 
         public IReadOnlyList<MotorProtocolKind> SupportedProtocols { get; } = Enum.GetValues<MotorProtocolKind>();
@@ -172,12 +190,19 @@ namespace ModuleMotor.ViewModels
                 Config.Protocol = value;
                 if (value != MotorProtocolKind.Encos)
                     StopEncosKeepAlive(log: false);
+                if (value != MotorProtocolKind.Cia402Canopen && value != MotorProtocolKind.Cia402Ethercat)
+                    StopCia402CyclicStreaming(log: false);
+                if (value != MotorProtocolKind.Cia402Canopen && _cia402Adapter != null)
+                    _ = DisconnectCia402Async();
+                if (value != MotorProtocolKind.Cia402Ethercat && _soemMaster != null)
+                    _ = DisconnectEthercatAsync();
                 ResetRawFrameDefaults();
                 RebuildBuiltInTestCases();
                 BuiltSteps.Clear();
                 SelectedAvailableTestCase = null;
                 SelectedQuickLibraryTestCase = null;
                 RaisePropertyChanged(nameof(CurrentProtocolUsesExtendedId));
+                RaisePropertyChanged(nameof(ConnectLabel));
                 RaisePropertyChanged(nameof(SendAllButtonText));
                 RaisePropertyChanged(nameof(ManualControlHint));
             }
@@ -197,8 +222,11 @@ namespace ModuleMotor.ViewModels
                 else       StopRxLoop();
             }
         }
-        public string ConnectLabel  => IsConnected ? "DISCONNECT CAN"        : "CAN Connect";
-        public string CanStatusText => IsConnected ? "CONNECTED"   : "DISCONNECTED";
+        public string ConnectLabel => SelectedProtocol == MotorProtocolKind.Cia402Ethercat
+            ? (Cia402IsConnected ? "DISCONNECT EtherCAT" : "EtherCAT Connect")
+            : (IsConnected       ? "DISCONNECT CAN"      : "CAN Connect");
+
+        public string CanStatusText => IsConnected || Cia402IsConnected ? "CONNECTED" : "DISCONNECTED";
 
         // ── Live RX ────────────────────────────────────────────────────────────
         public ObservableCollection<RxFrameEntry> RxFrames { get; } = new();
@@ -241,8 +269,367 @@ namespace ModuleMotor.ViewModels
 
         public DelegateCommand ClearRxCommand { get; private set; } = null!;
 
+        // ── CiA 402 ────────────────────────────────────────────────────────────
+        private IDriveController? _cia402Controller;
+        private CanopenCia402Adapter? _cia402Adapter;   // non-null only for CANopen
+        private SoemMaster? _soemMaster;                 // non-null only for EtherCAT
+        private ICia402ProcessDataCapabilities? _cia402ProcessDataCapabilities;
+        private CancellationTokenSource? _cia402PollCts;
+        private readonly SemaphoreSlim _cia402IoLock = new(1, 1);
+        private readonly SemaphoreSlim _ethercatLifecycleLock = new(1, 1);
+        public IReadOnlyList<Cia402OperationMode> Cia402OperationModes { get; } = Enum.GetValues<Cia402OperationMode>();
+
+        private bool _cia402IsConnected;
+        public bool Cia402IsConnected
+        {
+            get => _cia402IsConnected;
+            private set
+            {
+                if (!SetProperty(ref _cia402IsConnected, value))
+                    return;
+                RaisePropertyChanged(nameof(ConnectLabel));
+                RaisePropertyChanged(nameof(CanStatusText));
+                RaisePropertyChanged(nameof(Cia402CanEditPdo));
+                RaisePropertyChanged(nameof(Cia402SetpointHint));
+                RaisePropertyChanged(nameof(Cia402CyclicStreamingText));
+            }
+        }
+
+        public bool Cia402CanEditPdo => !Cia402IsConnected;
+
+        private bool _cia402ProcessDataActive;
+        public bool Cia402ProcessDataActive
+        {
+            get => _cia402ProcessDataActive;
+            private set
+            {
+                if (!SetProperty(ref _cia402ProcessDataActive, value))
+                    return;
+
+                RaisePropertyChanged(nameof(Cia402SetpointHint));
+                RaisePropertyChanged(nameof(Cia402CyclicStreamingText));
+            }
+        }
+
+        private string _cia402StatusText = "—";
+        public string Cia402StatusText
+        {
+            get => _cia402StatusText;
+            set => SetProperty(ref _cia402StatusText, value);
+        }
+
+        private double _cia402Position;
+        public double Cia402Position
+        {
+            get => _cia402Position;
+            set => SetProperty(ref _cia402Position, value);
+        }
+
+        private double _cia402Velocity;
+        public double Cia402Velocity
+        {
+            get => _cia402Velocity;
+            set => SetProperty(ref _cia402Velocity, value);
+        }
+
+        private double _cia402Torque;
+        public double Cia402Torque
+        {
+            get => _cia402Torque;
+            set => SetProperty(ref _cia402Torque, value);
+        }
+
+        private ushort _cia402ErrorCode;
+        public ushort Cia402ErrorCode
+        {
+            get => _cia402ErrorCode;
+            set => SetProperty(ref _cia402ErrorCode, value);
+        }
+
+        private ushort _cia402StatuswordRaw;
+        public ushort Cia402StatuswordRaw
+        {
+            get => _cia402StatuswordRaw;
+            set => SetProperty(ref _cia402StatuswordRaw, value);
+        }
+
+        private bool _cia402ReadyToSwitchOn;
+        public bool Cia402ReadyToSwitchOn
+        {
+            get => _cia402ReadyToSwitchOn;
+            set => SetProperty(ref _cia402ReadyToSwitchOn, value);
+        }
+
+        private bool _cia402SwitchedOn;
+        public bool Cia402SwitchedOn
+        {
+            get => _cia402SwitchedOn;
+            set => SetProperty(ref _cia402SwitchedOn, value);
+        }
+
+        private bool _cia402OperationEnabled;
+        public bool Cia402OperationEnabled
+        {
+            get => _cia402OperationEnabled;
+            set => SetProperty(ref _cia402OperationEnabled, value);
+        }
+
+        private bool _cia402Fault;
+        public bool Cia402Fault
+        {
+            get => _cia402Fault;
+            set => SetProperty(ref _cia402Fault, value);
+        }
+
+        private bool _cia402VoltageEnabled;
+        public bool Cia402VoltageEnabled
+        {
+            get => _cia402VoltageEnabled;
+            set => SetProperty(ref _cia402VoltageEnabled, value);
+        }
+
+        private bool _cia402QuickStopNotActive;
+        public bool Cia402QuickStopNotActive
+        {
+            get => _cia402QuickStopNotActive;
+            set => SetProperty(ref _cia402QuickStopNotActive, value);
+        }
+
+        private bool _cia402SwitchOnDisabled;
+        public bool Cia402SwitchOnDisabled
+        {
+            get => _cia402SwitchOnDisabled;
+            set => SetProperty(ref _cia402SwitchOnDisabled, value);
+        }
+
+        private bool _cia402Warning;
+        public bool Cia402Warning
+        {
+            get => _cia402Warning;
+            set => SetProperty(ref _cia402Warning, value);
+        }
+
+        private bool _cia402Remote;
+        public bool Cia402Remote
+        {
+            get => _cia402Remote;
+            set => SetProperty(ref _cia402Remote, value);
+        }
+
+        private bool _cia402TargetReached;
+        public bool Cia402TargetReached
+        {
+            get => _cia402TargetReached;
+            set => SetProperty(ref _cia402TargetReached, value);
+        }
+
+        private bool _cia402InternalLimitActive;
+        public bool Cia402InternalLimitActive
+        {
+            get => _cia402InternalLimitActive;
+            set => SetProperty(ref _cia402InternalLimitActive, value);
+        }
+
+        private bool _cia402SetPointAcknowledge;
+        public bool Cia402SetPointAcknowledge
+        {
+            get => _cia402SetPointAcknowledge;
+            set => SetProperty(ref _cia402SetPointAcknowledge, value);
+        }
+
+        private bool _cia402FollowingError;
+        public bool Cia402FollowingError
+        {
+            get => _cia402FollowingError;
+            set => SetProperty(ref _cia402FollowingError, value);
+        }
+
+        private double _cia402TargetPosition;
+        public double Cia402TargetPosition
+        {
+            get => _cia402TargetPosition;
+            set => SetProperty(ref _cia402TargetPosition, value);
+        }
+
+        private double _cia402TargetVelocity;
+        public double Cia402TargetVelocity
+        {
+            get => _cia402TargetVelocity;
+            set => SetProperty(ref _cia402TargetVelocity, value);
+        }
+
+        public int Cia402CountsPerRevolution
+        {
+            get => Config.Cia402CountsPerRevolution;
+            set
+            {
+                int normalized = Math.Max(1, value);
+                if (Config.Cia402CountsPerRevolution == normalized)
+                    return;
+
+                Config.Cia402CountsPerRevolution = normalized;
+                RaisePropertyChanged();
+            }
+        }
+
+        private int _cia402TargetTorque;
+        public int Cia402TargetTorque
+        {
+            get => _cia402TargetTorque;
+            set => SetProperty(ref _cia402TargetTorque, value);
+        }
+
+        private Cia402OperationMode _selectedCia402Mode = Cia402OperationMode.ProfilePosition;
+        public Cia402OperationMode SelectedCia402Mode
+        {
+            get => _selectedCia402Mode;
+            set
+            {
+                if (!SetProperty(ref _selectedCia402Mode, value))
+                    return;
+
+                StopCia402CyclicStreaming(log: false);
+                RaisePropertyChanged(nameof(Cia402SetpointHint));
+            }
+        }
+
+        private bool _cia402ProfileImmediateChange;
+        public bool Cia402ProfileImmediateChange
+        {
+            get => _cia402ProfileImmediateChange;
+            set => SetProperty(ref _cia402ProfileImmediateChange, value);
+        }
+
+        private int _cia402ProfileAckTimeoutMs = 5000;
+        public int Cia402ProfileAckTimeoutMs
+        {
+            get => _cia402ProfileAckTimeoutMs;
+            set => SetProperty(ref _cia402ProfileAckTimeoutMs, value);
+        }
+
+        private int _cia402ProfileVelocity = 5566;
+        public int Cia402ProfileVelocity
+        {
+            get => _cia402ProfileVelocity;
+            set => SetProperty(ref _cia402ProfileVelocity, value);
+        }
+
+        private int _cia402ProfileAcceleration = 5566;
+        public int Cia402ProfileAcceleration
+        {
+            get => _cia402ProfileAcceleration;
+            set => SetProperty(ref _cia402ProfileAcceleration, value);
+        }
+
+        private int _cia402ProfileDeceleration = 5566;
+        public int Cia402ProfileDeceleration
+        {
+            get => _cia402ProfileDeceleration;
+            set => SetProperty(ref _cia402ProfileDeceleration, value);
+        }
+
+        private bool _cia402CyclicStreamingActive;
+        public bool Cia402CyclicStreamingActive
+        {
+            get => _cia402CyclicStreamingActive;
+            private set
+            {
+                if (!SetProperty(ref _cia402CyclicStreamingActive, value))
+                    return;
+
+                RaisePropertyChanged(nameof(Cia402CyclicStreamingText));
+            }
+        }
+
+        private string _cia402CyclicStreamingDescription = "Idle";
+        public string Cia402CyclicStreamingDescription
+        {
+            get => _cia402CyclicStreamingDescription;
+            private set
+            {
+                if (!SetProperty(ref _cia402CyclicStreamingDescription, value))
+                    return;
+
+                RaisePropertyChanged(nameof(Cia402CyclicStreamingText));
+            }
+        }
+
+        private Cia402OperationMode? _cia402CyclicStreamingMode;
+        private double _cia402CyclicPositionCommandCounts;
+        private double _cia402CyclicPositionVelocityCountsPerSecond;
+        private int _cia402CyclicVelocityCommandCountsPerSecond;
+        private short _cia402CyclicTorqueCommand;
+
+        public string Cia402CyclicStreamingText => Cia402CyclicStreamingActive && _cia402CyclicStreamingMode is { } activeMode
+            ? $"Streaming {activeMode} via PDO every {Cia402PdoCycleMs} ms. Targets are sent before each SYNC."
+            : Cia402IsConnected && !Cia402ProcessDataActive
+                ? "PDO stream idle. Disconnect and reconnect with Enable PDO on to use CSV/CST/CSP."
+                : Cia402EnablePdo
+                ? "PDO stream idle. Use CSV/CST/CSP commands to start cyclic updates."
+                : "PDO stream idle. Enable PDO to use CSV/CST/CSP.";
+
+        public string Cia402SetpointHint => SelectedCia402Mode switch
+        {
+            Cia402OperationMode.ProfilePosition => "Profile Position sends one acknowledged set-point.",
+            Cia402OperationMode.ProfileVelocity => "Profile Velocity writes Target Velocity after mode, ramp, state, and error checks.",
+            Cia402OperationMode.ProfileTorque => "Profile Torque writes Target Torque once using the current transport.",
+            Cia402OperationMode.CyclicSynchronousPosition => Cia402ProcessDataActive
+                ? "CSP ramps cyclic PDO position targets from actual position to the requested target."
+                : Cia402IsConnected ? "CSP requires reconnect with Enable PDO on." : "CSP requires Enable PDO.",
+            Cia402OperationMode.CyclicSynchronousVelocity => Cia402ProcessDataActive
+                ? "CSV ramps cyclic PDO velocity targets using Profile Acceleration."
+                : Cia402IsConnected ? "CSV requires reconnect with Enable PDO on." : "CSV requires Enable PDO.",
+            Cia402OperationMode.CyclicSynchronousTorque => Cia402ProcessDataActive
+                ? "CST ramps cyclic PDO torque targets instead of stepping immediately."
+                : Cia402IsConnected ? "CST requires reconnect with Enable PDO on." : "CST requires Enable PDO.",
+            _ => "Choose a CiA402 mode, then send the matching setpoint."
+        };
+
+        public DelegateCommand Cia402FaultResetCommand   { get; }
+        public DelegateCommand Cia402ShutdownCommand     { get; }
+        public DelegateCommand Cia402SwitchOnCommand     { get; }
+        public DelegateCommand Cia402EnableCommand       { get; }
+        public DelegateCommand Cia402DisableCommand      { get; }
+        public DelegateCommand Cia402QuickStopCommand    { get; }
+        public DelegateCommand Cia402SetModeCommand      { get; }
+        public DelegateCommand Cia402SyncPositionCommand { get; }
+        public DelegateCommand Cia402MoveCommand         { get; }
+        public DelegateCommand Cia402SetVelocityCommand  { get; }
+        public DelegateCommand Cia402SetTorqueCommand    { get; }
+        public DelegateCommand Cia402StopCyclicCommand   { get; }
+        public DelegateCommand ScanEthercatAdaptersCommand { get; }
+
         // ── Port selection ─────────────────────────────────────────────────────
         public ObservableCollection<string> AvailablePorts { get; } = new();
+        public ObservableCollection<SoemNetworkAdapter> EthercatAdapters { get; } = new();
+
+        private SoemNetworkAdapter? _selectedEthercatAdapter;
+        public SoemNetworkAdapter? SelectedEthercatAdapter
+        {
+            get => _selectedEthercatAdapter;
+            set
+            {
+                if (!SetProperty(ref _selectedEthercatAdapter, value) || value == null)
+                    return;
+
+                EthercatInterface = value.Name;
+            }
+        }
+
+        public string EthercatInterface
+        {
+            get => Config.EthercatInterface;
+            set
+            {
+                value = NormalizeEthercatInterfaceName(value);
+
+                if (Config.EthercatInterface == value)
+                    return;
+
+                Config.EthercatInterface = value;
+                RaisePropertyChanged();
+            }
+        }
 
         public static IReadOnlyList<int> BaudRates { get; } = new[]
             {19200, 38400, 57600, 115200, 230400, 460800, 921600, 1000000};
@@ -251,6 +638,46 @@ namespace ModuleMotor.ViewModels
             {50, 100, 120, 200, 250, 400, 500, 800, 1000, 1200, 1500, 2000};
 
         public bool CurrentProtocolUsesExtendedId => SelectedProtocol == MotorProtocolKind.Robstride;
+
+        public bool Cia402EnablePdo
+        {
+            get => Config.Cia402EnablePdo;
+            set
+            {
+                if (Config.Cia402EnablePdo == value)
+                    return;
+
+                if (Cia402IsConnected)
+                {
+                    AppendLog("[CiA402] Enable PDO can only be changed while disconnected. Disconnect and reconnect to change the PDO data path.");
+                    RaisePropertyChanged();
+                    return;
+                }
+
+                Config.Cia402EnablePdo = value;
+                if (!value)
+                    StopCia402CyclicStreaming(log: false);
+
+                RaisePropertyChanged();
+                RaisePropertyChanged(nameof(Cia402SetpointHint));
+                RaisePropertyChanged(nameof(Cia402CyclicStreamingText));
+            }
+        }
+
+        public int Cia402PdoCycleMs
+        {
+            get => Config.Cia402PdoCycleMs <= 0 ? 20 : Config.Cia402PdoCycleMs;
+            set
+            {
+                int sanitized = Math.Max(Cia402MinimumPdoCycleMs, value);
+                if (Config.Cia402PdoCycleMs == sanitized)
+                    return;
+
+                Config.Cia402PdoCycleMs = sanitized;
+                RaisePropertyChanged();
+                RaisePropertyChanged(nameof(Cia402CyclicStreamingText));
+            }
+        }
 
         private string _selectedPort = string.Empty;
         public string SelectedPort
@@ -352,7 +779,7 @@ namespace ModuleMotor.ViewModels
         }
 
         // ── Commands ───────────────────────────────────────────────────────────
-        //public DelegateCommand CanConnectCommand { get; }
+        public DelegateCommand CanConnectCommand { get; }
         public DelegateCommand RunBuiltStepsCommand { get; }
         public DelegateCommand ZeroCmdCommand { get; }
         public DelegateCommand HoldPositionCommand { get; }
@@ -381,13 +808,43 @@ namespace ModuleMotor.ViewModels
         public DelegateCommand SendRawFrameCommand { get; }
 
         public DelegateCommand OpenListCan => new DelegateCommand(_openListCan);
-        public DelegateCommand CanConnectCommand => new DelegateCommand(OnCanConnect);
 
         public DelegateCommand AddQuickLibraryStepCommand { get; }
         // ── Constructor ────────────────────────────────────────────────────────
-        public MotorViewModel(IRegionManager regionManager)
+        // ── ITelemetrySource ───────────────────────────────────────────────────
+        string ITelemetrySource.ChannelPrefix => "motor";
+        bool ITelemetrySource.IsActive => IsConnected || Cia402IsConnected;
+        IEnumerable<(string Name, double Value)> ITelemetrySource.Sample()
+        {
+            if (Cia402IsConnected)
+            {
+                yield return ("cia402/position",   Cia402Position);
+                yield return ("cia402/velocity",   Cia402Velocity);
+                yield return ("cia402/torque",     Cia402Torque);
+                yield return ("cia402/statusword", Cia402StatuswordRaw);
+                yield return ("cia402/error_code", Cia402ErrorCode);
+            }
+
+            if (IsConnected)
+            {
+                foreach (MotorChannelModel m in Motors)
+                {
+                    string p = m.Label.ToLowerInvariant(); // "m01" .. "m08"
+                    yield return ($"{p}/position",    m.Q);
+                    yield return ($"{p}/velocity",    m.Dq);
+                    yield return ($"{p}/torque",      m.Tau);
+                    yield return ($"{p}/temperature", m.Temperature);
+                    yield return ($"{p}/error_code",  m.ErrorCode);
+                }
+            }
+        }
+
+        // ── Constructor ────────────────────────────────────────────────────────
+        public MotorViewModel(IRegionManager regionManager, ITelemetryPublisher telemetryPublisher)
         {
             _regionManager = regionManager;
+            _telemetryPublisher = telemetryPublisher;
+            telemetryPublisher.Register(this);
 
             for (int i = 0; i < N_MOTORS; i++)
             {
@@ -435,12 +892,28 @@ namespace ModuleMotor.ViewModels
             SaveConfigCommand = new DelegateCommand(OnSaveConfig);
             ClearLogCommand = new DelegateCommand(() => LogEntries.Clear());
             GoBackCommand = new DelegateCommand(OnGoBack);
+            CanConnectCommand = new DelegateCommand(OnCanConnect);
             //RefreshPortsCommand = new DelegateCommand(RefreshPorts);
             SendMotorCommand = new DelegateCommand<MotorChannelModel>(OnSendMotor);
             SendAllMotorsCommand = new DelegateCommand(OnSendAllMotors);
             SaveNewConfigCommand = new DelegateCommand(SaveNewConfig);
             SendRawFrameCommand = new DelegateCommand(OnSendRawFrame);
             ClearRxCommand      = new DelegateCommand(() => { RxFrames.Clear(); _lastRxCount = 0; _lastRxTime = -1.0; });
+
+            Cia402FaultResetCommand   = new DelegateCommand(() => ExecuteCia402StateMachineCommand(new FaultResetDriveCommand()));
+            Cia402ShutdownCommand     = new DelegateCommand(() => ExecuteCia402StateMachineCommand(new ShutdownDriveCommand()));
+            Cia402SwitchOnCommand     = new DelegateCommand(() => ExecuteCia402StateMachineCommand(new SwitchOnDriveCommand()));
+            Cia402EnableCommand       = new DelegateCommand(() => ExecuteCia402StateMachineCommand(new EnableOperationDriveCommand()));
+            Cia402DisableCommand      = new DelegateCommand(() => ExecuteCia402StateMachineCommand(new DisableOperationDriveCommand()));
+            Cia402QuickStopCommand    = new DelegateCommand(() => ExecuteCia402StateMachineCommand(new QuickStopDriveCommand()));
+            Cia402SetModeCommand      = new DelegateCommand(() => ExecuteCia402StateMachineCommand(new SetModeDriveCommand(SelectedCia402Mode)));
+            Cia402SyncPositionCommand = new DelegateCommand(() => ExecuteCia402StateMachineCommand(new SyncActualPositionToTargetDriveCommand()));
+            Cia402MoveCommand         = new DelegateCommand(ExecuteCia402PositionCommand);
+            Cia402SetVelocityCommand  = new DelegateCommand(ExecuteCia402VelocityCommand);
+            Cia402SetTorqueCommand    = new DelegateCommand(ExecuteCia402TorqueCommand);
+            Cia402StopCyclicCommand   = new DelegateCommand(() => StopCia402CyclicStreaming(), () => Cia402CyclicStreamingActive)
+                .ObservesProperty(() => Cia402CyclicStreamingActive);
+            ScanEthercatAdaptersCommand = new DelegateCommand(ScanEthercatAdapters);
 
             //RefreshPorts();
             SelectedCanBitrate = Config.CanBitrateKbps > 0 ? Config.CanBitrateKbps : 1000;
@@ -784,7 +1257,11 @@ namespace ModuleMotor.ViewModels
                 AppendLog(msg);
                 LogHelper.Debug(msg);
             }
-            catch (Exception ex) { LogHelper.Exception(ex); }
+            catch (Exception ex)
+            {
+                AppendLog($"Connect error: {ex.Message}");
+                LogHelper.Exception(ex);
+            }
         }
 
 
@@ -1029,10 +1506,19 @@ namespace ModuleMotor.ViewModels
             return FormatCanFrame(frame);
         }
 
-        //-- disconnect CAN-------
+        //-- disconnect CAN / EtherCAT -------
         private void DisconnectCAN()
         {
             StopEncosKeepAlive(log: false);
+
+            if (_soemMaster != null)
+            {
+                _ = DisconnectEthercatAsync();
+                return;
+            }
+
+            if (_cia402Adapter != null)
+                _ = DisconnectCia402Async();
 
             if (IsConnected || Model.GetOpenStatus())
             {
@@ -1047,9 +1533,31 @@ namespace ModuleMotor.ViewModels
 
         private bool HandleCanConnect()
         {
+            // ── EtherCAT disconnect ───────────────────────────────────────────────
+            if (SelectedProtocol == MotorProtocolKind.Cia402Ethercat || _soemMaster != null)
+            {
+                if (Cia402IsConnected || _soemMaster != null)
+                {
+                    StopEncosKeepAlive(log: false);
+                    _ = DisconnectEthercatAsync();
+                    return true;
+                }
+
+                // ── EtherCAT connect ──────────────────────────────────────────────
+                if (!TryValidateEthercatSlaveIndex(out _))
+                    return true;
+
+                AppendLog("[EtherCAT] Connecting...");
+                _ = ConnectEthercatAsync();
+                return true;
+            }
+
+            // ── CAN disconnect ────────────────────────────────────────────────────
             if (IsConnected || Model.GetOpenStatus())
             {
                 StopEncosKeepAlive(log: false);
+                if (_cia402Adapter != null)
+                    _ = DisconnectCia402Async();
                 Model.Close();
                 IsConnected = false;
                 const string disconnectMessage = "CAN disconnected";
@@ -1057,6 +1565,10 @@ namespace ModuleMotor.ViewModels
                 LogHelper.Debug(disconnectMessage);
                 return true;
             }
+
+            // ── CAN connect validation ────────────────────────────────────────────
+            if (SelectedProtocol == MotorProtocolKind.Cia402Canopen && !TryValidateCia402NodeId(out _))
+                return true;
 
             if (Model.SelectedCan == null)
             {
@@ -1078,6 +1590,10 @@ namespace ModuleMotor.ViewModels
 
             AppendLog(message);
             LogHelper.Debug(message);
+
+            if (connected && SelectedProtocol == MotorProtocolKind.Cia402Canopen)
+                _ = ConnectCia402Async();
+
             return true;
         }
 
@@ -1734,7 +2250,12 @@ namespace ModuleMotor.ViewModels
         public void AppendLog(string message)
         {
             var entry = $"[{DateTime.Now:HH:mm:ss.fff}]  {message}";
-            LogEntries.Insert(0, entry);
+
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher == null || dispatcher.CheckAccess())
+                LogEntries.Insert(0, entry);
+            else
+                dispatcher.Invoke(() => LogEntries.Insert(0, entry));
 
             if (_isLogging && _logWriter != null)
             {
@@ -1997,5 +2518,1000 @@ namespace ModuleMotor.ViewModels
             AddBuiltStepFromDefinition(SelectedQuickLibraryTestCase);
         }
 
+        // ── CiA 402 connect / disconnect ───────────────────────────────────────
+        private async Task ConnectCia402Async()
+        {
+            try
+            {
+                if (!TryValidateCia402NodeId(out byte nodeId))
+                    return;
+
+                var (controller, adapter) = DriveControllerFactory.CreateCanopenCia402Controller(
+                    Model, nodeId, enablePdo: Cia402EnablePdo);
+
+                _cia402Controller = controller;
+                _cia402Adapter = adapter;
+                _cia402ProcessDataCapabilities = Cia402EnablePdo ? adapter : null;
+
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await adapter.OpenAsync(cts.Token);
+
+                AppendLog($"[CiA402] NMT Start — Node ID=0x{nodeId:X2}  PDO={Cia402EnablePdo}");
+                StartCia402PollLoop();
+                Cia402ProcessDataActive = Cia402EnablePdo;
+                Cia402IsConnected = true;
+            }
+            catch (Exception ex)
+            {
+                _cia402Controller = null;
+                _cia402Adapter = null;
+                _cia402ProcessDataCapabilities = null;
+                Cia402ProcessDataActive = false;
+                Cia402IsConnected = false;
+                AppendLog($"[CiA402] Connect error: {ex.Message}");
+                LogHelper.Exception(ex);
+            }
+        }
+
+        private async Task DisconnectCia402Async()
+        {
+            StopCia402PollLoop();
+            var adapter = _cia402Adapter;
+            _cia402Controller = null;
+            _cia402Adapter = null;
+            _cia402ProcessDataCapabilities = null;
+            Cia402ProcessDataActive = false;
+
+            if (adapter == null) return;
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                await adapter.CloseAsync(cts.Token);
+                AppendLog("[CiA402] NMT Stop — node stopped.");
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"[CiA402] Disconnect error: {ex.Message}");
+                LogHelper.Exception(ex);
+            }
+        }
+
+        // ── EtherCAT connect / disconnect ──────────────────────────────────────
+        private void ScanEthercatAdapters()
+        {
+            try
+            {
+                IReadOnlyList<SoemNetworkAdapter> adapters = RefreshEthercatAdapters();
+                if (EthercatAdapters.Count == 0)
+                {
+                    AppendLog("[EtherCAT] No Ethernet adapters were found from the local Windows network list.");
+                    return;
+                }
+
+                AppendLog($"[EtherCAT] Found {EthercatAdapters.Count} adapter(s) from the local Windows network list.");
+            }
+            catch (DllNotFoundException ex)
+            {
+                AppendLog($"[EtherCAT] SOEM scan failed: {ex.Message}");
+                LogHelper.Exception(ex);
+            }
+
+            catch (BadImageFormatException ex)
+            {
+                AppendLog($"[EtherCAT] SOEM scan failed: soem.dll architecture does not match the app. {ex.Message}");
+                LogHelper.Exception(ex);
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"[EtherCAT] SOEM scan failed: {ex.Message}");
+                LogHelper.Exception(ex);
+            }
+        }
+
+        private IReadOnlyList<SoemNetworkAdapter> RefreshEthercatAdapters()
+        {
+            EthercatAdapters.Clear();
+
+            IReadOnlyList<SoemNetworkAdapter> adapters = SoemNative.FindAdapters();
+            foreach (SoemNetworkAdapter adapter in adapters)
+                EthercatAdapters.Add(adapter);
+
+            string configuredInterfaceName = NormalizeEthercatInterfaceName(Config.EthercatInterface);
+            SoemNetworkAdapter? selected = null;
+
+            if (_selectedEthercatAdapter != null)
+            {
+                selected = EthercatAdapters.FirstOrDefault(a =>
+                    string.Equals(a.Name, _selectedEthercatAdapter.Name, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (selected == null && !string.IsNullOrWhiteSpace(configuredInterfaceName))
+            {
+                selected = EthercatAdapters.FirstOrDefault(a =>
+                    string.Equals(a.Name, configuredInterfaceName, StringComparison.OrdinalIgnoreCase));
+            }
+
+            selected ??= EthercatAdapters.FirstOrDefault();
+
+            if (selected != null)
+            {
+                SelectedEthercatAdapter = selected;
+            }
+            else
+            {
+                _selectedEthercatAdapter = null;
+                EthercatInterface = string.Empty;
+                RaisePropertyChanged(nameof(SelectedEthercatAdapter));
+            }
+
+            return adapters;
+        }
+
+        private async Task ConnectEthercatAsync()
+        {
+            SoemMaster? master = null;
+            try
+            {
+                await _ethercatLifecycleLock.WaitAsync();
+                try
+                {
+                    if (_soemMaster != null || Cia402IsConnected)
+                    {
+                        AppendLog("[EtherCAT] Already connected.");
+                        return;
+                    }
+
+                    if (!TryResolveEthercatInterface(out string interfaceName))
+                        return;
+
+                    if (!SoemNative.TryEnsureLoaded(out string nativeLoadError))
+                    {
+                        AppendLog($"[EtherCAT] {nativeLoadError}");
+                        return;
+                    }
+
+                    if (SoemNative.TryGetNpcapAdminOnlyError(out string npcapPermissionError))
+                    {
+                        AppendLog($"[EtherCAT] {npcapPermissionError}");
+                        return;
+                    }
+
+                    if (!TryValidateEthercatSlaveIndex(out ushort slaveIndex))
+                        return;
+
+                    const int ethercatMasterCycleMs = 1;
+                    master = new SoemMaster(interfaceName, ethercatMasterCycleMs);
+
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+
+                    bool ethercatProcessDataEnabled = true;
+                    // Reprogram the slave's RxPDO/TxPDO so 0x607A/0x60FF/0x6071 are always
+                    // mapped — required for CSP/CSV/CST. Runs in PRE-OP before ConfigureIoMap
+                    // freezes the IO image. Skipped when PDO is off (no cyclic data path).
+                    Func<SoemMaster, CancellationToken, Task>? pdoConfigure = Cia402EnablePdo
+                        ? async (m, c) =>
+                        {
+                            try
+                            {
+                                await ErobPdoConfigurator.ApplyDefaultMappingAsync(m, slaveIndex, c).ConfigureAwait(false);
+                            }
+                            catch (Exception mapEx)
+                            {
+                                AppendLog($"[eRob-PDO] Default PDO remap skipped: {mapEx.Message}");
+                            }
+                        }
+                        : null;
+                    await master.OpenAsync(
+                        configurePdoMappingAsync: pdoConfigure,
+                        ct: cts.Token,
+                        enableProcessData: ethercatProcessDataEnabled);
+
+                    if (slaveIndex > master.SlaveCount)
+                    {
+                        throw new InvalidOperationException(
+                            $"Configured EtherCAT slave index {slaveIndex} is outside the detected slave range 1..{master.SlaveCount}.");
+                    }
+
+
+                    AppendLog($"[EtherCAT] Open — Interface={Config.EthercatInterface}  Slave={slaveIndex}  Slaves found={master.SlaveCount}  PDO={Cia402EnablePdo}");
+
+                    if (!Cia402EnablePdo)
+                        AppendLog("[EtherCAT] CiA402 state-machine commands require EtherCAT OP/PDO process data; cyclic setpoint streaming remains disabled by the Enable PDO checkbox.");
+
+                    if (ethercatProcessDataEnabled)
+                    {
+                        // Give the cyclic thread a few ticks so the IO map reflects real PDO data.
+                        await Task.Delay(50, cts.Token);
+                        AppendLog(master.GetDiagnosticsReport());
+                    }
+
+                    ErobPdoMap? activePdoMap = null;
+                    // Print the slave's actual PDO mapping so ErobPdoMap.Default can be
+                    // updated to match the factory layout. This is SDO-only and should also
+                    // run when PDO is disabled, because SAFE-OP may fail before PDO mode can log it.
+                    try
+                    {
+                        await ErobPdoConfigurator.LogActiveMappingAsync(master, slaveIndex, AppendLog, cts.Token);
+                        if (ethercatProcessDataEnabled)
+                            activePdoMap = await ErobPdoConfigurator.ReadActiveMapAsync(master, slaveIndex, AppendLog, cts.Token);
+                    }
+                    catch (Exception mapEx)
+                    {
+                        AppendLog($"[eRob-PDO] Mapping discovery failed: {mapEx.Message}");
+                    }
+
+                    var adapter = new EthercatCoeCia402Adapter(master, slaveIndex, activePdoMap);
+                    if (!adapter.HasTargetPosition || !adapter.HasTargetVelocity || !adapter.HasTargetTorque
+                        || !adapter.HasControlword || !adapter.HasOperationMode)
+                    {
+                        AppendLog(
+                            $"[eRob-PDO] RPDO is missing cyclic field(s): " +
+                            $"TargetPosition(0x607A)={adapter.HasTargetPosition}, " +
+                            $"TargetVelocity(0x60FF)={adapter.HasTargetVelocity}, " +
+                            $"TargetTorque(0x6071)={adapter.HasTargetTorque}, " +
+                            $"Controlword(0x6040)={adapter.HasControlword}, " +
+                            $"Mode(0x6060)={adapter.HasOperationMode}.");
+                    }
+
+                    if (!adapter.HasVelocityActualValue || !adapter.HasTorqueActualValue || !adapter.HasErrorCode)
+                    {
+                        AppendLog(
+                            $"[eRob-PDO] TxPDO is missing live field(s): " +
+                            $"Velocity(0x606C)={adapter.HasVelocityActualValue}, " +
+                            $"Torque(0x6077)={adapter.HasTorqueActualValue}, " +
+                            $"ErrorCode(0x603F)={adapter.HasErrorCode}. Missing fields will be read by SDO.");
+                    }
+
+                    bool cia402ProcessDataActive = Cia402EnablePdo && ethercatProcessDataEnabled;
+                    IDriveController controller = DriveControllerFactory.CreateCia402Controller(
+                        adapter,
+                        cia402ProcessDataActive ? adapter : null);
+
+                    _soemMaster = master;
+                    _cia402Controller = controller;
+                    _cia402ProcessDataCapabilities = cia402ProcessDataActive ? adapter : null;
+
+                    StartCia402PollLoop();
+                    Cia402ProcessDataActive = cia402ProcessDataActive;
+                    Cia402IsConnected = true;
+                    master = null;
+                }
+                finally
+                {
+                    _ethercatLifecycleLock.Release();
+                }
+            }
+            catch (Exception ex)
+            {
+                _cia402Controller = null;
+                _soemMaster = null;
+                _cia402ProcessDataCapabilities = null;
+                Cia402ProcessDataActive = false;
+                Cia402IsConnected = false;
+                if (master != null)
+                    await SafeDisposeEthercatMasterAsync(master);
+                AppendLog($"[EtherCAT] Connect error: {ex.Message}");
+                LogHelper.Exception(ex);
+            }
+        }
+
+        private async Task DisconnectEthercatAsync()
+        {
+            await _ethercatLifecycleLock.WaitAsync();
+            try
+            {
+                StopCia402PollLoop();
+                _cia402Controller = null;
+                _cia402ProcessDataCapabilities = null;
+                Cia402ProcessDataActive = false;
+                var master = _soemMaster;
+
+                if (master == null)
+                    return;
+
+                try
+                {
+                    await master.CloseAsync();
+                    AppendLog("[EtherCAT] Closed — slaves returned to Init state.");
+                }
+                catch (Exception ex)
+                {
+                    AppendLog($"[EtherCAT] Disconnect error: {ex.Message}");
+                    LogHelper.Exception(ex);
+                }
+                finally
+                {
+                    if (ReferenceEquals(_soemMaster, master))
+                        _soemMaster = null;
+
+                    try
+                    {
+                        master.Dispose();
+                    }
+                    catch
+                    {
+                        // Best-effort cleanup.
+                    }
+                }
+            }
+            finally
+            {
+                _ethercatLifecycleLock.Release();
+            }
+        }
+
+        private static async Task SafeDisposeEthercatMasterAsync(SoemMaster master)
+        {
+            try
+            {
+                await master.CloseAsync();
+            }
+            catch
+            {
+                // Best-effort cleanup after a failed connect.
+            }
+            finally
+            {
+                master.Dispose();
+            }
+        }
+
+        private bool TryValidateCia402NodeId(out byte nodeId)
+        {
+            nodeId = Config.Cia402NodeId;
+            if (nodeId is >= 1 and <= 127)
+                return true;
+
+            AppendLog($"[CiA402] Invalid Node ID '{nodeId}'. CANopen node IDs must be in range 1..127.");
+            return false;
+        }
+
+        // ── CiA 402 poll loop ──────────────────────────────────────────────────
+        private bool TryValidateEthercatSlaveIndex(out ushort slaveIndex)
+        {
+            slaveIndex = Config.EthercatSlaveIndex;
+            if (slaveIndex >= 1)
+                return true;
+
+            AppendLog($"[EtherCAT] Invalid Slave Index '{slaveIndex}'. EtherCAT slave indices must be >= 1.");
+            return false;
+        }
+
+        private bool TryResolveEthercatInterface(out string interfaceName)
+        {
+            IReadOnlyList<SoemNetworkAdapter> presentAdapters = RefreshEthercatAdapters();
+
+            SoemNetworkAdapter? matchedAdapter = SelectedEthercatAdapter;
+            if (matchedAdapter == null)
+            {
+                AppendLog("[EtherCAT] No valid adapter is selected. Scan adapters and select one before connecting.");
+                interfaceName = string.Empty;
+                return false;
+            }
+
+            bool stillPresent = presentAdapters.Any(a =>
+                string.Equals(a.Name, matchedAdapter.Name, StringComparison.OrdinalIgnoreCase));
+
+            if (!stillPresent)
+            {
+                AppendLog($"[EtherCAT] Saved adapter '{matchedAdapter.Name}' is no longer present — pick a new one.");
+                _selectedEthercatAdapter = null;
+                EthercatInterface = string.Empty;
+                RaisePropertyChanged(nameof(SelectedEthercatAdapter));
+                interfaceName = string.Empty;
+                return false;
+            }
+
+            interfaceName = matchedAdapter.Name;
+            EthercatInterface = interfaceName;
+            return true;
+        }
+
+        private static string NormalizeEthercatInterfaceName(string? value)
+        {
+            string normalized = value?.Trim() ?? string.Empty;
+            while (normalized.Contains("\\\\", StringComparison.Ordinal))
+                normalized = normalized.Replace("\\\\", "\\", StringComparison.Ordinal);
+            return normalized;
+        }
+
+        private void StartCia402PollLoop()
+        {
+            StopCia402PollLoop();
+            _cia402PollCts = new CancellationTokenSource();
+            Task.Run(() => Cia402PollLoopAsync(_cia402PollCts.Token));
+        }
+
+        private void StopCia402PollLoop()
+        {
+            _cia402PollCts?.Cancel();
+            _cia402PollCts = null;
+
+            void ApplyUiReset()
+            {
+                Cia402IsConnected = false;
+                Cia402ProcessDataActive = false;
+                _cia402ProcessDataCapabilities = null;
+                StopCia402CyclicStreaming(log: false);
+                ResetCia402StatusIndicators();
+            }
+
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher == null || dispatcher.CheckAccess())
+                ApplyUiReset();
+            else
+                dispatcher.Invoke(ApplyUiReset);
+        }
+
+        private async Task Cia402PollLoopAsync(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                try
+                {
+                    // If the SOEM cyclic thread died, surface the fault and stop polling.
+                    var cyclicFault = _soemMaster?.CyclicFault;
+                    if (cyclicFault != null)
+                    {
+                        AppendLog($"[EtherCAT] Cyclic thread fault — disconnecting: {cyclicFault.Message}");
+                        LogHelper.Exception(cyclicFault);
+                        _ = DisconnectEthercatAsync();
+                        break;
+                    }
+
+                    var controleler = _cia402Controller;
+                    if (controleler != null)
+                    {
+                        DriveSnapshot snapshot;
+                        await _cia402IoLock.WaitAsync(ct).ConfigureAwait(false);
+                        try
+                        {
+                            if (Cia402CyclicStreamingActive)
+                            {
+                                if (!Cia402ProcessDataActive)
+                                {
+                                    Application.Current?.Dispatcher.Invoke(() => StopCia402CyclicStreaming());
+                                }
+                                else
+                                {
+                                    await PushCia402CyclicTargetAsync(controleler, ct);
+                                }
+                            }
+
+                            snapshot = await controleler.ReadSnapshotAsync(ct);
+                        }
+                        finally
+                        {
+                            _cia402IoLock.Release();
+                        }
+
+                        var dispatcher = Application.Current?.Dispatcher;
+                        if (dispatcher == null)
+                            continue;
+
+                        dispatcher.Invoke(() =>
+                        {
+                            ApplyCia402Statusword(snapshot.Statusword);
+                            Cia402StatusText = snapshot.StatusText;
+                            Cia402Position   = Math.Round(Cia402CountsToDegrees(snapshot.Position), 4);
+                            Cia402Velocity   = Math.Round(Cia402CountsPerSecondToRpm(snapshot.Velocity), 4);
+                            Cia402Torque     = Math.Round(snapshot.Torque,   4);
+                            Cia402ErrorCode  = snapshot.ErrorCode;
+                        });
+                    }
+                }
+                catch (OperationCanceledException) { break; }
+                catch (Exception ex)
+                {
+                    AppendLog($"[CiA402] Poll error: {ex.Message}");
+                    LogHelper.Exception(ex);
+                }
+
+                await Task.Delay(GetCia402LoopIntervalMs(), ct).ConfigureAwait(false);
+            }
+        }
+
+        private int GetCia402LoopIntervalMs()
+        {
+            return Cia402CyclicStreamingActive
+                ? Math.Max(Cia402MinimumPdoCycleMs, Cia402PdoCycleMs)
+                : Cia402DefaultPollIntervalMs;
+        }
+
+        private async Task PushCia402CyclicTargetAsync(IDriveController controller, CancellationToken ct)
+        {
+            if (_cia402CyclicStreamingMode is not { } mode)
+                return;
+
+            if (!IsCia402CyclicTargetMapped(mode, out string requiredObject))
+            {
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    AppendLog($"[CiA402] Cyclic stream stopped because {requiredObject} is not mapped in this drive's RPDO.");
+                    StopCia402CyclicStreaming();
+                });
+                return;
+            }
+
+            double dtSeconds = Math.Max(Cia402MinimumPdoCycleMs, Cia402PdoCycleMs) / 1000.0;
+            DriveCommand? command = null;
+            switch (mode)
+            {
+                case Cia402OperationMode.CyclicSynchronousPosition:
+                {
+                    int targetCounts = DegreesToCia402Counts(Cia402TargetPosition);
+                    int maxVelocityCountsPerSecond = Math.Max(1, Cia402ProfileVelocity);
+                    int maxAccelerationCountsPerSecond2 = Math.Max(1, Cia402ProfileAcceleration);
+                    _cia402CyclicPositionCommandCounts = SlewPositionTrapezoid(
+                        _cia402CyclicPositionCommandCounts,
+                        ref _cia402CyclicPositionVelocityCountsPerSecond,
+                        targetCounts,
+                        maxVelocityCountsPerSecond,
+                        maxAccelerationCountsPerSecond2,
+                        dtSeconds);
+
+                    command = new WriteCyclicProcessDataDriveCommand(
+                        TargetPosition: (int)Math.Clamp(
+                            Math.Round(_cia402CyclicPositionCommandCounts),
+                            int.MinValue,
+                            int.MaxValue));
+                    break;
+                }
+                case Cia402OperationMode.CyclicSynchronousVelocity:
+                {
+                    int targetVelocityCountsPerSecond = RpmToCia402CountsPerSecond(Cia402TargetVelocity);
+                    int maxAccelerationCountsPerSecond2 = Math.Max(1, Cia402ProfileAcceleration);
+                    _cia402CyclicVelocityCommandCountsPerSecond = SlewInt32(
+                        _cia402CyclicVelocityCommandCountsPerSecond,
+                        targetVelocityCountsPerSecond,
+                        maxAccelerationCountsPerSecond2 * dtSeconds);
+
+                    command = new WriteCyclicProcessDataDriveCommand(
+                        TargetVelocity: _cia402CyclicVelocityCommandCountsPerSecond);
+                    break;
+                }
+                case Cia402OperationMode.CyclicSynchronousTorque:
+                {
+                    if (!TryGetCia402TargetTorque(logOnError: false, out short targetTorque))
+                    {
+                        Application.Current?.Dispatcher.Invoke(() =>
+                        {
+                            AppendLog($"[CiA402] Cyclic torque stream stopped because target {Cia402TargetTorque} is outside Int16 range.");
+                            StopCia402CyclicStreaming();
+                        });
+                        return;
+                    }
+
+                    int torqueSlewPerSecond = Math.Max(
+                        50,
+                        Math.Max(Math.Abs((int)targetTorque), Math.Abs((int)_cia402CyclicTorqueCommand)));
+                    _cia402CyclicTorqueCommand = (short)SlewInt32(
+                        _cia402CyclicTorqueCommand,
+                        targetTorque,
+                        torqueSlewPerSecond * dtSeconds);
+
+                    command = new WriteCyclicProcessDataDriveCommand(
+                        TargetTorque: _cia402CyclicTorqueCommand);
+                    break;
+                }
+            }
+
+            if (command is null)
+                return;
+
+            try
+            {
+                await controller.ExecuteAsync(command, ct);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("not mapped", StringComparison.OrdinalIgnoreCase))
+            {
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    AppendLog($"[CiA402] Cyclic stream stopped: {ex.Message}");
+                    StopCia402CyclicStreaming();
+                });
+            }
+        }
+
+        private bool IsCia402CyclicTargetMapped(Cia402OperationMode mode, out string requiredObject)
+        {
+            requiredObject = mode switch
+            {
+                Cia402OperationMode.CyclicSynchronousPosition => "Target Position 0x607A",
+                Cia402OperationMode.CyclicSynchronousVelocity => "Target Velocity 0x60FF",
+                Cia402OperationMode.CyclicSynchronousTorque => "Target Torque 0x6071",
+                _ => "cyclic target"
+            };
+
+            if (_cia402ProcessDataCapabilities is not { } caps)
+                return true;
+
+            return mode switch
+            {
+                Cia402OperationMode.CyclicSynchronousPosition => caps.HasTargetPosition,
+                Cia402OperationMode.CyclicSynchronousVelocity => caps.HasTargetVelocity,
+                Cia402OperationMode.CyclicSynchronousTorque => caps.HasTargetTorque,
+                _ => true
+            };
+        }
+
+        private static double SlewPositionTrapezoid(
+            double current,
+            ref double currentVelocity,
+            double target,
+            double maxVelocity,
+            double maxAcceleration,
+            double dt)
+        {
+            if (dt <= 0)
+                return current;
+
+            double error = target - current;
+            if (Math.Abs(error) < 0.5 && Math.Abs(currentVelocity) < 0.5)
+            {
+                currentVelocity = 0;
+                return target;
+            }
+
+            double direction = Math.Sign(error);
+            double stoppingDistance = currentVelocity * currentVelocity / (2.0 * Math.Max(1.0, maxAcceleration));
+            double desiredVelocity = Math.Abs(error) <= stoppingDistance
+                ? 0
+                : direction * Math.Max(0, maxVelocity);
+
+            currentVelocity = SlewDouble(currentVelocity, desiredVelocity, maxAcceleration * dt);
+            currentVelocity = Math.Clamp(currentVelocity, -maxVelocity, maxVelocity);
+
+            double next = current + currentVelocity * dt;
+            if (Math.Sign(target - next) != direction)
+            {
+                currentVelocity = 0;
+                return target;
+            }
+
+            return next;
+        }
+
+        private static double SlewDouble(double current, double target, double maxStep)
+        {
+            if (Math.Abs(target - current) <= maxStep)
+                return target;
+
+            return current + Math.Sign(target - current) * maxStep;
+        }
+
+        private static int SlewInt32(int current, int target, double maxStep)
+        {
+            if (current == target)
+                return target;
+
+            int step = Math.Max(1, (int)Math.Round(maxStep));
+            long delta = (long)target - current;
+            if (Math.Abs(delta) <= step)
+                return target;
+
+            long next = current + Math.Sign(delta) * (long)step;
+            return (int)Math.Clamp(next, int.MinValue, int.MaxValue);
+        }
+
+        private void ApplyCia402Statusword(ushort rawStatusword)
+        {
+            Cia402Statusword sw = new(rawStatusword);
+            Cia402StatuswordRaw = rawStatusword;
+            Cia402ReadyToSwitchOn = sw.ReadyToSwitchOn;
+            Cia402SwitchedOn = sw.SwitchedOn;
+            Cia402OperationEnabled = sw.OperationEnabled;
+            Cia402Fault = sw.Fault;
+            Cia402VoltageEnabled = sw.VoltageEnabled;
+            Cia402QuickStopNotActive = sw.QuickStopNotActive;
+            Cia402SwitchOnDisabled = sw.SwitchOnDisabled;
+            Cia402Warning = sw.Warning;
+            Cia402Remote = sw.Remote;
+            Cia402TargetReached = sw.TargetReached;
+            Cia402InternalLimitActive = sw.InternalLimitActive;
+            Cia402SetPointAcknowledge = sw.SetPointAcknowledge;
+            Cia402FollowingError = sw.FollowingError;
+        }
+
+        private void ResetCia402StatusIndicators()
+        {
+            Cia402StatusText = "—";
+            Cia402StatuswordRaw = 0;
+            Cia402ReadyToSwitchOn = false;
+            Cia402SwitchedOn = false;
+            Cia402OperationEnabled = false;
+            Cia402Fault = false;
+            Cia402VoltageEnabled = false;
+            Cia402QuickStopNotActive = false;
+            Cia402SwitchOnDisabled = false;
+            Cia402Warning = false;
+            Cia402Remote = false;
+            Cia402TargetReached = false;
+            Cia402InternalLimitActive = false;
+            Cia402SetPointAcknowledge = false;
+            Cia402FollowingError = false;
+        }
+
+        // ── CiA 402 command execution ──────────────────────────────────────────
+        private void ExecuteCia402StateMachineCommand(DriveCommand command)
+        {
+            StopCia402CyclicStreaming(log: false);
+            ExecuteCia402Command(command);
+        }
+
+        private void ExecuteCia402PositionCommand()
+        {
+            switch (SelectedCia402Mode)
+            {
+                case Cia402OperationMode.ProfilePosition:
+                {
+                    StopCia402CyclicStreaming(log: false);
+                    int timeoutMs = Math.Max(1, Cia402ProfileAckTimeoutMs);
+                    ExecuteCia402Command(new MoveAbsolutePositionDriveCommand(
+                        DegreesToCia402Counts(Cia402TargetPosition),
+                        Cia402PositionCommandMode.ProfilePosition,
+                        Cia402ProfileImmediateChange,
+                        TimeSpan.FromMilliseconds(timeoutMs),
+                        ProfileVelocity: Cia402ProfileVelocity,
+                        ProfileAcceleration: Cia402ProfileAcceleration,
+                        ProfileDeceleration: Cia402ProfileDeceleration));
+                    return;
+                }
+                case Cia402OperationMode.CyclicSynchronousPosition:
+                    if (!EnsureCia402PdoReadyForCyclic("CSP move", Cia402OperationMode.CyclicSynchronousPosition))
+                        return;
+
+                    StartCia402CyclicStreaming(
+                        Cia402OperationMode.CyclicSynchronousPosition,
+                        $"Target Position={Cia402TargetPosition} deg");
+                    return;
+                default:
+                    AppendLog($"[CiA402] Move requires {Cia402OperationMode.ProfilePosition} or {Cia402OperationMode.CyclicSynchronousPosition}. Current mode is {SelectedCia402Mode}.");
+                    return;
+            }
+        }
+
+        private void ExecuteCia402VelocityCommand()
+        {
+            if (!Cia402OperationEnabled)
+            {
+                AppendLog("[CiA402] Velocity command ignored because the drive is not Operation Enabled. Run Shutdown -> Switch On -> Enable Operation first.");
+                return;
+            }
+
+            switch (SelectedCia402Mode)
+            {
+                case Cia402OperationMode.ProfileVelocity:
+                    StopCia402CyclicStreaming(log: false);
+                    ExecuteCia402Command(new SetVelocityDriveCommand(RpmToCia402CountsPerSecond(Cia402TargetVelocity)));
+                    return;
+                case Cia402OperationMode.CyclicSynchronousVelocity:
+                    if (!EnsureCia402PdoReadyForCyclic("CSV setpoint", Cia402OperationMode.CyclicSynchronousVelocity))
+                        return;
+
+                    StartCia402CyclicStreaming(
+                        Cia402OperationMode.CyclicSynchronousVelocity,
+                        $"Target Velocity={Cia402TargetVelocity} rpm");
+                    return;
+                default:
+                    AppendLog($"[CiA402] Velocity command requires {Cia402OperationMode.ProfileVelocity} or {Cia402OperationMode.CyclicSynchronousVelocity}. Current mode is {SelectedCia402Mode}.");
+                    return;
+            }
+        }
+
+        private void ExecuteCia402TorqueCommand()
+        {
+            if (!TryGetCia402TargetTorque(logOnError: true, out short targetTorque))
+                return;
+
+            switch (SelectedCia402Mode)
+            {
+                case Cia402OperationMode.ProfileTorque:
+                    StopCia402CyclicStreaming(log: false);
+                    ExecuteCia402Command(new SetTorqueDriveCommand(targetTorque));
+                    return;
+                case Cia402OperationMode.CyclicSynchronousTorque:
+                    if (!EnsureCia402PdoReadyForCyclic("CST setpoint", Cia402OperationMode.CyclicSynchronousTorque))
+                        return;
+
+                    StartCia402CyclicStreaming(
+                        Cia402OperationMode.CyclicSynchronousTorque,
+                        $"Target Torque={targetTorque}");
+                    return;
+                default:
+                    AppendLog($"[CiA402] Torque command requires {Cia402OperationMode.ProfileTorque} or {Cia402OperationMode.CyclicSynchronousTorque}. Current mode is {SelectedCia402Mode}.");
+                    return;
+            }
+        }
+
+        private bool EnsureCia402PdoReadyForCyclic(string actionLabel, Cia402OperationMode cyclicMode)
+        {
+            if (_cia402Controller == null || !Cia402IsConnected)
+            {
+                AppendLog($"[CiA402] {actionLabel} requires an active CiA402 connection.");
+                return false;
+            }
+
+            if (!Cia402EnablePdo)
+            {
+                AppendLog($"[CiA402] {actionLabel} requires Enable PDO.");
+                return false;
+            }
+
+            if (!Cia402ProcessDataActive)
+            {
+                AppendLog($"[CiA402] {actionLabel} requires active PDO process data. Disconnect and reconnect with Enable PDO on.");
+                return false;
+            }
+
+            if (_cia402ProcessDataCapabilities is { } caps)
+            {
+                bool mapped = cyclicMode switch
+                {
+                    Cia402OperationMode.CyclicSynchronousPosition => caps.HasTargetPosition,
+                    Cia402OperationMode.CyclicSynchronousVelocity => caps.HasTargetVelocity,
+                    Cia402OperationMode.CyclicSynchronousTorque => caps.HasTargetTorque,
+                    _ => true
+                };
+
+                if (!mapped)
+                {
+                    string requiredObject = cyclicMode switch
+                    {
+                        Cia402OperationMode.CyclicSynchronousPosition => "Target Position 0x607A",
+                        Cia402OperationMode.CyclicSynchronousVelocity => "Target Velocity 0x60FF",
+                        Cia402OperationMode.CyclicSynchronousTorque => "Target Torque 0x6071",
+                        _ => "cyclic target"
+                    };
+
+                    AppendLog($"[CiA402] {actionLabel} requires {requiredObject} mapped in RPDO. Current active PDO map does not expose it.");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool TryGetCia402TargetTorque(bool logOnError, out short targetTorque)
+        {
+            if (Cia402TargetTorque is < short.MinValue or > short.MaxValue)
+            {
+                targetTorque = 0;
+                if (logOnError)
+                    AppendLog($"[CiA402] Target torque {Cia402TargetTorque} is out of Int16 range ({short.MinValue}..{short.MaxValue}).");
+
+                return false;
+            }
+
+            targetTorque = (short)Cia402TargetTorque;
+            return true;
+        }
+
+        private bool TryGetPositiveCia402TargetTorque(string actionLabel, out short targetTorque)
+        {
+            if (!TryGetCia402TargetTorque(logOnError: true, out targetTorque))
+                return false;
+
+            if (targetTorque > 0)
+                return true;
+
+            AppendLog($"[CiA402] {actionLabel} requires Target Torque > 0. eRob velocity mode uses Target Torque as the max torque/current limit.");
+            return false;
+        }
+
+        private int DegreesToCia402Counts(double degrees)
+        {
+            double counts = degrees / 360.0 * Cia402CountsPerRevolution;
+            return (int)Math.Clamp(Math.Round(counts), int.MinValue, int.MaxValue);
+        }
+
+        private int RpmToCia402CountsPerSecond(double rpm)
+        {
+            double countsPerSecond = rpm * Cia402CountsPerRevolution / 60.0;
+            return (int)Math.Clamp(Math.Round(countsPerSecond), int.MinValue, int.MaxValue);
+        }
+
+        private double Cia402CountsToDegrees(double counts)
+            => counts * 360.0 / Cia402CountsPerRevolution;
+
+        private double Cia402CountsPerSecondToRpm(double countsPerSecond)
+            => countsPerSecond * 60.0 / Cia402CountsPerRevolution;
+
+        private void StartCia402CyclicStreaming(Cia402OperationMode mode, string description)
+        {
+            bool wasActive = Cia402CyclicStreamingActive;
+            bool sameMode = _cia402CyclicStreamingMode == mode;
+
+            if (!wasActive || !sameMode)
+                ResetCia402CyclicCommandState(mode);
+
+            _cia402CyclicStreamingMode = mode;
+            Cia402CyclicStreamingDescription = description;
+            Cia402CyclicStreamingActive = true;
+
+            if (wasActive && sameMode)
+            {
+                AppendLog($"[CiA402] Updated cyclic PDO target: {description}");
+            }
+            else
+            {
+                AppendLog($"[CiA402] Started cyclic PDO stream: {mode} ({description}). Targets are ramped from the current feedback value.");
+            }
+        }
+
+        private void ResetCia402CyclicCommandState(Cia402OperationMode mode)
+        {
+            switch (mode)
+            {
+                case Cia402OperationMode.CyclicSynchronousPosition:
+                    _cia402CyclicPositionCommandCounts = DegreesToCia402Counts(Cia402Position);
+                    _cia402CyclicPositionVelocityCountsPerSecond = 0;
+                    break;
+                case Cia402OperationMode.CyclicSynchronousVelocity:
+                    _cia402CyclicVelocityCommandCountsPerSecond = RpmToCia402CountsPerSecond(Cia402Velocity);
+                    break;
+                case Cia402OperationMode.CyclicSynchronousTorque:
+                    _cia402CyclicTorqueCommand = (short)Math.Clamp(
+                        (int)Math.Round(Cia402Torque),
+                        short.MinValue,
+                        short.MaxValue);
+                    break;
+            }
+        }
+
+        private void StopCia402CyclicStreaming(bool log = true)
+        {
+            bool wasActive = Cia402CyclicStreamingActive;
+            string description = Cia402CyclicStreamingDescription;
+
+            Cia402CyclicStreamingActive = false;
+            _cia402CyclicStreamingMode = null;
+            Cia402CyclicStreamingDescription = "Idle";
+            _cia402CyclicPositionVelocityCountsPerSecond = 0;
+
+            if (log && wasActive)
+                AppendLog($"[CiA402] Cyclic PDO stream stopped ({description}).");
+        }
+
+        private void ExecuteCia402Command(DriveCommand command)
+        {
+            var controller = _cia402Controller;
+            if (controller == null)
+            {
+                AppendLog("[CiA402] Not connected — command ignored.");
+                return;
+            }
+            _ = ExecuteCia402CommandAsync(controller, command);
+        }
+
+        private async Task ExecuteCia402CommandAsync(IDriveController controller, DriveCommand command)
+        {
+            string name = command.GetType().Name.Replace("DriveCommand", string.Empty);
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                await _cia402IoLock.WaitAsync(cts.Token).ConfigureAwait(false);
+                try
+                {
+                    await controller.ExecuteAsync(command, cts.Token);
+                }
+                finally
+                {
+                    _cia402IoLock.Release();
+                }
+                AppendLog($"[CiA402] {name} OK");
+            }
+            catch (TimeoutException ex)
+            {
+                AppendLog($"[CiA402] {name} TIMEOUT: {ex.Message}");
+                LogHelper.Exception(ex);
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"[CiA402] {name} ERROR: {ex.Message}");
+                LogHelper.Exception(ex);
+            }
+        }
+
     }
-}
+} 

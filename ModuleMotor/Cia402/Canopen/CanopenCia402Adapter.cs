@@ -18,7 +18,7 @@ namespace ModuleMotor.Cia402.Canopen
     ///   var controller = DriveControllerFactory.CreateCia402Controller(adapter, adapter);
     /// </code>
     /// </summary>
-    public sealed class CanopenCia402Adapter : ICia402ObjectAccess, ICia402ProcessData
+    public sealed class CanopenCia402Adapter : ICia402ObjectAccess, ICia402ProcessData, ICia402ProcessDataCapabilities
     {
         private static readonly TimeSpan PdoTimeout = TimeSpan.FromMilliseconds(50);
 
@@ -27,6 +27,9 @@ namespace ModuleMotor.Cia402.Canopen
         private readonly CanopenNmtClient _nmtClient;
         private readonly IVCanFrameTransport _transport;
         private readonly ErobCanopenPdoMap _pdo;
+        private readonly byte[] _rpdo1Cache;
+        private readonly byte[] _rpdo2Cache;
+        private readonly SemaphoreSlim _pdoWriteLock = new(1, 1);
 
         /// <param name="nodeId">CANopen node ID of the eRob joint (1–127).</param>
         /// <param name="transport">VCan frame transport wrapping the connected MotorModel.</param>
@@ -44,6 +47,8 @@ namespace ModuleMotor.Cia402.Canopen
             _sdoClient = new CanopenSdoClient(transport);
             _nmtClient = new CanopenNmtClient(transport);
             _pdo = pdoMap ?? ErobCanopenPdoMap.Default;
+            _rpdo1Cache = new byte[_pdo.Rpdo1Bytes];
+            _rpdo2Cache = new byte[_pdo.Rpdo2Bytes];
         }
 
         // ── NMT lifecycle ─────────────────────────────────────────────────────
@@ -62,6 +67,17 @@ namespace ModuleMotor.Cia402.Canopen
         /// </summary>
         public Task CloseAsync(CancellationToken ct)
             => _nmtClient.StopRemoteNodeAsync(_nodeId, ct);
+
+        public bool HasTargetPosition => true;
+        public bool HasTargetVelocity => true;
+        public bool HasTargetTorque => true;
+        public bool HasMaxTorque => false;
+        public bool HasControlword => true;
+        public bool HasOperationMode => true;
+        public bool HasOperationModeDisplay => true;
+        public bool HasVelocityActualValue => true;
+        public bool HasTorqueActualValue => true;
+        public bool HasErrorCode => true;
 
         // ── ICia402ObjectAccess — expedited SDO ───────────────────────────────
 
@@ -108,6 +124,11 @@ namespace ModuleMotor.Cia402.Canopen
 
             byte[] t1 = tpdo1Task.Result.Payload;
             byte[] t2 = tpdo2Task.Result.Payload;
+            if (t1.Length < _pdo.Tpdo1Bytes || t2.Length < _pdo.Tpdo2Bytes)
+            {
+                throw new InvalidOperationException(
+                    $"TPDO payload too short: TPDO1={t1.Length} byte(s), TPDO2={t2.Length} byte(s).");
+            }
 
             return new ProcessSnapshot(
                 Statusword:          BinaryPrimitives.ReadUInt16LittleEndian(t1.AsSpan(_pdo.Tpdo1Statusword)),
@@ -125,32 +146,42 @@ namespace ModuleMotor.Cia402.Canopen
         /// </summary>
         public async ValueTask WriteAsync(ProcessCommand command, CancellationToken ct)
         {
-            // RPDO1: Controlword | ModesOfOperation | pad | TargetPosition
-            if (command.Controlword.HasValue
-                || command.OperationMode.HasValue
-                || command.TargetPosition.HasValue)
+            await _pdoWriteLock.WaitAsync(ct);
+            try
             {
-                byte[] rpdo1 = new byte[_pdo.Rpdo1Bytes];
-                if (command.Controlword is ushort cw)
-                    BinaryPrimitives.WriteUInt16LittleEndian(rpdo1.AsSpan(_pdo.Rpdo1Controlword), cw);
-                if (command.OperationMode is sbyte mode)
-                    rpdo1[_pdo.Rpdo1ModesOfOperation] = (byte)mode;
-                if (command.TargetPosition is int pos)
-                    BinaryPrimitives.WriteInt32LittleEndian(rpdo1.AsSpan(_pdo.Rpdo1TargetPosition), pos);
+                // RPDO1: Controlword | ModesOfOperation | pad | TargetPosition
+                if (command.Controlword.HasValue
+                    || command.OperationMode.HasValue
+                    || command.TargetPosition.HasValue)
+                {
+                    byte[] rpdo1 = (byte[])_rpdo1Cache.Clone();
+                    if (command.Controlword is ushort cw)
+                        BinaryPrimitives.WriteUInt16LittleEndian(rpdo1.AsSpan(_pdo.Rpdo1Controlword), cw);
+                    if (command.OperationMode is sbyte mode)
+                        rpdo1[_pdo.Rpdo1ModesOfOperation] = (byte)mode;
+                    if (command.TargetPosition is int pos)
+                        BinaryPrimitives.WriteInt32LittleEndian(rpdo1.AsSpan(_pdo.Rpdo1TargetPosition), pos);
 
-                await _transport.SendAsync(CanopenFrameBuilder.BuildRpdo1(_nodeId, rpdo1), ct);
+                    await _transport.SendAsync(CanopenFrameBuilder.BuildRpdo1(_nodeId, rpdo1), ct);
+                    rpdo1.CopyTo(_rpdo1Cache, 0);
+                }
+
+                // RPDO2: TargetVelocity | TargetTorque
+                if (command.TargetVelocity.HasValue || command.TargetTorque.HasValue)
+                {
+                    byte[] rpdo2 = (byte[])_rpdo2Cache.Clone();
+                    if (command.TargetVelocity is int vel)
+                        BinaryPrimitives.WriteInt32LittleEndian(rpdo2.AsSpan(_pdo.Rpdo2TargetVelocity), vel);
+                    if (command.TargetTorque is short torque)
+                        BinaryPrimitives.WriteInt16LittleEndian(rpdo2.AsSpan(_pdo.Rpdo2TargetTorque), torque);
+
+                    await _transport.SendAsync(CanopenFrameBuilder.BuildRpdo2(_nodeId, rpdo2), ct);
+                    rpdo2.CopyTo(_rpdo2Cache, 0);
+                }
             }
-
-            // RPDO2: TargetVelocity | TargetTorque
-            if (command.TargetVelocity.HasValue || command.TargetTorque.HasValue)
+            finally
             {
-                byte[] rpdo2 = new byte[_pdo.Rpdo2Bytes];
-                if (command.TargetVelocity is int vel)
-                    BinaryPrimitives.WriteInt32LittleEndian(rpdo2.AsSpan(_pdo.Rpdo2TargetVelocity), vel);
-                if (command.TargetTorque is short torque)
-                    BinaryPrimitives.WriteInt16LittleEndian(rpdo2.AsSpan(_pdo.Rpdo2TargetTorque), torque);
-
-                await _transport.SendAsync(CanopenFrameBuilder.BuildRpdo2(_nodeId, rpdo2), ct);
+                _pdoWriteLock.Release();
             }
         }
     }

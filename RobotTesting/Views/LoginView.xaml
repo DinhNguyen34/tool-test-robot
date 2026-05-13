@@ -5,86 +5,273 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="400"
-             Background="{DynamicResource MaterialDesignBackground}">
+             d:DesignHeight="500" d:DesignWidth="900"
+             Background="#FFFFFF">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <SolidColorBrush x:Key="LoginBlueBrush" Color="#238BC4"/>
+        <SolidColorBrush x:Key="LoginDarkTextBrush" Color="#172331"/>
+        <SolidColorBrush x:Key="LoginMutedTextBrush" Color="#7B8794"/>
+        <SolidColorBrush x:Key="LoginBorderBrush" Color="#B7C0CA"/>
+
+        <Style x:Key="LoginInputTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource LoginDarkTextBrush}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="8 0"/>
+        </Style>
+
+        <Style x:Key="LoginPasswordBoxStyle" TargetType="PasswordBox">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource LoginDarkTextBrush}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="8 0"/>
+        </Style>
     </UserControl.Resources>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <Grid Background="#FFFFFF">
+        <Border Width="760"
+                Height="430"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="#FFFFFF">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="260"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-        <!-- Center card -->
-        <md:Card Grid.Row="1"
-                 Margin="40 0"
-                 Padding="32 28"
-                 md:ElevationAssist.Elevation="Dp8">
-            <StackPanel>
+                <Border Grid.Column="0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#003F67" Offset="0"/>
+                            <GradientStop Color="#0078A8" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
 
-                <!-- Logo + title -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 0 0 24">
-                    <Image Source="/Resource;component/Images/Robot-32.png"
-                           Height="40" Width="40" Margin="0 0 10 0"/>
-                    <TextBlock Text="Robot Testing"
-                               FontSize="22" FontWeight="Bold"
-                               VerticalAlignment="Center"
-                               Foreground="{DynamicResource PrimaryHueMidBrush}"/>
-                </StackPanel>
+                    <Grid>
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Margin="0 0 0 8"
+                                    Panel.ZIndex="1">
+                            <Image Source="/Assets/logo-vinfast-03.png"
+                                   Width="256"
+                                   Height="221"
+                                   Stretch="Uniform"/> 
 
-                <!-- Username -->
-                <TextBox x:Name="TxtUsername"
-                         md:HintAssist.Hint="Username"
-                         md:HintAssist.IsFloating="True"
-                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
-                         Margin="0 0 0 16"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
-                <!-- Password -->
-                <PasswordBox x:Name="PwdPassword"
-                             md:HintAssist.Hint="Password"
-                             md:HintAssist.IsFloating="True"
-                             Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
-                             Margin="0 0 0 8"/>
+                <Grid Grid.Column="1" Margin="28 0 36 0" VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                <!-- Error message -->
-                <TextBlock Text="{Binding ErrorMessage}"
-                           Foreground="Red"
-                           FontSize="12"
-                           Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"
-                           Margin="0 0 0 8"/>
+                    <TextBlock Grid.Row="0"
+                               Text="Login"
+                               HorizontalAlignment="Center"
+                               Margin="0 0 0 26"
+                               FontSize="28"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource LoginDarkTextBrush}"/>
 
-                <!-- Sign In button -->
-                <Button x:Name="BtnLogin"
-                        HorizontalAlignment="Stretch"
-                        Height="40"
-                        Margin="0 8 0 0"
-                        Click="BtnLogin_Click">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsBusy}" Value="True">
-                                    <Setter Property="IsEnabled" Value="False"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                    <TextBlock Text="SIGN IN"/>
-                </Button>
+                    <StackPanel Grid.Row="1">
+                        <Border Height="45"
+                                CornerRadius="11"
+                                BorderThickness="1"
+                                BorderBrush="{StaticResource LoginBorderBrush}"
+                                Background="#FFFFFF"
+                                Margin="0 0 0 18">
+                            <Grid Margin="12 0 8 0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                <!-- Loading indicator -->
-                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
-                             Value="0"
-                             IsIndeterminate="True"
-                             HorizontalAlignment="Center"
-                             Margin="0 12 0 0"
-                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+                                <md:PackIcon Kind="Account"
+                                             Width="19"
+                                             Height="19"
+                                             VerticalAlignment="Center"
+                                             Foreground="#59758A"/>
+                                <TextBox x:Name="TxtUsername"
+                                         Grid.Column="1"
+                                         Style="{StaticResource LoginInputTextBoxStyle}"
+                                         Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="User name"
+                                           Margin="8 0 0 0"
+                                           VerticalAlignment="Center"
+                                           FontSize="14"
+                                           Foreground="{StaticResource LoginMutedTextBrush}"
+                                           IsHitTestVisible="False">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Text.Length, ElementName=TxtUsername}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
 
-            </StackPanel>
-        </md:Card>
+                        <Border Height="45"
+                                CornerRadius="11"
+                                BorderThickness="1"
+                                BorderBrush="{StaticResource LoginBorderBrush}"
+                                Background="#FFFFFF"
+                                Margin="0 0 0 18">
+                            <Grid Margin="12 0 8 0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="24"/>
+                                </Grid.ColumnDefinitions>
+
+                                <md:PackIcon Kind="Lock"
+                                             Width="18"
+                                             Height="18"
+                                             VerticalAlignment="Center"
+                                             Foreground="#59758A"/>
+                                <PasswordBox x:Name="PwdPassword"
+                                             Grid.Column="1"
+                                             Style="{StaticResource LoginPasswordBoxStyle}"
+                                             PasswordChanged="PwdPassword_PasswordChanged"/>
+                                <TextBox x:Name="TxtPasswordVisible"
+                                         Grid.Column="1"
+                                         Style="{StaticResource LoginInputTextBoxStyle}"
+                                         Visibility="Collapsed"
+                                         TextChanged="TxtPasswordVisible_TextChanged"/>
+                                <TextBlock x:Name="TxtPasswordPlaceholder"
+                                           Grid.Column="1"
+                                           Text="Password"
+                                           Margin="8 0 0 0"
+                                           VerticalAlignment="Center"
+                                           FontSize="14"
+                                           Foreground="{StaticResource LoginMutedTextBrush}"
+                                           IsHitTestVisible="False"/>
+                                <Button Grid.Column="2"
+                                        Width="24"
+                                        Height="34"
+                                        Padding="0"
+                                        BorderThickness="0"
+                                        Background="Transparent"
+                                        Click="TogglePasswordVisibility_Click"
+                                        ToolTip="Show password">
+                                    <md:PackIcon x:Name="IcoPasswordVisibility"
+                                                 Kind="EyeOff"
+                                                 Width="18"
+                                                 Height="18"
+                                                 VerticalAlignment="Center"
+                                                 Foreground="#7E8C98"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <Border Height="45"
+                                CornerRadius="11"
+                                BorderThickness="1"
+                                BorderBrush="{StaticResource LoginBorderBrush}"
+                                Background="#FFFFFF">
+                            <Grid Margin="12 0 8 0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <md:PackIcon Kind="KeyVariant"
+                                             Width="18"
+                                             Height="18"
+                                             VerticalAlignment="Center"
+                                             Foreground="#59758A"/>
+                                <TextBox x:Name="TxtOtp"
+                                         Grid.Column="1"
+                                         Style="{StaticResource LoginInputTextBoxStyle}"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="OTP code"
+                                           Margin="8 0 0 0"
+                                           VerticalAlignment="Center"
+                                           FontSize="14"
+                                           Foreground="{StaticResource LoginMutedTextBrush}"
+                                           IsHitTestVisible="False">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Text.Length, ElementName=TxtOtp}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="2"
+                               Text="{Binding ErrorMessage}"
+                               Foreground="#D32F2F"
+                               FontSize="12"
+                               Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"
+                               Margin="0 8 0 0"/>
+
+                    <Button x:Name="BtnLogin"
+                            Grid.Row="3"
+                            Height="45"
+                            Margin="0 40 0 0"
+                            Background="{StaticResource LoginBlueBrush}"
+                            BorderBrush="{StaticResource LoginBlueBrush}"
+                            Foreground="#FFFFFF"
+                            FontWeight="SemiBold"
+                            Click="BtnLogin_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="9">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                        <Setter Property="Content" Value="Logging in..."/>
+                                    </DataTrigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#1D7DB4"/>
+                                        <Setter Property="BorderBrush" Value="#1D7DB4"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock Text="Login"/>
+                    </Button>
+                </Grid>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

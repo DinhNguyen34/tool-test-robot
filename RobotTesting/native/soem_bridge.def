@@ -5,11 +5,15 @@ EXPORTS
     Free
     ScanDevices
     ConfigureIoMap
+    ConfigureDcSync0
     GetProcessIo
+    GetCyclicWkc
     GetState
+    GetAlStatusCode
     ReadState
     RequestCommonState
     RequestState
     UpdateIo
     NoCaSdoRead
     ecx_SDOwrite
+    PopLastSdoError

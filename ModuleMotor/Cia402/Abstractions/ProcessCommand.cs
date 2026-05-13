@@ -5,5 +5,6 @@ namespace ModuleMotor.Cia402.Abstractions
         sbyte? OperationMode = null,
         int? TargetPosition = null,
         int? TargetVelocity = null,
-        short? TargetTorque = null);
+        short? TargetTorque = null,
+        ushort? MaxTorque = null);
 }

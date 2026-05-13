@@ -27,6 +27,7 @@ namespace ModuleMotor.Controllers
         public Task<DriveSnapshot> ReadSnapshotAsync(CancellationToken ct)
         {
             return Task.FromResult(new DriveSnapshot(
+                Statusword: 0,
                 Position: 0,
                 Velocity: 0,
                 Torque: 0,

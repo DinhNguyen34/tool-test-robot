@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:prism="http://prismlibrary.com/"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             prism:ViewModelLocator.AutoWireViewModel="True"
              mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -421,6 +422,64 @@
             <Setter Property="FontSize"    Value="11"/>
             <Setter Property="TextAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="CiaPanel" TargetType="Border">
+            <Setter Property="Background" Value="#171D27"/>
+            <Setter Property="BorderBrush" Value="#303A4A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,12"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="CiaPanelTitle" TargetType="TextBlock" BasedOn="{StaticResource SectionHeader}">
+            <Setter Property="Foreground" Value="#D8E2F3"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="CiaMetricCard" TargetType="Border">
+            <Setter Property="Background" Value="#10161F"/>
+            <Setter Property="BorderBrush" Value="#293241"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Margin" Value="0,0,8,8"/>
+            <Setter Property="MinHeight" Value="64"/>
+        </Style>
+
+        <Style x:Key="CiaMetricLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#93A1B8"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+        </Style>
+
+        <Style x:Key="CiaMetricValue" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#F3F6FB"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,6,0,0"/>
+        </Style>
+
+        <Style x:Key="CiaBitPill" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#A7B2C2"/>
+            <Setter Property="Background" Value="#222A36"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="MinWidth" Value="46"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Foreground" Value="#DFFBE7"/>
+                    <Setter Property="Background" Value="#1F6F43"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
     </UserControl.Resources>
@@ -1056,6 +1115,7 @@
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
                                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,10">
@@ -1222,6 +1282,389 @@
                                  FontFamily="Consolas"
                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                    </TabItem>
+
+                    <!-- ── CiA 402 ── -->
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="CiA 402">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}}" Value="False">
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <Ellipse Width="8" Height="8" Margin="6,0,0,0" VerticalAlignment="Center">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="#555"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Cia402IsConnected}" Value="True">
+                                                    <Setter Property="Fill" Value="#4CAF50"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                            </StackPanel>
+                        </TabItem.Header>
+
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="12,8,12,12">
+
+                                <!-- Node config -->
+                                <Border Style="{StaticResource CiaPanel}">
+                                    <StackPanel>
+                                        <TextBlock Text="NODE CONFIG" Style="{StaticResource CiaPanelTitle}"/>
+
+                                        <!-- CANopen-only fields -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SelectedProtocol}" Value="Cia402Ethercat">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <TextBlock Text="Node ID" Style="{StaticResource ColLabel}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBox Text="{Binding Config.Cia402NodeId, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ConfigFieldTextBox}" Width="60" Margin="0,0,20,0"/>
+                                        </StackPanel>
+
+                                        <!-- EtherCAT-only fields -->
+                                        <StackPanel Margin="0,6,0,0">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SelectedProtocol}" Value="Cia402Ethercat">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                <TextBlock Text="ECAT Adapter" Style="{StaticResource ColLabel}" Margin="0,0,8,0" VerticalAlignment="Center" Width="90"/>
+                                                <TextBox Text="{Binding EthercatInterface, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource ConfigFieldTextBox}" Width="280"
+                                                         ToolTip="\Device\NPF_{GUID} — use Npcap adapter name"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                <TextBlock Text="Adapter List" Style="{StaticResource ColLabel}" Margin="0,0,8,0" VerticalAlignment="Center" Width="90"/>
+                                                <ComboBox ItemsSource="{Binding EthercatAdapters}"
+                                                          SelectedItem="{Binding SelectedEthercatAdapter}"
+                                                          DisplayMemberPath="DisplayName"
+                                                          Style="{StaticResource ConfigFieldComboBox}"
+                                                          Width="360"
+                                                          ToolTip="Adapters are listed from the local Windows network stack, similar to ipconfig. Selecting one still uses the underlying SOEM adapter."/>
+                                                <Button Content="Scan"
+                                                        Command="{Binding ScanEthercatAdaptersCommand}"
+                                                        Style="{StaticResource SecondaryBtn}"
+                                                        Margin="8,0,0,0"
+                                                        Width="70"/>
+                                            </StackPanel>
+                                            <TextBlock Text="Scan mirrors local adapters from Windows networking, including disconnected adapters. The selected item still maps back to the underlying EtherCAT adapter."
+                                                       Foreground="#98A6CA"
+                                                       FontSize="11"
+                                                       Margin="98,0,0,6"
+                                                       TextWrapping="Wrap"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Slave Index" Style="{StaticResource ColLabel}" Margin="0,0,8,0" VerticalAlignment="Center" Width="90"/>
+                                                <TextBox Text="{Binding Config.EthercatSlaveIndex, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource ConfigFieldTextBox}" Width="60"
+                                                         ToolTip="1-based EtherCAT slave position on the bus"/>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <!-- Shared: Enable PDO + cycle period -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                            <TextBlock Text="Enable PDO" Style="{StaticResource ColLabel}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <CheckBox IsChecked="{Binding Cia402EnablePdo}"
+                                                      IsEnabled="{Binding Cia402CanEditPdo}"
+                                                      ToolTip="Change requires disconnect/reconnect"
+                                                      VerticalAlignment="Center"/>
+                                            <TextBlock Text="PDO Cycle (ms)" Style="{StaticResource ColLabel}" Margin="20,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBox Text="{Binding Cia402PdoCycleMs, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ConfigFieldTextBox}" Width="80"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                            <TextBlock Text="Mode" Style="{StaticResource ColLabel}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <ComboBox ItemsSource="{Binding Cia402OperationModes}"
+                                                      SelectedItem="{Binding SelectedCia402Mode}"
+                                                      Style="{StaticResource ConfigFieldComboBox}"
+                                                      Width="190" Margin="0,0,8,0"/>
+                                            <Button Content="Set Mode"
+                                                    Command="{Binding Cia402SetModeCommand}"
+                                                    Style="{StaticResource PrimaryBtn}"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Cia402SetpointHint}"
+                                                   Foreground="#98A6CA"
+                                                   FontSize="11"
+                                                   Margin="0,8,0,0"
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- State machine -->
+                                <Border Style="{StaticResource CiaPanel}">
+                                    <StackPanel>
+                                        <TextBlock Text="DRIVE STATE MACHINE" Style="{StaticResource CiaPanelTitle}"/>
+                                        <WrapPanel>
+                                            <Button Content="Fault Reset"      Command="{Binding Cia402FaultResetCommand}"
+                                                    Style="{StaticResource DangerBtn}"    Width="106" Margin="0,0,8,8"/>
+                                            <Button Content="Shutdown"         Command="{Binding Cia402ShutdownCommand}"
+                                                    Style="{StaticResource WarningBtn}"   Width="106" Margin="0,0,8,8"/>
+                                            <Button Content="Switch On"        Command="{Binding Cia402SwitchOnCommand}"
+                                                    Style="{StaticResource PrimaryBtn}"   Width="106" Margin="0,0,8,8"/>
+                                            <Button Content="Enable Operation" Command="{Binding Cia402EnableCommand}"
+                                                    Style="{StaticResource SuccessBtn}"   Width="138" Margin="0,0,8,8"/>
+                                            <Button Content="Disable Operation" Command="{Binding Cia402DisableCommand}"
+                                                    Style="{StaticResource SecondaryBtn}" Width="138" Margin="0,0,8,8"/>
+                                            <Button Content="Quick Stop"       Command="{Binding Cia402QuickStopCommand}"
+                                                    Style="{StaticResource WarningBtn}"   Width="106" Margin="0,0,0,8"/>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Live data -->
+                                <Border Style="{StaticResource CiaPanel}">
+                                    <StackPanel>
+                                        <TextBlock Text="LIVE DATA" Style="{StaticResource CiaPanelTitle}"/>
+                                        <UniformGrid Columns="3">
+                                            <Border Style="{StaticResource CiaMetricCard}">
+                                                <StackPanel>
+                                                    <TextBlock Text="DRIVE STATE" Style="{StaticResource CiaMetricLabel}"/>
+                                                    <TextBlock Text="{Binding Cia402StatusText}"
+                                                               Style="{StaticResource CiaMetricValue}"
+                                                               FontFamily="Segoe UI"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Style="{StaticResource CiaMetricCard}">
+                                                <StackPanel>
+                                                    <TextBlock Text="POSITION DEG" Style="{StaticResource CiaMetricLabel}"/>
+                                                    <TextBlock Text="{Binding Cia402Position, StringFormat={}{0:F4}}"
+                                                               Style="{StaticResource CiaMetricValue}"
+                                                               Foreground="#79D2FF"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Style="{StaticResource CiaMetricCard}">
+                                                <StackPanel>
+                                                    <TextBlock Text="VELOCITY RPM" Style="{StaticResource CiaMetricLabel}"/>
+                                                    <TextBlock Text="{Binding Cia402Velocity, StringFormat={}{0:F4}}"
+                                                               Style="{StaticResource CiaMetricValue}"
+                                                               Foreground="#79D2FF"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Style="{StaticResource CiaMetricCard}">
+                                                <StackPanel>
+                                                    <TextBlock Text="TORQUE" Style="{StaticResource CiaMetricLabel}"/>
+                                                    <TextBlock Text="{Binding Cia402Torque, StringFormat={}{0:F4}}"
+                                                               Style="{StaticResource CiaMetricValue}"
+                                                               Foreground="#79D2FF"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Style="{StaticResource CiaMetricCard}">
+                                                <StackPanel>
+                                                    <TextBlock Text="ERROR CODE" Style="{StaticResource CiaMetricLabel}"/>
+                                                    <TextBlock Text="{Binding Cia402ErrorCode, StringFormat=0x{0:X4}}"
+                                                               Style="{StaticResource CiaMetricValue}"
+                                                               Foreground="#FF8F8F"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Style="{StaticResource CiaMetricCard}">
+                                                <StackPanel>
+                                                    <TextBlock Text="STATUSWORD" Style="{StaticResource CiaMetricLabel}"/>
+                                                    <TextBlock Text="{Binding Cia402StatuswordRaw, StringFormat=0x{0:X4}}"
+                                                               Style="{StaticResource CiaMetricValue}"
+                                                               Foreground="#FFD666"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </UniformGrid>
+
+                                        <WrapPanel Margin="0,6,0,0">
+                                            <StackPanel Width="138" Margin="0,0,10,10">
+                                                <TextBlock Text="Ready To Switch On" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402ReadyToSwitchOn}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                            <StackPanel Width="118" Margin="0,0,10,10">
+                                                <TextBlock Text="Switched On" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402SwitchedOn}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                            <StackPanel Width="138" Margin="0,0,10,10">
+                                                <TextBlock Text="Operation Enabled" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402OperationEnabled}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                            <StackPanel Width="78" Margin="0,0,10,10">
+                                                <TextBlock Text="Fault" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402Fault}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                            <StackPanel Width="128" Margin="0,0,10,10">
+                                                <TextBlock Text="Voltage Enabled" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402VoltageEnabled}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                            <StackPanel Width="142" Margin="0,0,10,10">
+                                                <TextBlock Text="Quick Stop Active" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402QuickStopNotActive}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                            <StackPanel Width="138" Margin="0,0,10,10">
+                                                <TextBlock Text="Switch On Disabled" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402SwitchOnDisabled}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                            <StackPanel Width="82" Margin="0,0,10,10">
+                                                <TextBlock Text="Warning" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402Warning}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                            <StackPanel Width="82" Margin="0,0,10,10">
+                                                <TextBlock Text="Remote" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402Remote}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                            <StackPanel Width="116" Margin="0,0,10,10">
+                                                <TextBlock Text="Target Reached" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402TargetReached}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                            <StackPanel Width="108" Margin="0,0,10,10">
+                                                <TextBlock Text="Internal Limit" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402InternalLimitActive}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                            <StackPanel Width="96" Margin="0,0,10,10">
+                                                <TextBlock Text="Setpoint Ack" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402SetPointAcknowledge}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                            <StackPanel Width="116" Margin="0,0,0,10">
+                                                <TextBlock Text="Following Error" Style="{StaticResource CiaMetricLabel}"/>
+                                                <TextBlock Text="{Binding Cia402FollowingError}" Style="{StaticResource CiaBitPill}"/>
+                                            </StackPanel>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Setpoints -->
+                                <Border Style="{StaticResource CiaPanel}">
+                                    <StackPanel>
+                                        <TextBlock Text="SETPOINTS" Style="{StaticResource CiaPanelTitle}"/>
+                                        <Grid Margin="0,8,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="160"/>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="0"
+                                                       Text="Target Position (deg)" Style="{StaticResource ColLabel}"
+                                                       VerticalAlignment="Center" Margin="0,0,10,8"/>
+                                            <TextBox Grid.Row="0" Grid.Column="1"
+                                                     Text="{Binding Cia402TargetPosition, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ConfigFieldTextBox}" Margin="0,0,8,8"/>
+                                            <Button Grid.Row="0" Grid.Column="2" Content="Move"
+                                                    Command="{Binding Cia402MoveCommand}"
+                                                    Style="{StaticResource PrimaryBtn}" Margin="0,0,0,8"/>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="0"
+                                                       Text="Target Velocity (rpm)" Style="{StaticResource ColLabel}"
+                                                       VerticalAlignment="Center" Margin="0,0,10,8"/>
+                                            <TextBox Grid.Row="1" Grid.Column="1"
+                                                     Text="{Binding Cia402TargetVelocity, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ConfigFieldTextBox}" Margin="0,0,8,8"/>
+                                            <Button Grid.Row="1" Grid.Column="2" Content="Set"
+                                                    Command="{Binding Cia402SetVelocityCommand}"
+                                                    Style="{StaticResource SuccessBtn}" Margin="0,0,0,8"/>
+
+                                            <TextBlock Grid.Row="2" Grid.Column="0"
+                                                       Text="Target Torque (1/1000 rated)" Style="{StaticResource ColLabel}"
+                                                       VerticalAlignment="Center" Margin="0,0,10,8"/>
+                                            <TextBox Grid.Row="2" Grid.Column="1"
+                                                     Text="{Binding Cia402TargetTorque, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ConfigFieldTextBox}" Margin="0,0,8,8"/>
+                                            <Button Grid.Row="2" Grid.Column="2" Content="Set"
+                                                    Command="{Binding Cia402SetTorqueCommand}"
+                                                    Style="{StaticResource SuccessBtn}" Margin="0,0,0,8"/>
+
+                                            <TextBlock Grid.Row="3" Grid.Column="0"
+                                                       Text="0x6081 Profile Velocity" Style="{StaticResource ColLabel}"
+                                                       VerticalAlignment="Center" Margin="0,0,10,8"
+                                                       ToolTip="CiA 402 0x6081 — max velocity used by the Profile Position trajectory generator (counts/s)."/>
+                                            <TextBox Grid.Row="3" Grid.Column="1"
+                                                     Text="{Binding Cia402ProfileVelocity, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ConfigFieldTextBox}" Margin="0,0,8,8"/>
+
+                                            <TextBlock Grid.Row="4" Grid.Column="0"
+                                                       Text="0x6083 Profile Acceleration" Style="{StaticResource ColLabel}"
+                                                       VerticalAlignment="Center" Margin="0,0,10,8"
+                                                       ToolTip="CiA 402 0x6083 — acceleration ramp used while approaching Profile Velocity (counts/s²)."/>
+                                            <TextBox Grid.Row="4" Grid.Column="1"
+                                                     Text="{Binding Cia402ProfileAcceleration, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ConfigFieldTextBox}" Margin="0,0,8,8"/>
+
+                                            <TextBlock Grid.Row="5" Grid.Column="0"
+                                                       Text="0x6084 Profile Deceleration" Style="{StaticResource ColLabel}"
+                                                       VerticalAlignment="Center" Margin="0,0,10,8"
+                                                       ToolTip="CiA 402 0x6084 — deceleration ramp used when leaving Profile Velocity (counts/s²)."/>
+                                            <TextBox Grid.Row="5" Grid.Column="1"
+                                                     Text="{Binding Cia402ProfileDeceleration, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ConfigFieldTextBox}" Margin="0,0,8,8"/>
+
+                                            <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3"
+                                                        Orientation="Horizontal" Margin="0,0,0,4">
+                                                <CheckBox IsChecked="{Binding Cia402ProfileImmediateChange}"
+                                                          VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBlock Text="Immediate Change" Style="{StaticResource ColLabel}"
+                                                           VerticalAlignment="Center" Margin="0,0,18,0"/>
+                                                <TextBlock Text="Ack Timeout (ms)" Style="{StaticResource ColLabel}"
+                                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBox Text="{Binding Cia402ProfileAckTimeoutMs, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource ConfigFieldTextBox}" Width="100"/>
+                                                <TextBlock Text="Counts/Rev" Style="{StaticResource ColLabel}"
+                                                           VerticalAlignment="Center" Margin="18,0,8,0"/>
+                                                <TextBox Text="{Binding Cia402CountsPerRevolution, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource ConfigFieldTextBox}" Width="100"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3"
+                                                        Orientation="Horizontal" Margin="0,4,0,0">
+                                                <TextBlock Text="{Binding Cia402CyclicStreamingText}"
+                                                           Foreground="#98A6CA"
+                                                           FontSize="11"
+                                                           VerticalAlignment="Center"
+                                                           Width="360"
+                                                           TextWrapping="Wrap"/>
+                                                <Button Content="Stop Cyclic Stream"
+                                                        Command="{Binding Cia402StopCyclicCommand}"
+                                                        Style="{StaticResource WarningBtn}"
+                                                        Margin="12,0,0,0"
+                                                        Width="150"/>
+                                            </StackPanel>
+
+                                            <Button Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3"
+                                                    Content="Sync Actual → Target Position"
+                                                    Command="{Binding Cia402SyncPositionCommand}"
+                                                    Style="{StaticResource SecondaryBtn}" Margin="0,4,0,0"
+                                                    HorizontalAlignment="Left" Width="220"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                            </StackPanel>
+                        </ScrollViewer>
                     </TabItem>
                 </TabControl>
                 <!-- Motor State Table -->

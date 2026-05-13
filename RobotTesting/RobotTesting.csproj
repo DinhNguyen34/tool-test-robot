@@ -1,73 +1,71 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Condition=" '$(EAZFUSCATOR_NET_HOME)' != '' and Exists('$(EAZFUSCATOR_NET_HOME)\Integration\MSBuild\Eazfuscator.NET.targets') " Project="$(EAZFUSCATOR_NET_HOME)\Integration\MSBuild\Eazfuscator.NET.targets" />
+	<Import Condition=" '$(EAZFUSCATOR_NET_HOME)' != '' and Exists('$(EAZFUSCATOR_NET_HOME)\Integration\MSBuild\Eazfuscator.NET.targets') " Project="$(EAZFUSCATOR_NET_HOME)\Integration\MSBuild\Eazfuscator.NET.targets" />
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
-    <ApplicationIcon>Robot-32.ico</ApplicationIcon>
-    <Platforms>AnyCPU;x64</Platforms>
-    <SupportedOSPlatformVersion>10.0.26100.0</SupportedOSPlatformVersion>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+		<ApplicationIcon>Robot-32.ico</ApplicationIcon>
+		<Platforms>AnyCPU;x64</Platforms>
+		<SupportedOSPlatformVersion>10.0.26100.0</SupportedOSPlatformVersion>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <!-- Eazfuscator.NET is integrated with this project at MSBuild level: https://help.gapotchenko.com/eazfuscator.net/kb/100036 -->
-    <EazfuscatorIntegration>MSBuild</EazfuscatorIntegration>
-    <EazfuscatorActiveConfiguration>Release</EazfuscatorActiveConfiguration>
-    <EazfuscatorCompatibilityVersion>2025.3</EazfuscatorCompatibilityVersion>
-  </PropertyGroup>
+	<PropertyGroup>
+		<!-- Eazfuscator.NET is integrated with this project at MSBuild level: https://help.gapotchenko.com/eazfuscator.net/kb/100036 -->
+		<EazfuscatorIntegration>MSBuild</EazfuscatorIntegration>
+		<EazfuscatorActiveConfiguration>Release</EazfuscatorActiveConfiguration>
+		<EazfuscatorCompatibilityVersion>2025.3</EazfuscatorCompatibilityVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Modules\**" />
-    <EmbeddedResource Remove="Modules\**" />
-    <None Remove="Modules\**" />
-    <Page Remove="Modules\**" />
-  </ItemGroup>
- 
-  <ItemGroup>
-    <Content Include="Robot-32.ico" />
-    <!-- soem_bridge.dll is the C# P/Invoke target; it loads soem_wrapper.dll
-         at runtime from the same directory via GetModuleFileNameW. -->
-    <None Include="native\soem_bridge.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="native\soem_wrapper.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="Modules\**" />
+		<EmbeddedResource Remove="Modules\**" />
+		<None Remove="Modules\**" />
+		<Page Remove="Modules\**" />
+	</ItemGroup>
 
+	<ItemGroup>
+		<Content Include="Robot-32.ico" />
+		<!-- soem_bridge.dll is the C# P/Invoke target. The preferred native build
+         statically links SOEM via native/CMakeLists.txt; soem_wrapper.dll is kept
+         beside it for the legacy dynamic bridge backup. -->
+		<None Include="native\soem_bridge.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="native\soem_wrapper.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="LibUsbDotNet" Version="2.2.75" />
+		<PackageReference Include="log4net" Version="3.3.0" />
+		<PackageReference Include="MaterialDesignThemes" Version="5.3.1" />
+		<PackageReference Include="Prism.Core" Version="9.0.537" />
+		<PackageReference Include="Prism.Unity" Version="9.0.537" />
+		<PackageReference Include="Prism.Wpf" Version="9.0.537" />
+	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\Common\Core\Core.csproj" />
+		<ProjectReference Include="..\Common\WinStyles\WinStyles.csproj" />
+		<ProjectReference Include="..\ModuleCamera\ModuleCamera.csproj" />
+		<ProjectReference Include="..\ModuleImu\ModuleImu.csproj" />
+		<ProjectReference Include="..\Modules\ModuleCover\ModuleCover.csproj" />
+		<ProjectReference Include="..\Modules\ModuleNetwork\ModuleNetwork.csproj" />
+		<ProjectReference Include="..\ModuleMotor\ModuleMotor.csproj" />
+		<ProjectReference Include="..\Modules\ModuleTestLed\ModuleTestLed.csproj" />
+		<ProjectReference Include="..\Modules\ModuleTestBms\ModuleTestBms.csproj" />
+	</ItemGroup>
 
-
-
-
-
-  <ItemGroup>
-    <PackageReference Include="LibUsbDotNet" Version="2.2.75" />
-    <PackageReference Include="log4net" Version="3.3.0" />
-    <PackageReference Include="MaterialDesignThemes" Version="5.3.1" />
-    <PackageReference Include="Prism.Core" Version="9.0.537" />
-    <PackageReference Include="Prism.Unity" Version="9.0.537" />
-    <PackageReference Include="Prism.Wpf" Version="9.0.537" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Common\Core\Core.csproj" />
-    <ProjectReference Include="..\Common\WinStyles\WinStyles.csproj" />
-    <ProjectReference Include="..\ModuleCamera\ModuleCamera.csproj" />
-    <ProjectReference Include="..\ModuleImu\ModuleImu.csproj" />
-    <ProjectReference Include="..\Modules\ModuleCover\ModuleCover.csproj" />
-    <ProjectReference Include="..\Modules\ModuleNetwork\ModuleNetwork.csproj" />
-    <ProjectReference Include="..\ModuleMotor\ModuleMotor.csproj" />
-    <ProjectReference Include="..\Modules\ModuleTestLed\ModuleTestLed.csproj" />
-    <ProjectReference Include="..\Modules\ModuleTestBms\ModuleTestBms.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-	<ProjectReference Include="..\ModuleLidar\ModuleLidar.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\ModuleLidar\ModuleLidar.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<Resource Include="Assets\*.png"/>
+	</ItemGroup>
+	
 
 </Project>

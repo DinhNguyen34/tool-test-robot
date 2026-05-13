@@ -3,6 +3,8 @@ namespace ModuleMotor.Models
     public enum MotorProtocolKind
     {
         Robstride,
-        Encos
+        Encos,
+        Cia402Canopen,
+        Cia402Ethercat
     }
 }

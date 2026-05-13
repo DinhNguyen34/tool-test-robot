@@ -13,6 +13,7 @@
             Led,
             Camera,
             Lidar,
+            Imu,
             BMS
         }
 }

@@ -8,6 +8,7 @@ namespace Common.Core.Auth
         NavigateBms,
         NavigateCamera,
         NavigateLidar,
+        NavigateImu,
         ManageUsers
     }
 }

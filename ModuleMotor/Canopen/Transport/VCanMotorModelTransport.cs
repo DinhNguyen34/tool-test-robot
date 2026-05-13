@@ -41,7 +41,7 @@ namespace ModuleMotor.Canopen.Transport
             TimeSpan timeout,
             CancellationToken ct)
         {
-            HashSet<string> seen = new(StringComparer.Ordinal);
+            HashSet<string> seenMatches = new(StringComparer.Ordinal);
             DateTime deadline = DateTime.UtcNow + timeout;
 
             while (DateTime.UtcNow < deadline)
@@ -57,11 +57,11 @@ namespace ModuleMotor.Canopen.Transport
                     if (frame.Timestamp <= after.Timestamp)
                         continue;
 
-                    string key = $"{frame.Timestamp:R}|{frame.CanId:X8}|{Convert.ToHexString(frame.Payload)}";
-                    if (!seen.Add(key))
+                    if (!predicate(frame))
                         continue;
 
-                    if (predicate(frame))
+                    string key = $"{frame.Timestamp:R}|{frame.CanId:X8}|{Convert.ToHexString(frame.Payload)}";
+                    if (seenMatches.Add(key))
                         return frame;
                 }
 

@@ -11,6 +11,7 @@ namespace Common.Core.Auth
             Permission.NavigateBms,
             Permission.NavigateCamera,
             Permission.NavigateLidar,
+            Permission.NavigateImu,
             Permission.ManageUsers
         };
 
@@ -21,7 +22,8 @@ namespace Common.Core.Auth
             Permission.NavigateLed,
             Permission.NavigateBms,
             Permission.NavigateCamera,
-            Permission.NavigateLidar
+            Permission.NavigateLidar,
+            Permission.NavigateImu
         };
 
         private static readonly IReadOnlySet<Permission> ViewerPermissions = new HashSet<Permission>
